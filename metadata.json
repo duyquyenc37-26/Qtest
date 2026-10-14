@@ -1,6 +1,6 @@
 {
   "name": "MathExam Pro",
-  "description": "Nền tảng thi trắc nghiệm Toán học bảo mật cao, bóc tách đề thông minh (Word, LaTeX, AI), chấm điểm tự động và hỗ trợ offline",
+  "description": "Nền tảng thi trắc nghiệm Toán học",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
