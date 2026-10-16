@@ -107,7 +107,8 @@
         processEnvironments: true
       },
       options: {
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+        ignoreHtmlClass: 'tikz-container'
       },
       startup: {
         pageReady: () => {
@@ -120,18 +121,21 @@
 
   <!-- TikZJax for LaTeX Geometry Diagrams -->
   <link rel="stylesheet" type="text/css" href="https://tikzjax.com/v1/fonts.css">
-  <script src="https://tikzjax.com/v1/tikzjax.js"></script>
   <script>
-    // Safeguard and capture TikZJax's WebAssembly runner immediately upon load
-    (function() {
-      if (typeof window.onload === 'function') {
-        window._tikzJaxRunner = window.onload;
+    // Safeguard against TikZJax WebAssembly traps on unsupported TikZ syntax
+    window.addEventListener('error', function(e) {
+      if ((e.filename && e.filename.includes('tikzjax')) || (e.message && e.message.includes('unreachable'))) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
       }
-    })();
+    }, true);
   </script>
+  <script src="https://tikzjax.com/v1/tikzjax.js"></script>
 
-  <!-- Firebase Compat CDN (Realtime Firestore) -->
+  <!-- Firebase Compat CDN (Realtime Firestore & Auth) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <!-- Pyodide for Python Regex in WebAssembly -->
@@ -243,14 +247,29 @@
       color: #1e293b;
       white-space: nowrap !important;
       font-variant-numeric: tabular-nums;
-    }
-    .tkz-tab-table th, 
-    .tkz-tab-table td {
       border: 1.5px solid #334155 !important;
+    }
+    .tkz-tab-table th {
+      border: none !important;
+      border-right: 1.5px solid #334155 !important;
       text-align: center;
       vertical-align: middle;
       white-space: nowrap !important;
       word-break: keep-all !important;
+    }
+    /* Hide vertical grid lines inside data area between -infinity and +infinity */
+    .tkz-tab-table td {
+      border-top: none !important;
+      border-bottom: none !important;
+      border-left: none !important;
+      border-right: none !important;
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+    }
+    .tkz-tab-table tr.tkz-row-sep {
+      border-bottom: 1.5px solid #334155 !important;
     }
     /* Anti-wrap protection: prevent +/- signs and \infty from breaking across lines */
     .tkz-tab-val,
@@ -354,10 +373,6 @@
         </div>
       </div>
       <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
-        <div id="system-connection-badge" class="hidden xs:flex px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200 items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span id="system-connection-text">Local Storage DB</span>
-        </div>
         <button onclick="window.switchView('view-teacher-login')" class="text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2.5 sm:px-3 py-1.5 rounded-lg transition border border-indigo-200/60 flex items-center gap-1.5 shadow-sm">
           <i class="fa-solid fa-chalkboard-user"></i> <span class="hidden sm:inline">Cổng</span> Giáo viên
         </button>
@@ -426,7 +441,7 @@
         <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-virus text-indigo-600"></i> Chống gian lận Tab / DevTools</span>
         <span class="flex items-center gap-1.5"><i class="fa-solid fa-square-root-alt text-violet-600"></i> MathJax 3.0 & TikZJax</span>
         <span class="flex items-center gap-1.5"><i class="fa-brands fa-python text-amber-600"></i> Python Regex (PyScript/Pyodide)</span>
-        <span class="flex items-center gap-1.5"><i class="fa-solid fa-database text-blue-600"></i> Firebase Realtime / Offline Cache</span>
+        <span class="flex items-center gap-1.5"><i class="fa-solid fa-database text-blue-600"></i> Lưu trữ Trực tuyến / Offline Cache</span>
       </div>
     </main>
 
@@ -491,7 +506,7 @@
           <h2 class="font-extrabold text-slate-800 text-xs sm:text-base flex items-center gap-1.5 sm:gap-2 truncate">
             MathExam Pro <span class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">Teacher</span>
           </h2>
-          <p class="text-[10px] sm:text-[11px] text-slate-500 truncate">ThS. Toán Học | <span id="teacher-header-db-status" class="text-emerald-600 font-medium">Local Storage Active</span></p>
+          <p class="text-[10px] sm:text-[11px] text-slate-500 truncate">ThS. Toán Học | <span id="teacher-header-db-status" onclick="window.showChangeServerModal()" class="text-emerald-600 font-medium cursor-pointer hover:underline" title="Nhấn để cấu hình / đổi server Firebase">Local Storage Active</span></p>
         </div>
       </div>
 
@@ -696,6 +711,41 @@
                 <span class="font-semibold text-slate-700">Khóa đề ngay khi tạo</span>
               </label>
             </div>
+          </div>
+        </div>
+
+        <!-- BỘ 6 VỊ TRÍ TẢI LÊN 6 MÃ ĐỀ KHÁC NHAU -->
+        <div class="glass-card p-5 sm:p-6 rounded-2xl border-2 border-indigo-200/90 bg-gradient-to-br from-indigo-50/50 via-white to-violet-50/50 space-y-4 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                  <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                    Bộ 6 Vị Trí Tải Lên 6 Mã Đề Khác Nhau
+                    <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-bold text-[10px]">Tự Động Phát & Xáo Trộn Ngẫu Nhiên</span>
+                  </h4>
+                  <p class="text-[11px] text-slate-500 mt-0.5">
+                    Tải lên tối đa 6 file mã đề khác nhau (.docx, .tex, .txt) hoặc dán text. Học sinh khi vào thi sẽ được <strong>đưa ngẫu nhiên 1 mã đề</strong> và <strong>tự động trộn câu hỏi & đáp án</strong> của mã đề đó.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="window.generateSample6VariantsForEditor()" class="px-3 py-1.5 rounded-xl bg-violet-100 hover:bg-violet-200 text-violet-800 font-bold text-xs border border-violet-200 transition flex items-center gap-1.5 shadow-xs" title="Tự động nhân bản & xáo trộn 6 mã đề từ câu hỏi hiện tại">
+                <i class="fa-solid fa-wand-magic-sparkles text-violet-600"></i> Nạp 6 Mã Mẫu (101 → 106)
+              </button>
+              <button type="button" onclick="window.clearAll6Variants(false)" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition flex items-center gap-1" title="Xóa toàn bộ 6 vị trí">
+                <i class="fa-regular fa-trash-can"></i> Xóa Hết 6 Mã
+              </button>
+            </div>
+          </div>
+
+          <!-- 6 Slots Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5" id="multi-variants-slots-container">
+            <!-- Rendered by window.render6VariantSlots() -->
           </div>
         </div>
 
@@ -1450,6 +1500,49 @@
     </div>
   </div>
 
+  <!-- Modal: Quản Lý 6 Mã Đề Thi Từ Danh Sách Đề -->
+  <div id="modal-multi-variants" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="glass-card max-w-5xl w-full max-h-[92vh] flex flex-col p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white bg-white/95 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-base shadow-sm">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <div>
+            <h4 id="modal-variants-title" class="font-extrabold text-slate-800 text-sm sm:text-base">Quản Lý 6 Vị Trí Mã Đề</h4>
+            <p id="modal-variants-subtitle" class="text-xs text-slate-500">Tải lên hoặc chỉnh sửa 6 vị trí mã đề khác nhau. Học sinh sẽ được phát ngẫu nhiên 1 mã đề và xáo trộn câu hỏi khi vào thi.</p>
+          </div>
+        </div>
+        <button onclick="window.closeModal('modal-multi-variants')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 py-3 px-1">
+        <span class="text-xs text-slate-600 font-medium">Hỗ trợ tải lên file Word <strong>.docx</strong>, mã <strong>LaTeX .tex</strong> hoặc <strong>.txt</strong> cho từng vị trí mã đề.</span>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.generateSample6VariantsForModal()" class="px-3 py-1.5 rounded-xl bg-violet-100 hover:bg-violet-200 text-violet-800 font-bold text-xs border border-violet-200 transition flex items-center gap-1.5 shadow-xs">
+            <i class="fa-solid fa-wand-magic-sparkles text-violet-600"></i> Nạp 6 Mã Mẫu
+          </button>
+          <button type="button" onclick="window.clearAll6Variants(true)" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition flex items-center gap-1">
+            <i class="fa-regular fa-trash-can"></i> Xóa Hết
+          </button>
+        </div>
+      </div>
+
+      <div id="modal-multi-variants-container" class="flex-1 overflow-y-auto py-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pr-1">
+        <!-- Rendered by window.renderModalVariantSlots() -->
+      </div>
+
+      <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="window.closeModal('modal-multi-variants')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">
+          Đóng
+        </button>
+        <button onclick="window.saveMultiCodeVariantsModal()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5">
+          <i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi Bộ 6 Mã Đề
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Exam Room Rules & Regulations (Nội Quy & Quy Định Phòng Thi) -->
   <div id="modal-exam-rules" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4">
     <div class="glass-card max-w-2xl w-full max-h-[92vh] flex flex-col p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/80 shadow-2xl bg-white/95">
@@ -1802,6 +1895,14 @@ def parse_docx_math_text_py(raw_text):
               stem: 'Hàm số bậc ba $y = ax^3 + bx^2 + cx + d$ có đồ thị luôn nhận [[điểm uốn | tâm đối xứng | điểm cực đại | tiệm cận]] làm tâm đối xứng, và đạo hàm cấp hai tại điểm đó bằng [[0 | 1 | 2 | -1]].',
               solution: 'Đồ thị hàm số bậc ba luôn nhận điểm uốn làm tâm đối xứng, tại đó $y\'\'(x_0) = 0$.'
             }
+          ],
+          codeVariants: [
+            { slot: 1, code: '101', questions: [] },
+            { slot: 2, code: '102', questions: [] },
+            { slot: 3, code: '103', questions: [] },
+            { slot: 4, code: '104', questions: [] },
+            { slot: 5, code: '105', questions: [] },
+            { slot: 6, code: '106', questions: [] }
           ]
         }
       },
@@ -1870,12 +1971,214 @@ def parse_docx_math_text_py(raw_text):
       submissions: []
     };
 
+    // Ensure Firebase library is loaded (with fallback CDN)
+    window.ensureFirebaseLoaded = async () => {
+      if (window.firebase && window.firebase.firestore && window.firebase.auth) return true;
+      for (let i = 0; i < 20; i++) {
+        if (window.firebase && window.firebase.firestore && window.firebase.auth) return true;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      if (window.firebase && window.firebase.firestore) return true;
+
+      const loadScript = (src) => new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+      try {
+        if (!window.firebase) {
+          await loadScript('https://cdn.jsdelivr.net/npm/firebase@10.8.0/firebase-app-compat.js');
+        }
+        if (!window.firebase.auth) {
+          await loadScript('https://cdn.jsdelivr.net/npm/firebase@10.8.0/firebase-auth-compat.js').catch(() => {});
+        }
+        if (!window.firebase.firestore) {
+          await loadScript('https://cdn.jsdelivr.net/npm/firebase@10.8.0/firebase-firestore-compat.js');
+        }
+        return !!(window.firebase && window.firebase.firestore);
+      } catch (err) {
+        console.warn('Could not load fallback Firebase CDN:', err);
+        return false;
+      }
+    };
+
+    // Robust Firebase Config Parser (Supports JSON, JavaScript objects, Firebase console snippets)
+    window.parseFirebaseConfig = (input) => {
+      if (!input || typeof input !== 'string') return null;
+      let raw = input.trim();
+      if (!raw) return null;
+
+      // 1. Try standard JSON first
+      try {
+        const obj = JSON.parse(raw);
+        if (obj && typeof obj === 'object' && (obj.apiKey || obj.projectId)) return obj;
+      } catch (e) {}
+
+      // 2. Try JS object literal cleaning / Function evaluation (strip const/var/let, etc.)
+      try {
+        const firstBrace = raw.indexOf('{');
+        const lastBrace = raw.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+          const candidate = raw.substring(firstBrace, lastBrace + 1);
+          const fn = new Function(`"use strict"; return (${candidate});`);
+          const res = fn();
+          if (res && typeof res === 'object' && (res.apiKey || res.projectId)) {
+            return res;
+          }
+        }
+      } catch (e) {}
+
+      // 3. Fallback: Regex extraction of standard Firebase config properties
+      const extract = (field) => {
+        const regex = new RegExp(`(?:['"]?${field}['"]?|\\b${field}\\b)\\s*[:=]\\s*['"\`]?([^'"\`\\n,;\\s}]+)['"\`]?`, 'i');
+        const match = raw.match(regex);
+        return match ? match[1].trim() : '';
+      };
+
+      const apiKey = extract('apiKey');
+      const projectId = extract('projectId');
+      const authDomain = extract('authDomain') || (projectId ? `${projectId}.firebaseapp.com` : '');
+      const storageBucket = extract('storageBucket') || (projectId ? `${projectId}.appspot.com` : '');
+      const messagingSenderId = extract('messagingSenderId');
+      const appId = extract('appId');
+      const measurementId = extract('measurementId');
+
+      if (apiKey || projectId) {
+        const cfg = {
+          apiKey: apiKey || '',
+          projectId: projectId || '',
+          authDomain: authDomain || '',
+          storageBucket: storageBucket || '',
+          messagingSenderId: messagingSenderId || '',
+          appId: appId || ''
+        };
+        if (measurementId) cfg.measurementId = measurementId;
+        return cfg;
+      }
+
+      return null;
+    };
+
+    // Helper to refresh teacher interface tabs on realtime updates
+    window.refreshCurrentTeacherTab = () => {
+      if (typeof window.refreshTeacherDashboard === 'function') {
+        window.refreshTeacherDashboard();
+      }
+    };
+
+    // Helper to unpack LaTeX \immini[opts]{arg1}{arg2} into clean stem and figure blocks
+    window.unpackLatexImmini = (text) => {
+      if (!text || typeof text !== 'string' || !text.includes('\\immini')) return text;
+      let res = text;
+      let guard = 0;
+      while (res.includes('\\immini') && guard++ < 30) {
+        let idx = res.indexOf('\\immini');
+        if (idx === -1) break;
+        let cursor = idx + 7;
+        while (cursor < res.length && /\s/.test(res[cursor])) cursor++;
+        // Optional [width]
+        if (res[cursor] === '[') {
+          const closeBracket = res.indexOf(']', cursor);
+          if (closeBracket === -1) break;
+          cursor = closeBracket + 1;
+          while (cursor < res.length && /\s/.test(res[cursor])) cursor++;
+        }
+        if (res[cursor] !== '{') break;
+
+        const extractBraced = (pos) => {
+          if (res[pos] !== '{') return null;
+          let depth = 0;
+          let start = pos + 1;
+          for (let i = pos; i < res.length; i++) {
+            if (res[i] === '{') depth++;
+            else if (res[i] === '}') {
+              depth--;
+              if (depth === 0) return { content: res.substring(start, i), end: i };
+            }
+          }
+          return null;
+        };
+
+        const arg1 = extractBraced(cursor);
+        if (!arg1) break;
+        cursor = arg1.end + 1;
+        while (cursor < res.length && /\s/.test(res[cursor])) cursor++;
+        const arg2 = extractBraced(cursor);
+        if (!arg2) break;
+
+        let stemPart = arg1.content.trim();
+        let figPart = arg2.content.trim();
+        // If figure is in arg1 and question text is in arg2 (swapped order in LaTeX)
+        if ((stemPart.includes('\\begin{tikzpicture}') || stemPart.includes('\\tkzTabInit')) &&
+            !(figPart.includes('\\begin{tikzpicture}') || figPart.includes('\\tkzTabInit'))) {
+          const tmp = stemPart;
+          stemPart = figPart;
+          figPart = tmp;
+        }
+
+        const replacement = `${stemPart}\n\n${figPart}\n\n`;
+        res = res.substring(0, idx) + replacement + res.substring(arg2.end + 1);
+      }
+      return res;
+    };
+
+    // Strip print/paper LaTeX layout wrappers around figures and formulas
+    window.cleanLatexWrappers = (content) => {
+      if (!content || typeof content !== 'string') return '';
+      let res = window.unpackLatexImmini(content);
+
+      // 1. Unwrap any previously injected HTML tikz wrappers to prevent double-wrapping or corruption
+      res = res.replace(/<div class="tikz-container[^"]*">([\s\S]*?)<\/div>/gi, '$1');
+      res = res.replace(/<script type="text\/tikz">([\s\S]*?)<\/script>/gi, '$1');
+
+      // 2. Strip minipage, figure, caption, label environments
+      res = res.replace(/\\begin\{minipage\}(?:\[.*?\])?\{[^{}]*\}\s*/gi, '');
+      res = res.replace(/\\end\{minipage\}/gi, '');
+      res = res.replace(/\\begin\{figure\}(?:\[.*?\])?\s*/gi, '');
+      res = res.replace(/\\end\{figure\}/gi, '');
+      res = res.replace(/\\caption\{[^{}]*\}/gi, '');
+      res = res.replace(/\\label\{[^{}]*\}/gi, '');
+
+      // 3. Strip environment wrappers around figures
+      res = res.replace(/\\begin\{center\}/gi, '');
+      res = res.replace(/\\end\{center\}/gi, '');
+      res = res.replace(/\\begin\{flushleft\}/gi, '');
+      res = res.replace(/\\end\{flushleft\}/gi, '');
+      res = res.replace(/\\begin\{flushright\}/gi, '');
+      res = res.replace(/\\end\{flushright\}/gi, '');
+
+      // 4. Strip \resizebox, \scalebox, \fbox wrappers
+      res = res.replace(/\\resizebox\*?\s*\{[^{}]*\}\s*\{[^{}]*\}\s*\{/gi, '');
+      res = res.replace(/\\scalebox\*?\s*\{[^{}]*\}\s*\{/gi, '');
+      res = res.replace(/\\fbox\s*\{/gi, '');
+
+      // 5. Clean orphan closing braces after \end{tikzpicture}
+      res = res.replace(/(\\end\{tikzpicture\})\s*\}+/g, '$1');
+
+      // 6. Strip comments that trail braces or on lines (e.g. }{% or % at end of line)
+      res = res.replace(/\{\s*%\s*\n?/g, '{');
+      res = res.replace(/\}\s*%\s*\n?/g, '}');
+      res = res.replace(/^[ \t]*%[^\n]*\n?/gm, '');
+      res = res.replace(/([^\\])%[^\n]*/g, '$1');
+
+      // 7. Strip print formatting commands
+      res = res.replace(/\\centering\b/gi, '');
+      res = res.replace(/\\noindent\b/gi, '');
+      res = res.replace(/\\vspace\*?\{[^{}]*\}/gi, '');
+      res = res.replace(/\\hspace\*?\{[^{}]*\}/gi, '');
+
+      return res.trim();
+    };
+
     // Database Manager Class
     class DatabaseManager {
       constructor() {
         this.db = this.loadLocal();
         this.firebaseApp = null;
         this.firestore = null;
+        this.unsubscribeSnapshot = null;
         this.initFirebaseIfConfigured();
       }
 
@@ -1885,16 +2188,65 @@ def parse_docx_math_text_py(raw_text):
           if (raw) {
             const data = JSON.parse(raw);
             if (!data.practice) data.practice = JSON.parse(JSON.stringify(DEFAULT_DATABASE.practice));
-            if (data.exams && data.exams['exam_sample_1'] && data.exams['exam_sample_1'].questions && !data.exams['exam_sample_1'].questions[0].stem.includes('tkzTabInit')) {
-              data.exams['exam_sample_1'].questions = JSON.parse(JSON.stringify(DEFAULT_DATABASE.exams['exam_sample_1'].questions));
+            if (data.exams && data.exams['exam_sample_1'] && data.exams['exam_sample_1'].questions) {
+              const q1 = data.exams['exam_sample_1'].questions[0];
+              const q2 = data.exams['exam_sample_1'].questions[1];
+              if (!q1 || !q1.stem.includes('tkzTabInit') || (q2 && (q2.stem.includes('container text-center') || q2.stem.includes('script type=') || q2.stem.includes('\\immini')))) {
+                data.exams['exam_sample_1'].questions = JSON.parse(JSON.stringify(DEFAULT_DATABASE.exams['exam_sample_1'].questions));
+              }
             }
             if (data.practice['prac_1'] && (!data.practice['prac_1'].questions || data.practice['prac_1'].questions.length === 0 || !data.practice['prac_1'].questions[0].stem.includes('tkzTabInit'))) {
               data.practice['prac_1'].questions = JSON.parse(JSON.stringify(DEFAULT_DATABASE.practice['prac_1'].questions));
             }
+
+            if (data.exams && data.exams['exam_sample_1']) {
+              if (!data.exams['exam_sample_1'].codeVariants || !Array.isArray(data.exams['exam_sample_1'].codeVariants) || data.exams['exam_sample_1'].codeVariants.length === 0) {
+                const sampleQs = data.exams['exam_sample_1'].questions || DEFAULT_DATABASE.exams['exam_sample_1'].questions;
+                data.exams['exam_sample_1'].codeVariants = [
+                  { slot: 1, code: '101', questions: JSON.parse(JSON.stringify(sampleQs)) },
+                  { slot: 2, code: '102', questions: JSON.parse(JSON.stringify(sampleQs)) },
+                  { slot: 3, code: '103', questions: JSON.parse(JSON.stringify(sampleQs)) },
+                  { slot: 4, code: '104', questions: JSON.parse(JSON.stringify(sampleQs)) },
+                  { slot: 5, code: '105', questions: JSON.parse(JSON.stringify(sampleQs)) },
+                  { slot: 6, code: '106', questions: JSON.parse(JSON.stringify(sampleQs)) }
+                ];
+              }
+            }
+
+            // Sanitize questions across all exams and practice sets
+            if (data.exams && typeof data.exams === 'object') {
+              Object.keys(data.exams).forEach(k => {
+                if (data.exams[k] && Array.isArray(data.exams[k].questions)) {
+                  data.exams[k].questions.forEach(q => {
+                    if (q && q.stem && (q.stem.includes('container text-center') || q.stem.includes('\\begin{center}') || q.stem.includes('\\resizebox') || q.stem.includes('\\immini') || q.stem.includes('\\begin{minipage}'))) {
+                      q.stem = window.cleanLatexWrappers(q.stem);
+                    }
+                    if (q && q.solution && (q.solution.includes('container text-center') || q.solution.includes('\\begin{center}') || q.solution.includes('\\resizebox') || q.solution.includes('\\immini') || q.solution.includes('\\begin{minipage}'))) {
+                      q.solution = window.cleanLatexWrappers(q.solution);
+                    }
+                  });
+                }
+              });
+            }
+            if (data.practice && typeof data.practice === 'object') {
+              Object.keys(data.practice).forEach(k => {
+                if (data.practice[k] && Array.isArray(data.practice[k].questions)) {
+                  data.practice[k].questions.forEach(q => {
+                    if (q && q.stem && (q.stem.includes('container text-center') || q.stem.includes('\\begin{center}') || q.stem.includes('\\resizebox') || q.stem.includes('\\immini') || q.stem.includes('\\begin{minipage}'))) {
+                      q.stem = window.cleanLatexWrappers(q.stem);
+                    }
+                    if (q && q.solution && (q.solution.includes('container text-center') || q.solution.includes('\\begin{center}') || q.solution.includes('\\resizebox') || q.solution.includes('\\immini') || q.solution.includes('\\begin{minipage}'))) {
+                      q.solution = window.cleanLatexWrappers(q.solution);
+                    }
+                  });
+                }
+              });
+            }
+
             return data;
           }
         } catch (e) {
-          console.error('Error reading localStorage DB:', e);
+          console.warn('Notice reading localStorage DB:', e);
         }
         localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DEFAULT_DATABASE));
         return JSON.parse(JSON.stringify(DEFAULT_DATABASE));
@@ -1905,30 +2257,208 @@ def parse_docx_math_text_py(raw_text):
           localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
           this.syncToFirebase();
         } catch (e) {
-          console.error('Error saving local DB:', e);
+          console.warn('Notice saving local DB:', e);
         }
       }
 
-      initFirebaseIfConfigured() {
-        const configStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
-        if (configStr && window.firebase) {
-          try {
-            const config = JSON.parse(configStr);
-            if (!firebase.apps.length) {
-              this.firebaseApp = firebase.initializeApp(config);
-            } else {
-              this.firebaseApp = firebase.app();
-            }
-            this.firestore = firebase.firestore();
-            document.getElementById('system-connection-badge').className = 'px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200 flex items-center gap-1.5';
-            document.getElementById('system-connection-text').innerText = 'Firebase Realtime Connected';
-            const teacherBadge = document.getElementById('teacher-header-db-status');
-            if (teacherBadge) teacherBadge.innerText = 'Firebase Cloud Realtime';
-            console.log('Firebase initialized successfully!');
-            this.listenFirebaseUpdates();
-          } catch (err) {
-            console.warn('Firebase config invalid or connection failed:', err);
+      updateConnectionUI(isConnected, text) {
+        const badge = document.getElementById('system-connection-badge');
+        const badgeText = document.getElementById('system-connection-text');
+        const teacherBadge = document.getElementById('teacher-header-db-status');
+
+        if (badge && badgeText) {
+          if (isConnected) {
+            badge.className = 'hidden xs:flex px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200 items-center gap-1.5 shadow-sm cursor-pointer hover:shadow-md hover:bg-emerald-200/70 transition';
+            badgeText.innerText = text || 'Firebase Realtime';
+          } else {
+            badge.className = 'hidden xs:flex px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 items-center gap-1.5 shadow-sm cursor-pointer hover:shadow-md hover:bg-slate-200/70 transition';
+            badgeText.innerText = text || 'Local Storage DB';
           }
+        }
+        if (teacherBadge) {
+          teacherBadge.innerText = text || (isConnected ? 'Firebase Cloud Realtime' : 'Local Storage Active');
+          teacherBadge.className = isConnected ? 'text-indigo-600 font-semibold cursor-pointer hover:underline' : 'text-emerald-600 font-medium cursor-pointer hover:underline';
+        }
+      }
+
+      async initFirebaseIfConfigured() {
+        const configStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
+        if (!configStr) {
+          this.updateConnectionUI(false, 'Local Storage DB');
+          return;
+        }
+
+        await window.ensureFirebaseLoaded();
+
+        if (window.firebase && window.firebase.firestore) {
+          try {
+            const config = window.parseFirebaseConfig(configStr);
+            if (config && (config.apiKey || config.projectId)) {
+              if (firebase.apps && firebase.apps.length > 0) {
+                for (const app of [...firebase.apps]) {
+                  try { await app.delete(); } catch (e) {}
+                }
+              }
+              this.firebaseApp = firebase.initializeApp(config);
+              if (window.firebase && typeof firebase.auth === 'function') {
+                try {
+                  if (!firebase.auth().currentUser) {
+                    await firebase.auth().signInAnonymously();
+                  }
+                } catch (authErr) {
+                  console.warn('Anonymous auth notice (proceeding):', authErr.message || authErr);
+                }
+              }
+              this.firestore = firebase.firestore();
+              this.updateConnectionUI(true, `Firebase: ${config.projectId}`);
+
+              // Check if remote DB exists and load it, or seed if empty
+              try {
+                const docRef = this.firestore.collection('mathexam_app').doc('main_db');
+                const snap = await docRef.get();
+                if (snap.exists && snap.data() && snap.data().payload) {
+                  const remote = JSON.parse(snap.data().payload);
+                  this.db = remote;
+                  localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
+                  if (typeof window.refreshTeacherDashboard === 'function') {
+                    window.refreshTeacherDashboard();
+                  }
+                } else {
+                  await this.syncToFirebase();
+                }
+              } catch (connErr) {
+                console.warn('Initial sync or read from Firebase notice:', connErr.message || connErr);
+                if (connErr && (connErr.code === 'permission-denied' || (connErr.message && connErr.message.includes('permission')))) {
+                  this.updateConnectionUI(false, 'Lỗi Rules Firestore (Nhấp để sửa)');
+                }
+              }
+
+              this.listenFirebaseUpdates();
+              return;
+            }
+          } catch (err) {
+            console.warn('Firebase config notice:', err.message || err);
+            this.updateConnectionUI(false, 'Lỗi kết nối Firebase');
+            return;
+          }
+        }
+        this.updateConnectionUI(false, 'Local Storage DB');
+      }
+
+      async switchFirebaseConfig(configObj) {
+        if (typeof this.unsubscribeSnapshot === 'function') {
+          try { this.unsubscribeSnapshot(); } catch (e) {}
+          this.unsubscribeSnapshot = null;
+        }
+
+        if (window.firebase && firebase.apps && firebase.apps.length > 0) {
+          for (const app of [...firebase.apps]) {
+            try {
+              await app.delete();
+            } catch (e) {
+              console.warn('Error deleting old Firebase app instance:', e);
+            }
+          }
+        }
+        this.firebaseApp = null;
+        this.firestore = null;
+
+        if (!configObj) {
+          localStorage.removeItem(FIREBASE_CONFIG_KEY);
+          this.updateConnectionUI(false, 'Local Storage DB');
+          return { success: true, mode: 'local' };
+        }
+
+        await window.ensureFirebaseLoaded();
+
+        if (!window.firebase || !window.firebase.firestore) {
+          return {
+            success: false,
+            code: 'sdk-missing',
+            projectId: configObj.projectId,
+            message: 'Thư viện Firebase SDK chưa nạp được trên trình duyệt.'
+          };
+        }
+
+        try {
+          this.firebaseApp = firebase.initializeApp(configObj);
+          if (window.firebase && typeof firebase.auth === 'function') {
+            try {
+              if (!firebase.auth().currentUser) {
+                await firebase.auth().signInAnonymously();
+              }
+            } catch (authErr) {
+              console.warn('Anonymous auth notice (proceeding):', authErr.message || authErr);
+            }
+          }
+          this.firestore = firebase.firestore();
+
+          const docRef = this.firestore.collection('mathexam_app').doc('main_db');
+          let remoteLoaded = false;
+          let permError = null;
+
+          try {
+            const snap = await docRef.get();
+            if (snap.exists && snap.data() && snap.data().payload) {
+              const remote = JSON.parse(snap.data().payload);
+              this.db = remote;
+              localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
+              remoteLoaded = true;
+              if (typeof window.refreshTeacherDashboard === 'function') {
+                window.refreshTeacherDashboard();
+              }
+            } else {
+              try {
+                await docRef.set({
+                  payload: JSON.stringify(this.db),
+                  updatedAt: new Date().toISOString()
+                });
+              } catch (writeErr) {
+                permError = writeErr;
+              }
+            }
+          } catch (readErr) {
+            permError = readErr;
+          }
+
+          if (permError) {
+            console.warn('Firebase Firestore permission check notice:', permError.message || permError);
+            const isPermDenied = permError.code === 'permission-denied' || 
+              (permError.message && (permError.message.includes('permission') || permError.message.includes('Missing or insufficient')));
+            if (isPermDenied) {
+              this.updateConnectionUI(false, 'Lỗi Rules Firestore (Nhấp để sửa)');
+              return {
+                success: false,
+                code: 'permission-denied',
+                projectId: configObj.projectId,
+                message: permError.message || 'Missing or insufficient permissions',
+                config: configObj
+              };
+            }
+            return {
+              success: false,
+              code: permError.code || 'firestore-error',
+              projectId: configObj.projectId,
+              message: permError.message || String(permError),
+              config: configObj
+            };
+          }
+
+          localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(configObj, null, 2));
+          this.updateConnectionUI(true, `Firebase: ${configObj.projectId}`);
+          this.listenFirebaseUpdates();
+
+          return { success: true, mode: 'firebase', projectId: configObj.projectId, remoteLoaded };
+        } catch (err) {
+          console.warn('Firebase initialization notice:', err.message || err);
+          this.updateConnectionUI(false, 'Lỗi kết nối Firebase');
+          return {
+            success: false,
+            code: err.code || 'init-failed',
+            projectId: configObj.projectId,
+            message: err.message || String(err),
+            config: configObj
+          };
         }
       }
 
@@ -1940,22 +2470,39 @@ def parse_docx_math_text_py(raw_text):
             updatedAt: new Date().toISOString()
           }, { merge: true });
         } catch (err) {
-          console.warn('Firebase sync failed (will retry):', err);
+          console.warn('Firebase sync failed (will retry):', err.message || err);
+          if (err && (err.code === 'permission-denied' || (err.message && err.message.includes('permission')))) {
+            this.updateConnectionUI(false, 'Lỗi Rules Firestore (Nhấp để sửa)');
+          }
         }
       }
 
       listenFirebaseUpdates() {
         if (!this.firestore) return;
-        this.firestore.collection('mathexam_app').doc('main_db').onSnapshot((doc) => {
-          if (doc.exists && doc.data().payload) {
+        if (typeof this.unsubscribeSnapshot === 'function') {
+          try { this.unsubscribeSnapshot(); } catch (e) {}
+        }
+        this.unsubscribeSnapshot = this.firestore.collection('mathexam_app').doc('main_db').onSnapshot((doc) => {
+          if (doc.exists && doc.data() && doc.data().payload) {
             try {
               const remote = JSON.parse(doc.data().payload);
-              this.db = remote;
-              localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
-              window.refreshCurrentTeacherTab();
+              if (JSON.stringify(remote) !== JSON.stringify(this.db)) {
+                this.db = remote;
+                localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
+                if (typeof window.refreshTeacherDashboard === 'function') {
+                  window.refreshTeacherDashboard();
+                }
+              }
             } catch (e) {
-              console.error('Error parsing remote update:', e);
+              console.warn('Error parsing remote update:', e.message || e);
             }
+          }
+        }, (err) => {
+          console.warn('Firebase snapshot listener notice:', err.message || err);
+          if (err && (err.code === 'permission-denied' || (err.message && err.message.includes('permission')))) {
+            this.updateConnectionUI(false, 'Lỗi Rules Firestore (Nhấp để sửa)');
+          } else {
+            this.updateConnectionUI(false, 'Mất kết nối Firebase');
           }
         });
       }
@@ -2009,17 +2556,10 @@ def parse_docx_math_text_py(raw_text):
     // =========================================================================
     // 2.1 TKZ-TAB (BẢNG BIẾN THIÊN & XÉT DẤU) & TIKZ COMPILER
     // =========================================================================
-    window._tikzSvgCache = window._tikzSvgCache || {};
-
     window.convertTkzTabToHtml = (rawCode) => {
       if (!rawCode || typeof rawCode !== 'string') return '';
       try {
         let clean = rawCode
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&quot;/g, '"')
-          .replace(/&#039;/g, "'")
           .replace(/\\begin\{tikzpicture\}(?:\[.*?\])?/g, '')
           .replace(/\\end\{tikzpicture\}/g, '')
           .replace(/%[^\n]*/g, '') // remove comments
@@ -2133,9 +2673,9 @@ def parse_docx_math_text_py(raw_text):
                   signIdx++;
                 }
               } else {
-                // Point (0 or || or d or z)
+                // Point (0 or || or d)
                 if (i > 0 && i < colSpan - 1) {
-                  if (item === '0' || item === '$0$' || item === 'z' || item === '$z$') {
+                  if (item === '0' || item === '$0$') {
                     content = `<span class="whitespace-nowrap inline-block font-bold text-slate-800 tkz-tab-val">$0$</span>`;
                     signIdx++;
                   } else if (item === '||' || item === 'd') {
@@ -2164,21 +2704,16 @@ def parse_docx_math_text_py(raw_text):
             const vp = varPoints[i] || { type: '-', val: '' };
             const xPct = (10 + (i * 80 / (N - 1))).toFixed(1);
             const xPx = Math.round((parseFloat(xPct) / 100) * totalWidthPx);
+            let yPx = 104; // bottom default
             let isDouble = vp.type.includes('D');
-            let leftY = 104;
-            let rightY = 104;
 
-            if (isDouble) {
-              const dIdx = vp.type.indexOf('D');
-              const leftType = vp.type.substring(0, dIdx).trim();
-              const rightType = vp.type.substring(dIdx + 1).trim();
-              leftY = leftType.startsWith('+') ? 22 : (leftType.startsWith('R') ? 64 : 104);
-              rightY = rightType.startsWith('+') ? 22 : (rightType.startsWith('R') ? 64 : 104);
-            } else {
-              leftY = rightY = vp.type.startsWith('+') ? 22 : (vp.type.startsWith('R') ? 64 : 104);
+            if (vp.type.startsWith('+')) {
+              yPx = 22; // top
+            } else if (vp.type.startsWith('R')) {
+              yPx = 64; // middle
             }
 
-            nodeCoords.push({ xPx, leftY, rightY, xPct, type: vp.type, val: vp.val, isDouble });
+            nodeCoords.push({ xPx, yPx, xPct, type: vp.type, val: vp.val, isDouble });
 
             let displayVal = vp.val;
             if (displayVal && !displayVal.startsWith('$') && !displayVal.endsWith('$') && !displayVal.includes('/')) {
@@ -2193,16 +2728,16 @@ def parse_docx_math_text_py(raw_text):
               if (p1 && !p1.startsWith('$')) p1 = `$${p1}$`;
 
               valueNodes += `
-                <div class="absolute whitespace-nowrap tkz-nowrap" style="left: calc(${xPct}% - 14px); top: ${leftY}px; transform: translate(-100%, -50%);">
+                <div class="absolute whitespace-nowrap tkz-nowrap" style="left: calc(${xPct}% - 14px); top: 22px; transform: translate(-100%, -50%);">
                   <span class="whitespace-nowrap inline-block text-slate-800 font-semibold tkz-tab-val">${p0}</span>
                 </div>
-                <div class="absolute whitespace-nowrap tkz-nowrap" style="left: calc(${xPct}% + 14px); top: ${rightY}px; transform: translate(0, -50%);">
+                <div class="absolute whitespace-nowrap tkz-nowrap" style="left: calc(${xPct}% + 14px); top: 104px; transform: translate(0, -50%);">
                   <span class="whitespace-nowrap inline-block text-slate-800 font-semibold tkz-tab-val">${p1}</span>
                 </div>
               `;
             } else {
               valueNodes += `
-                <div class="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap tkz-nowrap" style="left: ${xPct}%; top: ${leftY}px;">
+                <div class="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap tkz-nowrap" style="left: ${xPct}%; top: ${yPx}px;">
                   <span class="whitespace-nowrap inline-block text-slate-800 font-semibold tkz-tab-val">${displayVal}</span>
                 </div>
               `;
@@ -2216,17 +2751,19 @@ def parse_docx_math_text_py(raw_text):
 
             if (from.isDouble && to.isDouble) continue;
 
-            let startX = from.isDouble ? from.xPx + 14 : from.xPx + 16;
-            let startY = from.isDouble ? from.rightY : from.leftY;
-            let endX = to.isDouble ? to.xPx - 14 : to.xPx - 16;
-            let endY = to.isDouble ? to.leftY : to.leftY;
+            let startX = from.xPx + 16;
+            let startY = from.yPx;
+            let endX = to.xPx - 16;
+            let endY = to.yPx;
 
-            if (startY < endY) {
-              startY += 8;
-              endY -= 8;
-            } else if (startY > endY) {
-              startY -= 8;
-              endY += 8;
+            if (from.yPx < to.yPx) {
+              // Going down
+              startY += 10;
+              endY -= 10;
+            } else if (from.yPx > to.yPx) {
+              // Going up
+              startY -= 10;
+              endY += 10;
             }
 
             svgLines += `
@@ -2275,7 +2812,163 @@ def parse_docx_math_text_py(raw_text):
 
         return html;
       } catch (err) {
-        console.error('Error in convertTkzTabToHtml:', err);
+        console.warn('Notice in convertTkzTabToHtml:', err);
+        return null;
+      }
+    };
+
+    // =========================================================================
+    // 2.2 TIKZ FUNCTION GRAPH & 2D COORDINATE SVG COMPILER
+    // =========================================================================
+    window.convertTikzGraphToSvg = (rawCode) => {
+      if (!rawCode || typeof rawCode !== 'string') return null;
+      // Must be a 2D coordinate graph (has plot or coordinate axes with $x$, $y$)
+      const hasPlot = /\\draw[^;]*plot/i.test(rawCode);
+      const hasAxes = /\\draw\[[^\]]*->[^\]]*\][^;]*node[^;]*\$x\$/i.test(rawCode) || /\\draw\[[^\]]*->[^\]]*\][^;]*node[^;]*\$y\$/i.test(rawCode);
+      if (!hasPlot && !hasAxes) return null;
+
+      try {
+        let clean = rawCode.replace(/%[^\n]*/g, '').trim();
+
+        // 1. Detect axes bounds
+        let xMin = -3, xMax = 3.2, yMin = -3, yMax = 3.2;
+        const xAxisMatch = clean.match(/\\draw\[[^\]]*->[^\]]*\]\s*\(\s*([-\d\.]+)\s*,\s*([-\d\.]+)\s*\)\s*--\s*\(\s*([-\d\.]+)\s*,\s*([-\d\.]+)\s*\)[^;]*node[^;]*\$x\$/i);
+        if (xAxisMatch) {
+          xMin = parseFloat(xAxisMatch[1]);
+          xMax = parseFloat(xAxisMatch[3]);
+        }
+        const yAxisMatch = clean.match(/\\draw\[[^\]]*->[^\]]*\]\s*\(\s*([-\d\.]+)\s*,\s*([-\d\.]+)\s*\)\s*--\s*\(\s*([-\d\.]+)\s*,\s*([-\d\.]+)\s*\)[^;]*node[^;]*\$y\$/i);
+        if (yAxisMatch) {
+          yMin = parseFloat(yAxisMatch[2]);
+          yMax = parseFloat(yAxisMatch[4]);
+        }
+
+        if (xMin >= xMax || yMin >= yMax) {
+          xMin = -3; xMax = 3.2; yMin = -3; yMax = 3.2;
+        }
+
+        // 2. Detect plot domain
+        let domainMin = xMin + 0.3, domainMax = xMax - 0.4;
+        const domainMatch = clean.match(/domain\s*=\s*([-\d\.]+)\s*:\s*([-\d\.]+)/);
+        if (domainMatch) {
+          domainMin = parseFloat(domainMatch[1]);
+          domainMax = parseFloat(domainMatch[2]);
+        }
+
+        const width = 360;
+        const height = 300;
+        const padX = 35;
+        const padY = 30;
+
+        const toSvgX = (x) => padX + ((x - xMin) / (xMax - xMin)) * (width - 2 * padX);
+        const toSvgY = (y) => height - (padY + ((y - yMin) / (yMax - yMin)) * (height - 2 * padY));
+
+        const originX = toSvgX(0);
+        const originY = toSvgY(0);
+
+        const markerId = 'arr_' + Math.random().toString(36).substr(2, 6);
+        let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" class="max-w-full h-auto mx-auto block my-2.5 bg-white rounded-xl shadow-xs border border-slate-200" style="max-height: 320px;">`;
+        svg += `<defs><marker id="${markerId}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1e293b"/></marker></defs>`;
+
+        // Coordinate Axes
+        svg += `<line x1="${toSvgX(xMin).toFixed(1)}" y1="${originY.toFixed(1)}" x2="${toSvgX(xMax).toFixed(1)}" y2="${originY.toFixed(1)}" stroke="#1e293b" stroke-width="1.8" marker-end="url(#${markerId})" />`;
+        svg += `<line x1="${originX.toFixed(1)}" y1="${toSvgY(yMin).toFixed(1)}" x2="${originX.toFixed(1)}" y2="${toSvgY(yMax).toFixed(1)}" stroke="#1e293b" stroke-width="1.8" marker-end="url(#${markerId})" />`;
+
+        // Axis Labels
+        svg += `<text x="${(toSvgX(xMax) + 4).toFixed(1)}" y="${(originY + 4).toFixed(1)}" font-family="serif" font-style="italic" font-size="14" fill="#1e293b" font-weight="bold">x</text>`;
+        svg += `<text x="${(originX - 5).toFixed(1)}" y="${(toSvgY(yMax) - 6).toFixed(1)}" font-family="serif" font-style="italic" font-size="14" fill="#1e293b" font-weight="bold" text-anchor="end">y</text>`;
+        svg += `<text x="${(originX - 7).toFixed(1)}" y="${(originY + 16).toFixed(1)}" font-family="serif" font-style="italic" font-size="14" fill="#1e293b">O</text>`;
+
+        // Dashed projection lines & coordinate labels
+        const dashedRegex = /\\draw\[[^\]]*dashed[^\]]*\]\s*([^;]+);/g;
+        let dMatch;
+        while ((dMatch = dashedRegex.exec(clean)) !== null) {
+          const segStr = dMatch[1];
+          const parts = segStr.split('--');
+          const points = [];
+          for (const p of parts) {
+            const coordMatch = p.match(/\(\s*([-\d\.]+)\s*,\s*([-\d\.]+)\s*\)/);
+            if (coordMatch) {
+              const x = parseFloat(coordMatch[1]);
+              const y = parseFloat(coordMatch[2]);
+              points.push({ x, y, sx: toSvgX(x), sy: toSvgY(y) });
+            }
+            const labelMatch = p.match(/node\[([^\]]*)\]\s*\{([^}]+)\}/);
+            if (labelMatch && points.length > 0) {
+              const lastPt = points[points.length - 1];
+              lastPt.label = labelMatch[2].replace(/\$/g, '');
+              lastPt.pos = labelMatch[1];
+            }
+          }
+          for (let i = 0; i < points.length - 1; i++) {
+            svg += `<line x1="${points[i].sx.toFixed(1)}" y1="${points[i].sy.toFixed(1)}" x2="${points[i+1].sx.toFixed(1)}" y2="${points[i+1].sy.toFixed(1)}" stroke="#64748b" stroke-width="1.2" stroke-dasharray="3,3" />`;
+          }
+          for (const pt of points) {
+            if (pt.label) {
+              let offX = 0, offY = 0, anchor = 'middle';
+              if (pt.pos.includes('below')) offY = 15;
+              if (pt.pos.includes('above')) offY = -8;
+              if (pt.pos.includes('left')) { offX = -8; anchor = 'end'; }
+              if (pt.pos.includes('right')) { offX = 8; anchor = 'start'; }
+              svg += `<text x="${(pt.sx + offX).toFixed(1)}" y="${(pt.sy + offY).toFixed(1)}" font-family="sans-serif" font-size="12" fill="#334155" text-anchor="${anchor}">${pt.label}</text>`;
+            }
+          }
+        }
+
+        // Function plot curve
+        const plotRegex = /\\draw\[([^\]]*)\][^\(\n]*plot\s*(?:\(\s*\\x\s*,\s*\{?([^}]+)\}?\s*\)|\(\s*\{\\x\}\s*,\s*\{([^}]+)\}\s*\))/g;
+        let plMatch;
+        while ((plMatch = plotRegex.exec(clean)) !== null) {
+          const opts = plMatch[1];
+          const strokeColor = opts.includes('red') ? '#ef4444' : (opts.includes('purple') ? '#7c3aed' : '#2563eb');
+          const rawFormula = (plMatch[2] || plMatch[3] || '').trim();
+
+          let jsExpr = rawFormula
+            .replace(/\\x/g, 'x')
+            .replace(/\^/g, '**')
+            .replace(/(\d+)\s*x/g, '$1*x')
+            .replace(/\)\s*x/g, ')*x');
+
+          try {
+            const f = new Function('x', `"use strict"; return (${jsExpr});`);
+            const steps = 140;
+            let d = '';
+            let prevValid = false;
+            for (let i = 0; i <= steps; i++) {
+              const x = domainMin + (i / steps) * (domainMax - domainMin);
+              let y = f(x);
+              if (!isNaN(y) && isFinite(y) && y >= yMin - 1.5 && y <= yMax + 1.5) {
+                const sx = toSvgX(x);
+                const sy = toSvgY(y);
+                if (!prevValid || d === '') {
+                  d += ` M ${sx.toFixed(1)} ${sy.toFixed(1)}`;
+                } else {
+                  d += ` L ${sx.toFixed(1)} ${sy.toFixed(1)}`;
+                }
+                prevValid = true;
+              } else {
+                prevValid = false;
+              }
+            }
+            if (d) {
+              svg += `<path d="${d.trim()}" fill="none" stroke="${strokeColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`;
+            }
+          } catch(e) {}
+        }
+
+        // Extrema / points
+        const fillRegex = /\\(?:filldraw|fill)\[([^\]]*)\]\s*\(\s*([-\d\.]+)\s*,\s*([-\d\.]+)\s*\)\s*circle/g;
+        let fMatch;
+        while ((fMatch = fillRegex.exec(clean)) !== null) {
+          const color = fMatch[1].includes('red') ? '#ef4444' : '#2563eb';
+          const x = parseFloat(fMatch[2]);
+          const y = parseFloat(fMatch[3]);
+          svg += `<circle cx="${toSvgX(x).toFixed(1)}" cy="${toSvgY(y).toFixed(1)}" r="3.5" fill="${color}" stroke="#ffffff" stroke-width="1.2" />`;
+        }
+
+        svg += `</svg>`;
+        return `<div class="tikz-container text-center my-3 max-w-full overflow-x-auto">${svg}</div>`;
+      } catch (err) {
         return null;
       }
     };
@@ -2283,120 +2976,54 @@ def parse_docx_math_text_py(raw_text):
     // Universal Question Content Formatter (converts tkz-tab, tikzpicture, math)
     window.formatQuestionContent = (content) => {
       if (!content || typeof content !== 'string') return '';
-      let text = content;
+      // First clean all LaTeX print wrappers (center, resizebox, comments) and unwrap any corrupted markup
+      let text = window.cleanLatexWrappers(content);
 
-      // 1. Clean up LaTeX centering tags around tikzpicture or formulas
-      text = text.replace(/\\begin\{center\}\s*([\s\S]*?)\s*\\end\{center\}/g, '<div class="text-center my-2">$1</div>');
-
-      // 2. Convert tkz-tab environment or standalone \tkzTabInit to HTML table with SVG arrows
+      // 1. Convert tkz-tab environment or standalone \tkzTabInit to HTML table with SVG arrows
       const tkzTabRegex = /\\begin\{tikzpicture\}(?:\[.*?\])?[\s\S]*?\\tkzTabInit[\s\S]*?\\end\{tikzpicture\}|\\tkzTabInit(?:\s*\[.*?\])?\s*\{[\s\S]*?\}\s*\{[\s\S]*?\}[\s\S]*?(?=(\\end\{tikzpicture\}|\\begin\{|\\choice|\n\nCâu|\n\n[A-D]\.|$))/g;
       text = text.replace(tkzTabRegex, (match) => {
         const html = window.convertTkzTabToHtml(match);
         return html || match;
       });
 
-      // 3. Convert remaining tikzpicture (geometry, function graphs, 3D space) to TikZJax <script type="text/tikz">
-      // Check for existing script tag to prevent double-wrapping
-      if (!text.includes('script type="text/tikz"')) {
-        text = text.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, (match) => {
-          if (match.includes('\\tkzTabInit')) {
-            const tabHtml = window.convertTkzTabToHtml(match);
-            if (tabHtml) return tabHtml;
+      // 2. Convert 2D function graphs in tikzpicture to crisp native SVG
+      text = text.replace(/\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g, (match) => {
+        if (match.includes('\\tkzTabInit')) {
+          const tabHtml = window.convertTkzTabToHtml(match);
+          if (tabHtml) return tabHtml;
+        }
+        const svgGraph = window.convertTikzGraphToSvg(match);
+        if (svgGraph) return svgGraph;
+        return `<div class="tikz-container text-center my-3 max-w-full overflow-x-auto"><script type="text/tikz">${match}<\/script></div>`;
+      });
+
+      // 3. Format multiple paragraphs cleanly so question text before/after diagrams never clutters
+      const blocks = text.split(/\n{2,}/);
+      if (blocks.length > 1) {
+        text = blocks.map(b => {
+          b = b.trim();
+          if (!b) return '';
+          if (b.startsWith('<div') || b.startsWith('<table') || b.startsWith('<svg') || b.startsWith('<p')) {
+            return b;
           }
-
-          let cleanTikz = match
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#039;/g, "'")
-            .trim();
-
-          if (window._tikzSvgCache && window._tikzSvgCache[cleanTikz]) {
-            return `<div class="tikz-container text-center my-3 max-w-full overflow-x-auto">${window._tikzSvgCache[cleanTikz]}</div>`;
-          }
-
-          return `<div class="tikz-container text-center my-3 max-w-full overflow-x-auto"><script type="text/tikz">${cleanTikz}<\/script></div>`;
-        });
+          return `<div class="my-1.5 leading-relaxed">${b}</div>`;
+        }).filter(Boolean).join('\n');
       }
 
       return text;
     };
 
-    // TikZJax Dynamic Engine Runner with Concurrency Lock & Robust Queue
-    let _isTikzRendering = false;
-    let _hasPendingTikzRender = false;
-
-    window.renderTikZ = (containerElement) => {
-      if (_isTikzRendering) {
-        _hasPendingTikzRender = true;
-        return;
-      }
-
-      setTimeout(async () => {
-        const root = containerElement || document;
-        const tikzScripts = root.querySelectorAll('script[type="text/tikz"]');
+    // TikZJax Dynamic Engine Runner
+    window.renderTikZ = () => {
+      setTimeout(() => {
+        const tikzScripts = document.querySelectorAll('script[type="text/tikz"]');
         if (!tikzScripts || tikzScripts.length === 0) return;
 
-        // Instant Cache replacement for already rendered diagrams
-        tikzScripts.forEach((script) => {
-          const rawCode = (script.textContent || '').trim();
-          if (!rawCode) {
-            script.remove();
-            return;
-          }
-          if (window._tikzSvgCache && window._tikzSvgCache[rawCode]) {
-            const cachedWrapper = document.createElement('div');
-            cachedWrapper.className = 'tikz-svg-rendered';
-            cachedWrapper.innerHTML = window._tikzSvgCache[rawCode];
-            script.parentNode && script.parentNode.replaceChild(cachedWrapper, script);
-          }
-        });
-
-        // Check if there are still scripts needing WebAssembly compilation
-        const remainingScripts = document.querySelectorAll('script[type="text/tikz"]');
-        if (remainingScripts.length === 0) return;
-
-        const runner = window._tikzJaxRunner || window.onload;
-        if (typeof runner !== 'function') {
-          console.warn('TikZJax WebAssembly compiler not yet available. Retrying...');
-          setTimeout(() => window.renderTikZ(containerElement), 300);
-          return;
-        }
-
-        _isTikzRendering = true;
-        _hasPendingTikzRender = false;
-
-        try {
-          await runner();
-
-          // Populate cache with newly compiled SVGs
-          document.querySelectorAll('.tikz-container').forEach((tc) => {
-            const svg = tc.querySelector('svg');
-            const scriptTag = tc.querySelector('script[type="text/tikz"]');
-            if (svg && !scriptTag) {
-              const code = tc.getAttribute('data-raw-tikz');
-              if (code && window._tikzSvgCache && !window._tikzSvgCache[code]) {
-                window._tikzSvgCache[code] = tc.innerHTML;
-              }
-            }
-          });
-        } catch (e) {
-          console.warn('TikZJax compilation error:', e);
-          const failedList = document.querySelectorAll('script[type="text/tikz"]');
-          if (failedList.length > 0) {
-            const failedScript = failedList[0];
-            const fallbackDiv = document.createElement('div');
-            fallbackDiv.className = 'p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-mono my-2 text-left';
-            fallbackDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1 text-amber-600"></i> Không thể biên dịch đồ thị/hình TikZ: <pre class="mt-1 overflow-x-auto text-[11px] whitespace-pre-wrap">${window.escapeHtml(failedScript.textContent || '')}</pre>`;
-            failedScript.parentNode && failedScript.parentNode.replaceChild(fallbackDiv, failedScript);
-          }
-        } finally {
-          _isTikzRendering = false;
-          if (_hasPendingTikzRender || document.querySelectorAll('script[type="text/tikz"]').length > 0) {
-            _hasPendingTikzRender = false;
-            setTimeout(() => window.renderTikZ(), 80);
-          }
+        if (typeof window._tikzJaxRunner === 'function') {
+          window._tikzJaxRunner().catch((e) => console.warn('TikZJax execution error:', e));
+        } else if (typeof window.onload === 'function') {
+          window._tikzJaxRunner = window.onload;
+          window.onload().catch((e) => console.warn('TikZJax execution error:', e));
         }
       }, 70);
     };
@@ -2411,7 +3038,7 @@ def parse_docx_math_text_py(raw_text):
         }
         // Trigger TikZJax compilation for geometric diagrams and function graphs
         if (typeof window.renderTikZ === 'function') {
-          window.renderTikZ(containerElement);
+          window.renderTikZ();
         }
       }, 50);
     };
@@ -2420,9 +3047,6 @@ def parse_docx_math_text_py(raw_text):
     window.addEventListener('load', () => {
       if (typeof window.onload === 'function' && !window._tikzJaxRunner) {
         window._tikzJaxRunner = window.onload;
-      }
-      if (typeof window.renderMath === 'function') {
-        window.renderMath();
       }
     });
 
@@ -2688,10 +3312,20 @@ def parse_docx_math_text_py(raw_text):
           ? `<span class="inline-flex items-center gap-1 text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full font-bold text-[10px]"><i class="fa-solid fa-lock"></i> Đã Khóa</span>`
           : `<span class="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-bold text-[10px]"><i class="fa-solid fa-lock-open"></i> Đang Mở</span>`;
 
+        const validVariantsCount = (exam.codeVariants && Array.isArray(exam.codeVariants))
+          ? exam.codeVariants.filter(v => v.questions && v.questions.length > 0).length
+          : 0;
+        const variantsBadge = validVariantsCount > 0 
+          ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs" title="Đã có ${validVariantsCount} mã đề tải lên sẵn sàng phát ngẫu nhiên"><i class="fa-solid fa-layer-group"></i> ${validVariantsCount}/6 mã đề</span>`
+          : '';
+
         return `
           <tr class="hover:bg-slate-50/80 transition">
             <td class="py-3 px-4">
-              <div class="font-bold text-slate-800 text-sm">${exam.title}</div>
+              <div class="font-bold text-slate-800 text-sm flex items-center gap-1.5 flex-wrap">
+                <span>${exam.title}</span>
+                ${variantsBadge}
+              </div>
               <div class="text-[11px] text-slate-400">ID: ${exam.id} | Tạo lúc: ${new Date(exam.createdAt || Date.now()).toLocaleDateString('vi-VN')}</div>
             </td>
             <td class="py-3 px-4 font-semibold text-slate-600">${className}</td>
@@ -2702,6 +3336,9 @@ def parse_docx_math_text_py(raw_text):
             <td class="py-3 px-4 text-right space-x-1">
               <button onclick="window.toggleExamLock('${exam.id}')" class="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition" title="Khóa / Mở đề">
                 <i class="fa-solid ${exam.isLocked ? 'fa-lock-open text-emerald-600' : 'fa-lock text-rose-600'}"></i>
+              </button>
+              <button onclick="window.openMultiCodeVariantsModal('${exam.id}')" class="p-1.5 rounded-lg border border-slate-200 hover:bg-indigo-50 text-indigo-600 transition" title="Quản lý 6 vị trí tải lên mã đề">
+                <i class="fa-solid fa-layer-group"></i>
               </button>
               <button onclick="window.previewExamModal('${exam.id}')" class="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition" title="Xem trước">
                 <i class="fa-regular fa-eye text-indigo-600"></i>
@@ -2814,49 +3451,256 @@ def parse_docx_math_text_py(raw_text):
     };
 
     // Firebase Custom Server Modal
-    window.showChangeServerModal = () => {
-      const current = localStorage.getItem(FIREBASE_CONFIG_KEY) || '';
-      Swal.fire({
+    window.showChangeServerModal = async () => {
+      const currentConfigStr = localStorage.getItem(FIREBASE_CONFIG_KEY) || '';
+      let parsedCurrent = null;
+      if (currentConfigStr) {
+        try {
+          parsedCurrent = window.parseFirebaseConfig(currentConfigStr);
+        } catch (e) {}
+      }
+
+      const isConnected = !!(window.dbManager && window.dbManager.firestore && parsedCurrent);
+      const currentProjectName = parsedCurrent?.projectId || '';
+
+      const statusHtml = isConnected
+        ? `<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs mb-3 shadow-xs">
+             <div class="flex items-center gap-2 text-emerald-800 font-semibold truncate">
+               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+               <span class="truncate">Đang kết nối: <code class="font-mono bg-emerald-100 px-1.5 py-0.5 rounded text-emerald-900 font-bold">${currentProjectName}</code></span>
+             </div>
+             <span class="text-[11px] text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full font-medium shrink-0">Realtime Hoạt Động</span>
+           </div>`
+        : `<div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs mb-3 shadow-xs">
+             <div class="flex items-center gap-2 text-slate-700 font-medium">
+               <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+               <span>Chế độ: <b>Offline LocalStorage DB</b></span>
+             </div>
+             <span class="text-[11px] text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-full font-medium shrink-0">Lưu trữ nội bộ</span>
+           </div>`;
+
+      const initialVal = parsedCurrent ? JSON.stringify(parsedCurrent, null, 2) : currentConfigStr;
+
+      const result = await Swal.fire({
         title: 'Cấu Hình Server Firebase Firestore',
+        width: '640px',
         html: `
-          <div class="text-left text-xs space-y-2">
-            <p class="text-slate-500 leading-relaxed">
-              Dán cấu hình <code>firebaseConfig</code> (JSON) của bạn vào bên dưới để kích hoạt kết nối Realtime nhiều máy:
-            </p>
-            <textarea id="firebase-config-input" rows="8" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..." }' class="w-full p-2.5 font-mono text-xs border rounded-xl border-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500">${current}</textarea>
-            <p class="text-[11px] text-slate-400">Nếu để trống, ứng dụng sẽ tự động chạy ở chế độ Offline LocalStorage Database.</p>
+          <div class="text-left text-xs space-y-3 pt-1">
+            ${statusHtml}
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="font-semibold text-slate-700">
+                  Dán mã <code>firebaseConfig</code> (JSON hoặc mã JavaScript từ Firebase Console):
+                </label>
+                <button type="button" id="btn-sample-config" class="text-[11px] text-violet-600 hover:text-violet-800 underline font-medium">Dán mẫu thử</button>
+              </div>
+              <textarea id="firebase-config-input" rows="8" placeholder='// Dán đoạn mã từ Firebase Console, ví dụ:
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "du-an-toan.firebaseapp.com",
+  projectId: "du-an-toan",
+  storageBucket: "du-an-toan.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
+};' class="w-full p-2.5 font-mono text-xs border rounded-xl border-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500 text-slate-800 bg-slate-50/50 leading-relaxed">${initialVal ? initialVal.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</textarea>
+              <p class="text-[11px] text-slate-400 mt-1">Hỗ trợ dán trực tiếp toàn bộ code từ Firebase Console (có <code>const firebaseConfig =</code>) hoặc JSON thuần.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-violet-50/80 border border-violet-200/70 text-[11px] text-violet-950 space-y-1">
+              <div class="font-semibold flex items-center gap-1.5 text-violet-800">
+                <i class="fa-solid fa-circle-info"></i> Các bước thiết lập Firebase trong 1 phút:
+              </div>
+              <ol class="list-decimal pl-4 space-y-0.5 text-slate-600 leading-normal">
+                <li>Truy cập <a href="https://console.firebase.google.com" target="_blank" class="text-violet-700 underline font-medium">console.firebase.google.com</a> &rarr; Thêm dự án mới (hoặc chọn dự án có sẵn).</li>
+                <li>Vào <b>Build &rarr; Firestore Database &rarr; Create database</b> (chọn chế độ <i>Test mode</i> hoặc đặt Rules cho phép đọc/ghi).</li>
+                <li>Vào <b>Project Settings &rarr; General &rarr; Your apps &rarr; Web (&lt;/&gt;)</b>, copy biến <code>firebaseConfig</code> rồi dán vào đây.</li>
+              </ol>
+            </div>
           </div>
         `,
+        didOpen: () => {
+          const btnSample = document.getElementById('btn-sample-config');
+          if (btnSample) {
+            btnSample.onclick = () => {
+              const sample = `const firebaseConfig = {\n  apiKey: "AIzaSy_SAMPLE_KEY_ABC123",\n  authDomain: "mathexam-online.firebaseapp.com",\n  projectId: "mathexam-online",\n  storageBucket: "mathexam-online.appspot.com",\n  messagingSenderId: "123456789012",\n  appId: "1:123456789012:web:abcdef123456"\n};`;
+              const txt = document.getElementById('firebase-config-input');
+              if (txt) txt.value = sample;
+            };
+          }
+        },
         showCancelButton: true,
-        confirmButtonText: 'Lưu & Khởi tạo',
-        cancelButtonText: 'Hủy',
+        showDenyButton: isConnected,
+        confirmButtonText: '<i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Lưu & Kết Nối',
+        denyButtonText: '<i class="fa-solid fa-power-off mr-1.5"></i> Về LocalStorage (Ngắt kết nối)',
+        cancelButtonText: 'Đóng',
+        confirmButtonColor: '#7c3aed',
+        denyButtonColor: '#e11d48',
         preConfirm: () => {
           return document.getElementById('firebase-config-input').value.trim();
         }
-      }).then((res) => {
-        if (res.isConfirmed) {
-          if (res.value) {
-            try {
-              JSON.parse(res.value); // test JSON syntax
-              localStorage.setItem(FIREBASE_CONFIG_KEY, res.value);
-              Swal.fire({
-                icon: 'success',
-                title: 'Đã lưu cấu hình!',
-                text: 'Hệ thống đang nạp lại kết nối Firebase Firestore.',
-                timer: 1500,
-                showConfirmButton: false
-              }).then(() => {
-                location.reload();
-              });
-            } catch (err) {
-              Swal.fire('Lỗi JSON', 'Cấu hình Firebase không hợp lệ!', 'error');
-            }
-          } else {
-            localStorage.removeItem(FIREBASE_CONFIG_KEY);
-            Swal.fire('Đã chuyển về LocalStorage DB', 'Sử dụng lưu trữ nội bộ trình duyệt.', 'info');
-          }
-        }
       });
+
+      if (result.isDenied) {
+        // User explicitly clicked "Về LocalStorage (Ngắt kết nối)"
+        await window.dbManager.switchFirebaseConfig(null);
+        Swal.fire({
+          icon: 'info',
+          title: 'Đã Chuyển Về LocalStorage DB',
+          text: 'Ứng dụng hiện lưu trữ dữ liệu an toàn trên trình duyệt này (Offline).',
+          confirmButtonColor: '#7c3aed'
+        });
+        return;
+      }
+
+      if (result.isConfirmed) {
+        const rawInput = result.value;
+        if (!rawInput) {
+          // Empty input -> switch to LocalStorage
+          await window.dbManager.switchFirebaseConfig(null);
+          Swal.fire({
+            icon: 'info',
+            title: 'Đã Chuyển Về LocalStorage DB',
+            text: 'Cấu hình server đã xóa. Ứng dụng chạy ở chế độ nội bộ LocalStorage.',
+            confirmButtonColor: '#7c3aed'
+          });
+          return;
+        }
+
+        const parsedConfig = window.parseFirebaseConfig(rawInput);
+        if (!parsedConfig || (!parsedConfig.apiKey && !parsedConfig.projectId)) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Cấu Hình Không Hợp Lệ!',
+            html: '<p class="text-xs text-slate-600">Không tìm thấy <code>apiKey</code> hoặc <code>projectId</code> trong nội dung vừa dán.<br>Vui lòng sao chép toàn bộ object <code>firebaseConfig</code> từ Firebase Console.</p>',
+            confirmButtonColor: '#7c3aed'
+          });
+          return;
+        }
+
+        // Show connecting state
+        Swal.fire({
+          title: 'Đang Kết Nối Server...',
+          html: `<div class="text-xs text-slate-600 py-2">
+            Đang liên kết với dự án <b>${parsedConfig.projectId}</b> và kiểm tra quyền truy cập Cloud Firestore...
+          </div>`,
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        try {
+          const res = await window.dbManager.switchFirebaseConfig(parsedConfig);
+
+          if (res && res.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Kết Nối Thành Công!',
+              html: `
+                <div class="text-xs text-slate-600 space-y-2 text-center py-1">
+                  <p>Đã đồng bộ thành công với Server Firebase: <b class="text-violet-700 font-mono text-sm">${res.projectId}</b></p>
+                  <div class="p-2.5 rounded-lg bg-emerald-50 text-emerald-800 text-[11px]">
+                    ${res.remoteLoaded 
+                      ? '<i class="fa-solid fa-check mr-1"></i> Đã tải dữ liệu đề thi & học sinh có sẵn từ Server về máy.' 
+                      : '<i class="fa-solid fa-cloud-arrow-up mr-1"></i> Cơ sở dữ liệu mới đã được khởi tạo và tải lên Server.'}
+                  </div>
+                  <p class="text-[11px] text-slate-400">Tất cả các máy kết nối cùng Server Firebase này sẽ tự động cập nhật Realtime!</p>
+                </div>
+              `,
+              confirmButtonColor: '#7c3aed',
+              confirmButtonText: 'Bắt đầu sử dụng'
+            });
+          } else if (res && res.code === 'permission-denied') {
+            const rulesCode = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}`;
+            
+            await Swal.fire({
+              icon: 'warning',
+              title: 'Quyền Truy Cập Firestore Bị Khóa',
+              width: '620px',
+              html: `
+                <div class="text-left text-xs space-y-3 pt-1">
+                  <p class="text-slate-600">
+                    Dự án <b>${res.projectId}</b> đã được liên kết nhưng Firestore Rules hiện tại đang từ chối quyền đọc/ghi (<b>Missing or insufficient permissions</b>).
+                  </p>
+
+                  <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="font-bold text-amber-900 text-[11px]">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> Quy tắc bảo mật (Rules) đề xuất cho ứng dụng:
+                      </span>
+                      <button type="button" id="btn-copy-rules" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[11px] font-medium transition shadow-xs">
+                        <i class="fa-solid fa-copy mr-1"></i> Sao chép Rules
+                      </button>
+                    </div>
+                    <pre class="bg-slate-900 text-emerald-400 p-2.5 rounded-lg text-[10px] font-mono leading-relaxed select-all overflow-x-auto">${rulesCode}</pre>
+                  </div>
+
+                  <div class="space-y-1 text-slate-600 text-[11px]">
+                    <p class="font-semibold text-slate-700">Hướng dẫn 2 bước khắc phục:</p>
+                    <ol class="list-decimal pl-4 space-y-1">
+                      <li>Nhấn <a href="https://console.firebase.google.com/project/${res.projectId}/firestore/rules" target="_blank" class="text-violet-700 underline font-bold">Vào tab Rules của dự án trên Firebase Console</a>.</li>
+                      <li>Dán đoạn mã trên vào rồi nhấn <b>Publish</b> (Xuất bản).</li>
+                    </ol>
+                  </div>
+                </div>
+              `,
+              didOpen: () => {
+                const btn = document.getElementById('btn-copy-rules');
+                if (btn) {
+                  btn.onclick = () => {
+                    navigator.clipboard.writeText(rulesCode);
+                    btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Đã chép!';
+                    setTimeout(() => {
+                      btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Sao chép Rules';
+                    }, 2000);
+                  };
+                }
+              },
+              showCancelButton: true,
+              showDenyButton: true,
+              confirmButtonText: '<i class="fa-solid fa-rotate-right mr-1"></i> Thử lại ngay',
+              denyButtonText: '<i class="fa-solid fa-bookmark mr-1"></i> Vẫn lưu cấu hình này',
+              cancelButtonText: 'Đóng',
+              confirmButtonColor: '#7c3aed',
+              denyButtonColor: '#4f46e5'
+            }).then(async (act) => {
+              if (act.isConfirmed) {
+                window.showChangeServerModal();
+              } else if (act.isDenied) {
+                localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(parsedConfig, null, 2));
+                window.dbManager.updateConnectionUI(false, `Firebase (Chờ Rules): ${parsedConfig.projectId}`);
+                Swal.fire({
+                  icon: 'info',
+                  title: 'Đã Lưu Cấu Hình',
+                  text: 'Sau khi bạn cập nhật Rules trên Firebase Console và bấm Publish, hãy nhấp vào huy hiệu trạng thái để kết nối ngay.',
+                  confirmButtonColor: '#7c3aed'
+                });
+              }
+            });
+          } else {
+            let errorHelp = `Không thể kết nối đến Firestore của dự án <b>${parsedConfig.projectId}</b>: ${(res && res.message) || ''}`;
+            if (res && res.code === 'not-found') {
+              errorHelp = `Dự án <b>${parsedConfig.projectId}</b> chưa được tạo cơ sở dữ liệu Firestore. Hãy vào Firebase Console &rarr; Build &rarr; Firestore Database và bấm <b>Create database</b>.`;
+            }
+            Swal.fire({
+              icon: 'error',
+              title: 'Kết Nối Server Thất Bại',
+              html: `<div class="text-xs text-slate-600 text-left">${errorHelp}</div>`,
+              confirmButtonColor: '#7c3aed',
+              confirmButtonText: 'Đã hiểu'
+            });
+          }
+        } catch (err) {
+          console.warn('Lưu cấu hình Firebase thông báo:', err.message || err);
+          Swal.fire({
+            icon: 'info',
+            title: 'Thông báo',
+            text: 'Đã nạp thông tin server. Vui lòng kiểm tra quyền Firestore trên Firebase Console.',
+            confirmButtonColor: '#7c3aed'
+          });
+        }
+      }
     };
 
     // Backup & Restore Database
@@ -2899,6 +3743,473 @@ def parse_docx_math_text_py(raw_text):
     };
 
     // =========================================================================
+    // 4.9 MULTI-CODE VARIANTS SYSTEM (6 VỊ TRÍ TẢI LÊN 6 MÃ ĐỀ KHÁC NHAU)
+    // =========================================================================
+    window.editingModalExamId = null;
+    window.editingModalVariants = [];
+
+    window.createDefault6Variants = (baseQuestions) => {
+      const defaultCodes = ['101', '102', '103', '104', '105', '106'];
+      return defaultCodes.map((code, idx) => ({
+        slot: idx + 1,
+        code: code,
+        questions: (baseQuestions && Array.isArray(baseQuestions) && baseQuestions.length > 0)
+          ? window.randomizeExamQuestionsAndOptions(baseQuestions)
+          : []
+      }));
+    };
+
+    window.randomizeExamQuestionsAndOptions = (questions) => {
+      if (!questions || !Array.isArray(questions) || questions.length === 0) return [];
+
+      const part1 = questions.filter(q => q && q.type === 'mcq');
+      const part2 = questions.filter(q => q && q.type === 'tf');
+      const part3 = questions.filter(q => q && q.type === 'short');
+      const part4 = questions.filter(q => q && q.type === 'cloze');
+      const other = questions.filter(q => q && !['mcq', 'tf', 'short', 'cloze'].includes(q.type));
+
+      const shuffleList = (arr) => {
+        const copy = JSON.parse(JSON.stringify(arr));
+        return window.shuffleArray(copy);
+      };
+
+      let combined = [];
+      if (part1.length > 0 || part2.length > 0 || part3.length > 0 || part4.length > 0) {
+        combined = [
+          ...shuffleList(part1),
+          ...shuffleList(part2),
+          ...shuffleList(part3),
+          ...shuffleList(part4),
+          ...shuffleList(other)
+        ];
+      } else {
+        combined = shuffleList(questions);
+      }
+
+      return combined.map((q) => {
+        const qClone = JSON.parse(JSON.stringify(q));
+        if (qClone.type === 'mcq' && Array.isArray(qClone.options) && qClone.options.length > 1) {
+          const origCorrect = qClone.options.find(o => o.isCorrect === true || o.key === qClone.correctKey);
+          const origCorrectText = origCorrect ? origCorrect.text : null;
+
+          const shuffledOpts = window.shuffleArray(qClone.options);
+          const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+          shuffledOpts.forEach((opt, idx) => {
+            opt.key = letters[idx] || opt.key;
+            if (origCorrectText !== null) {
+              opt.isCorrect = (opt.text === origCorrectText);
+            }
+          });
+          qClone.options = shuffledOpts;
+          const newCorrectOpt = shuffledOpts.find(o => o.isCorrect === true);
+          if (newCorrectOpt) {
+            qClone.correctKey = newCorrectOpt.key;
+          }
+        }
+        return qClone;
+      });
+    };
+
+    window.generateVariantSlotHTML = (v, idx, isModal) => {
+      const qCount = (v && v.questions) ? v.questions.length : 0;
+      const hasQuestions = qCount > 0;
+      const inputPrefix = isModal ? 'modal-variant' : 'editor-variant';
+      const code = window.escapeHtml(v?.code || (101 + idx).toString());
+
+      return `
+        <div class="p-4 rounded-2xl border-2 transition relative flex flex-col justify-between ${hasQuestions ? 'border-indigo-300 bg-white shadow-xs' : 'border-dashed border-slate-300 bg-slate-50/70'}">
+          <!-- Top: Slot number & code input -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold ${hasQuestions ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200 text-slate-600'}">
+                <i class="fa-solid fa-tag text-[10px]"></i> Vị trí #${idx + 1}
+              </span>
+              ${hasQuestions 
+                ? `<span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200"><i class="fa-solid fa-circle-check"></i> ${qCount} câu</span>`
+                : `<span class="text-[11px] font-medium text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">Chưa tải lên</span>`
+              }
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Mã đề:</label>
+              <input type="text" value="${code}" onchange="window.updateVariantCode(${idx}, this.value, ${isModal})" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono font-bold text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white" placeholder="VD: 101" />
+            </div>
+          </div>
+
+          <!-- Middle description -->
+          <div class="my-2.5 text-xs text-slate-500">
+            ${hasQuestions 
+              ? `<div class="p-2 rounded-lg bg-emerald-50/70 border border-emerald-100 text-[11px] text-emerald-900 leading-snug">
+                   <strong>Đã sẵn sàng:</strong> ${qCount} câu hỏi. Thí sinh nhận mã này sẽ được xáo trộn đề & phương án ngẫu nhiên.
+                 </div>`
+              : `<div class="p-2 rounded-lg bg-slate-100/80 text-[11px] text-slate-500 leading-snug">
+                   Chưa có câu hỏi. Nhấn <strong>Tải File</strong> hoặc <strong>Dán Text</strong> để nạp mã đề này.
+                 </div>`
+            }
+          </div>
+
+          <!-- Bottom: Action buttons -->
+          <div class="space-y-1.5 pt-2 border-t border-slate-100">
+            <input type="file" id="${inputPrefix}-file-input-${idx}" accept=".docx,.tex,.txt" onchange="window.handleVariantFileUpload(${idx}, event, ${isModal})" class="hidden" />
+
+            <div class="grid grid-cols-2 gap-1.5">
+              <button type="button" onclick="window.triggerVariantUpload(${idx}, ${isModal})" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] flex items-center justify-center gap-1 transition shadow-xs cursor-pointer">
+                <i class="fa-solid fa-file-arrow-up"></i> Tải File
+              </button>
+              <button type="button" onclick="window.openPasteModalForVariant(${idx}, ${isModal})" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] flex items-center justify-center gap-1 transition border border-slate-200 cursor-pointer">
+                <i class="fa-solid fa-paste"></i> Dán Text/TeX
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between gap-1 pt-1">
+              ${hasQuestions ? `
+                <button type="button" onclick="window.previewVariantQuestions(${idx}, ${isModal})" class="text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 cursor-pointer">
+                  <i class="fa-regular fa-eye"></i> Xem câu hỏi
+                </button>
+                <button type="button" onclick="window.clearVariantSlot(${idx}, ${isModal})" class="text-[11px] text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1 cursor-pointer">
+                  <i class="fa-regular fa-trash-can"></i> Xóa mã này
+                </button>
+              ` : `
+                <button type="button" onclick="window.copyMainQuestionsToVariant(${idx}, ${isModal})" class="text-[11px] text-slate-500 hover:text-indigo-600 font-medium flex items-center gap-1 cursor-pointer">
+                  <i class="fa-regular fa-copy"></i> Lấy từ đề chính
+                </button>
+                <span class="text-[10px] text-slate-400">Vị trí #${idx + 1} trống</span>
+              `}
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    window.render6VariantSlots = () => {
+      const container = document.getElementById('multi-variants-slots-container');
+      if (!container) return;
+      if (!window.currentEditingExam.codeVariants || !Array.isArray(window.currentEditingExam.codeVariants) || window.currentEditingExam.codeVariants.length === 0) {
+        window.currentEditingExam.codeVariants = window.createDefault6Variants(window.currentEditingExam.questions);
+      }
+      container.innerHTML = window.currentEditingExam.codeVariants.map((v, i) => window.generateVariantSlotHTML(v, i, false)).join('');
+    };
+
+    window.renderModalVariantSlots = () => {
+      const container = document.getElementById('modal-multi-variants-container');
+      if (!container) return;
+      if (!window.editingModalVariants || !Array.isArray(window.editingModalVariants) || window.editingModalVariants.length === 0) {
+        window.editingModalVariants = window.createDefault6Variants();
+      }
+      container.innerHTML = window.editingModalVariants.map((v, i) => window.generateVariantSlotHTML(v, i, true)).join('');
+    };
+
+    window.updateVariantCode = (idx, newCode, isModal) => {
+      const targetVariants = isModal ? window.editingModalVariants : window.currentEditingExam.codeVariants;
+      if (targetVariants && targetVariants[idx]) {
+        targetVariants[idx].code = newCode.trim() || ('10' + (idx + 1));
+      }
+    };
+
+    window.triggerVariantUpload = (idx, isModal) => {
+      const inputId = (isModal ? 'modal-variant' : 'editor-variant') + '-file-input-' + idx;
+      const el = document.getElementById(inputId);
+      if (el) {
+        el.value = '';
+        el.click();
+      }
+    };
+
+    window.handleVariantFileUpload = (slotIndex, event, isModal) => {
+      const file = event.target.files ? event.target.files[0] : null;
+      if (!file) return;
+
+      const fileName = file.name.toLowerCase();
+      Swal.fire({
+        title: `Đang bóc tách Vị trí #${slotIndex + 1}...`,
+        text: `Tệp: ${file.name}`,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      const applyParsedQuestions = (parsed) => {
+        if (!parsed || parsed.length === 0) {
+          Swal.fire('Không nhận diện được', 'Không tìm thấy câu hỏi hợp lệ trong tệp này. Hãy kiểm tra lại định dạng Word hoặc TeX.', 'warning');
+          return;
+        }
+
+        const targetVariants = isModal ? window.editingModalVariants : window.currentEditingExam.codeVariants;
+        if (!targetVariants[slotIndex]) {
+          targetVariants[slotIndex] = { slot: slotIndex + 1, code: (101 + slotIndex).toString(), questions: [] };
+        }
+        targetVariants[slotIndex].questions = parsed;
+
+        // Auto extract 3-digit exam code from file name if present (e.g. De_103.docx -> 103)
+        const codeMatch = file.name.match(/\b([1-9]\d{2})\b/);
+        if (codeMatch) {
+          targetVariants[slotIndex].code = codeMatch[1];
+        }
+
+        if (isModal) {
+          window.renderModalVariantSlots();
+        } else {
+          window.render6VariantSlots();
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Tải Lên Thành Công!',
+          text: `Đã nạp ${parsed.length} câu hỏi vào Vị trí #${slotIndex + 1} (Mã đề: ${targetVariants[slotIndex].code})!`,
+          timer: 1600,
+          showConfirmButton: false
+        });
+      };
+
+      if (fileName.endsWith('.docx')) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const arrayBuffer = evt.target.result;
+          if (window.mammoth) {
+            window.mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+              .then(function(result) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = result.value;
+                const innerTextWithU = tempDiv.innerHTML
+                  .replace(/<p>/gi, '\n')
+                  .replace(/<\/p>/gi, '')
+                  .replace(/<br\s*[\/]?>/gi, '\n');
+                const parsed = window.parseWordTextJS(innerTextWithU);
+                applyParsedQuestions(parsed);
+              })
+              .catch(function(err) {
+                Swal.fire('Lỗi đọc Word', 'Không thể giải mã file .docx: ' + err.message, 'error');
+              });
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else if (fileName.endsWith('.tex') || fileName.endsWith('.txt')) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const content = evt.target.result;
+          let parsed = [];
+          if (content.includes('\\begin{ex}') || content.includes('\\choice')) {
+            parsed = window.parseLatexText(content);
+          } else {
+            parsed = window.parseWordTextJS(content);
+          }
+          applyParsedQuestions(parsed);
+        };
+        reader.readAsText(file);
+      } else {
+        Swal.fire('Định dạng không hỗ trợ', 'Vui lòng chọn file .docx, .tex hoặc .txt!', 'warning');
+      }
+    };
+
+    window.openPasteModalForVariant = (slotIndex, isModal) => {
+      const targetVariants = isModal ? window.editingModalVariants : (window.currentEditingExam.codeVariants || []);
+      const code = targetVariants[slotIndex]?.code || (101 + slotIndex);
+      window.pasteModalTargetMode = (isModal ? 'modal_variant_' : 'variant_') + slotIndex;
+      document.getElementById('modal-paste-text').classList.remove('hidden');
+      const title = document.getElementById('paste-modal-title');
+      const desc = document.getElementById('paste-modal-desc');
+      title.innerText = `Dán Văn Bản / Mã LaTeX Cho Vị Trí #${slotIndex + 1} (Mã đề: ${code})`;
+      desc.innerText = 'Dán nội dung đề thi Word hoặc LaTeX .tex. Hệ thống sẽ bóc tách câu hỏi và lưu trực tiếp vào vị trí mã đề này.';
+      document.getElementById('raw-paste-textarea').value = '';
+    };
+
+    window.copyMainQuestionsToVariant = (slotIndex, isModal) => {
+      const qs = window.currentEditingExam.questions || [];
+      if (qs.length === 0) {
+        Swal.fire('Đề chính đang trống', 'Hãy tải hoặc tạo câu hỏi ở Đề chính trước khi sao chép sang vị trí này.', 'info');
+        return;
+      }
+      const targetVariants = isModal ? window.editingModalVariants : window.currentEditingExam.codeVariants;
+      if (!targetVariants[slotIndex]) {
+        targetVariants[slotIndex] = { slot: slotIndex + 1, code: (101 + slotIndex).toString(), questions: [] };
+      }
+      targetVariants[slotIndex].questions = JSON.parse(JSON.stringify(qs));
+      if (isModal) {
+        window.renderModalVariantSlots();
+      } else {
+        window.render6VariantSlots();
+      }
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: `Đã sao chép ${qs.length} câu vào Vị trí #${slotIndex + 1}`,
+        timer: 1500,
+        showConfirmButton: false
+      });
+    };
+
+    window.generateSample6VariantsForEditor = () => {
+      const base = (window.currentEditingExam.questions && window.currentEditingExam.questions.length > 0)
+        ? window.currentEditingExam.questions
+        : (window.dbManager.db.exams['exam_sample_1']?.questions || DEFAULT_DATABASE.exams['exam_sample_1'].questions);
+
+      window.currentEditingExam.codeVariants = window.createDefault6Variants(base);
+      window.render6VariantSlots();
+      Swal.fire({
+        icon: 'success',
+        title: 'Đã Nạp 6 Mã Đề Mẫu (101 → 106)!',
+        text: 'Cả 6 vị trí mã đề đã được nạp dữ liệu câu hỏi và xáo trộn ngẫu nhiên thành công.',
+        timer: 1600,
+        showConfirmButton: false
+      });
+    };
+
+    window.generateSample6VariantsForModal = () => {
+      const ex = window.dbManager.db.exams[window.editingModalExamId];
+      const base = (ex && ex.questions && ex.questions.length > 0)
+        ? ex.questions
+        : (window.dbManager.db.exams['exam_sample_1']?.questions || DEFAULT_DATABASE.exams['exam_sample_1'].questions);
+
+      window.editingModalVariants = window.createDefault6Variants(base);
+      window.renderModalVariantSlots();
+      Swal.fire({
+        icon: 'success',
+        title: 'Đã Nạp 6 Mã Đề Mẫu!',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    };
+
+    window.clearVariantSlot = (slotIndex, isModal) => {
+      const targetVariants = isModal ? window.editingModalVariants : window.currentEditingExam.codeVariants;
+      if (targetVariants && targetVariants[slotIndex]) {
+        targetVariants[slotIndex].questions = [];
+        if (isModal) {
+          window.renderModalVariantSlots();
+        } else {
+          window.render6VariantSlots();
+        }
+      }
+    };
+
+    window.clearAll6Variants = (isModal) => {
+      Swal.fire({
+        title: 'Xóa toàn bộ 6 vị trí?',
+        text: 'Dữ liệu các mã đề sẽ được xóa về trạng thái trống ban đầu.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Đồng ý xóa',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#e11d48'
+      }).then((r) => {
+        if (r.isConfirmed) {
+          if (isModal) {
+            window.editingModalVariants = window.createDefault6Variants();
+            window.renderModalVariantSlots();
+          } else {
+            window.currentEditingExam.codeVariants = window.createDefault6Variants();
+            window.render6VariantSlots();
+          }
+          Swal.fire('Đã xóa', '6 vị trí mã đề đã được làm trống.', 'success');
+        }
+      });
+    };
+
+    window.previewVariantQuestions = (slotIndex, isModal) => {
+      const targetVariants = isModal ? window.editingModalVariants : (window.currentEditingExam.codeVariants || []);
+      const variant = targetVariants[slotIndex];
+      if (!variant || !variant.questions || variant.questions.length === 0) {
+        Swal.fire('Trống', 'Vị trí này chưa có câu hỏi nào.', 'info');
+        return;
+      }
+
+      const questions = variant.questions;
+      let html = `
+        <div class="text-left text-xs space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          <div class="p-2.5 bg-indigo-50 rounded-xl flex items-center justify-between">
+            <span class="font-bold text-indigo-900">Mã đề: ${variant.code || (101 + slotIndex)}</span>
+            <span class="text-slate-600 font-semibold">${questions.length} câu hỏi</span>
+          </div>
+          ${questions.map((q, idx) => `
+            <div class="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+              <div class="font-bold text-slate-800">Câu ${idx + 1}. <span class="text-[10px] uppercase font-semibold text-indigo-600">(${q.type})</span></div>
+              <div class="text-slate-700 leading-relaxed">${window.formatQuestionContent(q.stem || '')}</div>
+              ${q.type === 'mcq' ? `
+                <div class="grid grid-cols-2 gap-1.5 mt-2">
+                  ${(q.options || []).map(o => `
+                    <div class="p-1.5 rounded border text-[11px] ${o.isCorrect ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold' : 'border-slate-200'}">
+                      ${o.key}. ${o.text} ${o.isCorrect ? '✓' : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+              ${q.type === 'tf' ? `
+                <div class="space-y-1 mt-1.5">
+                  ${(q.items || []).map(it => `
+                    <div class="flex justify-between items-center text-[11px] p-1 rounded bg-slate-50">
+                      <span><strong>${it.label})</strong> ${it.text}</span>
+                      <span class="font-bold text-[10px] px-1.5 py-0.5 rounded ${it.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${it.isCorrect ? 'ĐÚNG' : 'SAI'}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+              ${(q.type === 'short' || q.type === 'cloze') ? `
+                <div class="text-[11px] text-amber-900 bg-amber-50 p-1.5 rounded mt-1">
+                  <strong>Đáp án:</strong> ${q.correctAnswer || ''}
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      Swal.fire({
+        title: `Xem Trước Mã Đề: ${variant.code || (101 + slotIndex)} (Vị trí #${slotIndex + 1})`,
+        html: html,
+        width: 700,
+        confirmButtonText: 'Đóng',
+        confirmButtonColor: '#4f46e5',
+        didOpen: (el) => {
+          if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([el]).catch(() => {});
+          }
+        }
+      });
+    };
+
+    window.openMultiCodeVariantsModal = (examId) => {
+      const ex = window.dbManager.db.exams[examId];
+      if (!ex) return;
+
+      window.editingModalExamId = examId;
+      document.getElementById('modal-variants-title').innerText = `Quản Lý 6 Mã Đề - ${ex.title}`;
+      document.getElementById('modal-variants-subtitle').innerText = `Lớp: ${ex.classId || 'Chung'} | Thời gian: ${ex.duration} phút | Tối đa 6 vị trí tải lên mã đề`;
+
+      if (!ex.codeVariants || !Array.isArray(ex.codeVariants) || ex.codeVariants.length === 0) {
+        window.editingModalVariants = window.createDefault6Variants(ex.questions);
+      } else {
+        window.editingModalVariants = JSON.parse(JSON.stringify(ex.codeVariants));
+      }
+
+      window.renderModalVariantSlots();
+      window.openModal('modal-multi-variants');
+    };
+
+    window.saveMultiCodeVariantsModal = () => {
+      if (!window.editingModalExamId) return;
+      const ex = window.dbManager.db.exams[window.editingModalExamId];
+      if (!ex) return;
+
+      ex.codeVariants = JSON.parse(JSON.stringify(window.editingModalVariants));
+      const validVariant = ex.codeVariants.find(v => v.questions && v.questions.length > 0);
+      if ((!ex.questions || ex.questions.length === 0) && validVariant) {
+        ex.questions = JSON.parse(JSON.stringify(validVariant.questions));
+      }
+
+      window.dbManager.saveLocal();
+      window.renderTeacherExamTable();
+      window.closeModal('modal-multi-variants');
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Đã Lưu Bộ 6 Mã Đề!',
+        text: `Bộ 6 mã đề cho đề thi "${ex.title}" đã được cập nhật thành công!`,
+        timer: 1600,
+        showConfirmButton: false
+      });
+    };
+
+    // =========================================================================
     // 5. EXAM CREATOR & 3 PARSERS ENGINE
     // =========================================================================
     window.currentEditingExam = {
@@ -2911,18 +4222,25 @@ def parse_docx_math_text_py(raw_text):
       maxStrikes: 3,
       maxAttempts: 1,
       isLocked: false,
-      questions: []
+      questions: [],
+      codeVariants: window.createDefault6Variants()
     };
 
     window.editExam = (examId) => {
       const ex = window.dbManager.db.exams[examId];
       if (!ex) return;
       window.currentEditingExam = JSON.parse(JSON.stringify(ex));
+      if (!window.currentEditingExam.codeVariants || !Array.isArray(window.currentEditingExam.codeVariants) || window.currentEditingExam.codeVariants.length === 0) {
+        window.currentEditingExam.codeVariants = window.createDefault6Variants(window.currentEditingExam.questions);
+      }
       window.switchTeacherTab('create');
     };
 
     window.renderEditorExamForm = () => {
       const ex = window.currentEditingExam;
+      if (!ex.codeVariants || !Array.isArray(ex.codeVariants) || ex.codeVariants.length === 0) {
+        ex.codeVariants = window.createDefault6Variants(ex.questions);
+      }
       document.getElementById('editor-exam-title').value = ex.title || '';
       document.getElementById('editor-exam-duration').value = ex.duration || 90;
       document.getElementById('editor-exam-display-mode').value = ex.displayMode || 'scroll';
@@ -2936,6 +4254,7 @@ def parse_docx_math_text_py(raw_text):
         document.getElementById('editor-exam-class').value = ex.classId;
       }
 
+      window.render6VariantSlots();
       window.renderEditorQuestionsList();
     };
 
@@ -3405,14 +4724,21 @@ def parse_docx_math_text_py(raw_text):
       if (!exam.id) exam.id = 'exam_' + window.uid();
       exam.createdAt = exam.createdAt || new Date().toISOString();
 
+      exam.codeVariants = window.currentEditingExam.codeVariants || window.createDefault6Variants();
+      const firstValid = exam.codeVariants.find(v => v.questions && v.questions.length > 0);
+      if ((!exam.questions || exam.questions.length === 0) && firstValid) {
+        exam.questions = JSON.parse(JSON.stringify(firstValid.questions));
+      }
+
       window.dbManager.db.exams[exam.id] = JSON.parse(JSON.stringify(exam));
       window.dbManager.saveLocal();
 
+      const uploadedCount = exam.codeVariants.filter(v => v.questions && v.questions.length > 0).length;
       Swal.fire({
         icon: 'success',
         title: 'Đã lưu đề thi thành công!',
-        text: `Đề thi "${exam.title}" gồm ${exam.questions?.length || 0} câu đã được lưu vào hệ thống.`,
-        timer: 1500,
+        text: `Đề thi "${exam.title}" (${uploadedCount > 0 ? uploadedCount + ' mã đề tải lên, ' : ''}${exam.questions?.length || 0} câu) đã được lưu vào hệ thống.`,
+        timer: 1600,
         showConfirmButton: false
       });
 
@@ -3423,12 +4749,15 @@ def parse_docx_math_text_py(raw_text):
       window.currentEditingExam = JSON.parse(JSON.stringify(window.dbManager.db.exams['exam_sample_1'] || DEFAULT_DATABASE.exams['exam_sample_1']));
       window.currentEditingExam.id = 'exam_' + window.uid();
       window.currentEditingExam.title = 'Đề Thi Khảo Sát Mẫu 2025 - ' + new Date().toLocaleDateString('vi-VN');
+      if (!window.currentEditingExam.codeVariants || !Array.isArray(window.currentEditingExam.codeVariants) || window.currentEditingExam.codeVariants.length === 0) {
+        window.currentEditingExam.codeVariants = window.createDefault6Variants(window.currentEditingExam.questions);
+      }
       window.renderEditorExamForm();
       Swal.fire({
         icon: 'success',
-        title: 'Đã tải đề mẫu chuẩn!',
-        text: 'Bao gồm trắc nghiệm 4 lựa chọn, đúng/sai, trả lời ngắn và điền khuyết.',
-        timer: 1400,
+        title: 'Đã tải đề mẫu chuẩn 6 mã đề!',
+        text: 'Bao gồm 6 mã đề (101 → 106) có trắc nghiệm 4 lựa chọn, đúng/sai, trả lời ngắn và điền khuyết.',
+        timer: 1500,
         showConfirmButton: false
       });
     };
@@ -3549,7 +4878,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         window.renderEditorQuestionsList();
         Swal.fire('Hoàn tất!', `AI đã bóc tách thành công ${parsedQuestions.length} câu hỏi!`, 'success');
       } catch (err) {
-        console.error('Gemini error:', err);
+        console.warn('Gemini notice:', err.message || err);
         Swal.fire('Lỗi AI Gemini', err.message || 'Không thể kết nối đến AI. Hãy kiểm tra lại API Key hoặc mạng.', 'error');
       }
     };
@@ -3655,6 +4984,28 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       }
 
       if (parsed && parsed.length > 0) {
+        if (window.pasteModalTargetMode && (window.pasteModalTargetMode.startsWith('variant_') || window.pasteModalTargetMode.startsWith('modal_variant_'))) {
+          const isModal = window.pasteModalTargetMode.startsWith('modal_variant_');
+          const slotIdx = parseInt(window.pasteModalTargetMode.replace('modal_variant_', '').replace('variant_', ''));
+          const targetVariants = isModal ? window.editingModalVariants : window.currentEditingExam.codeVariants;
+          if (targetVariants && targetVariants[slotIdx]) {
+            targetVariants[slotIdx].questions = parsed;
+            if (isModal) {
+              window.renderModalVariantSlots();
+            } else {
+              window.render6VariantSlots();
+            }
+            Swal.fire({
+              icon: 'success',
+              title: 'Thành công!',
+              text: `Đã nạp ${parsed.length} câu hỏi vào Vị trí #${slotIdx + 1} (Mã đề: ${targetVariants[slotIdx].code})!`,
+              timer: 1600,
+              showConfirmButton: false
+            });
+            return;
+          }
+        }
+
         if (window.pasteModalTargetMode === 'practice_python' || window.pasteModalTargetMode === 'practice_latex') {
           const newPracId = 'prac_' + window.uid();
           window.dbManager.db.practice[newPracId] = {
@@ -3811,79 +5162,136 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       return questions;
     };
 
-    // Parser for LaTeX .tex files
+    // Parser for LaTeX .tex files (Enhanced with balanced braces and multi-format support)
     window.parseLatexText = (tex) => {
       const questions = [];
+
+      // Helper to extract 4 braced arguments with balanced braces
+      const extract4BracedArgs = (text, startPos) => {
+        let pos = startPos;
+        const args = [];
+        for (let a = 0; a < 4; a++) {
+          while (pos < text.length && /\s/.test(text[pos])) pos++;
+          if (text[pos] !== '{') return null;
+          let depth = 0;
+          let start = pos + 1;
+          let end = -1;
+          for (let i = pos; i < text.length; i++) {
+            if (text[i] === '{') depth++;
+            else if (text[i] === '}') {
+              depth--;
+              if (depth === 0) {
+                end = i;
+                break;
+              }
+            }
+          }
+          if (end === -1) return null;
+          args.push(text.substring(start, end).trim());
+          pos = end + 1;
+        }
+        return { args, endPos: pos };
+      };
+
       // Split by \begin{ex} ... \end{ex}
       const exRegex = /\\begin\{ex\}([\s\S]*?)\\end\{ex\}/g;
       let exMatch;
       let count = 1;
 
       while ((exMatch = exRegex.exec(tex)) !== null) {
-        const body = exMatch[1].trim();
+        let body = exMatch[1].trim();
 
-        // Extract \loigiai{...}
+        // Extract \loigiai{...} with balanced braces
         let solution = '';
         let mainContent = body;
-        const loigiaiMatch = body.match(/\\loigiai\{([\s\S]*)\}\s*$/);
-        if (loigiaiMatch) {
-          solution = loigiaiMatch[1].trim();
-          mainContent = body.substring(0, loigiaiMatch.index).trim();
+        const loigiaiIdx = body.search(/\\loigiai\s*\{/);
+        if (loigiaiIdx !== -1) {
+          let depth = 0;
+          let solStart = -1;
+          let solEnd = -1;
+          for (let i = loigiaiIdx; i < body.length; i++) {
+            if (body[i] === '{') {
+              depth++;
+              if (depth === 1) solStart = i + 1;
+            } else if (body[i] === '}') {
+              depth--;
+              if (depth === 0) {
+                solEnd = i;
+                break;
+              }
+            }
+          }
+          if (solEnd !== -1) {
+            solution = body.substring(solStart, solEnd).trim();
+            mainContent = (body.substring(0, loigiaiIdx) + body.substring(solEnd + 1)).trim();
+          }
         }
 
-        // Keep mainContent in clean LaTeX; rendering is handled dynamically by formatQuestionContent
+        // Clean LaTeX wrappers so mainContent is pristine LaTeX without print wrappers
+        mainContent = window.cleanLatexWrappers(mainContent);
+        if (solution) {
+          solution = window.cleanLatexWrappers(solution);
+        }
 
-        // 1. Check for \choiceTFt (True/False)
-        const tfMatch = mainContent.match(/\\choiceTFt\s*\{([\s\S]*?)\}\s*\{([\s\S]*?)\}\s*\{([\s\S]*?)\}\s*\{([\s\S]*?)\}/);
+        // 1. Check for True/False (\choiceTF, \choiceTFt, \choiceTF[t])
+        const tfMatch = mainContent.match(/\\choiceTFt?(?:\[.*?\])?/);
         if (tfMatch) {
-          const stem = mainContent.substring(0, tfMatch.index).trim();
-          const labels = ['a', 'b', 'c', 'd'];
-          const items = labels.map((lbl, i) => {
-            let itemText = tfMatch[i + 1].trim();
-            const isTrue = itemText.includes('\\True');
-            itemText = itemText.replace(/\\True/g, '').trim();
-            return { label: lbl, text: itemText, isCorrect: isTrue };
-          });
+          const matchIdx = tfMatch.index;
+          const fourArgs = extract4BracedArgs(mainContent, matchIdx + tfMatch[0].length);
+          if (fourArgs) {
+            const stem = window.cleanLatexWrappers(mainContent.substring(0, matchIdx)).trim();
+            const labels = ['a', 'b', 'c', 'd'];
+            const items = labels.map((lbl, i) => {
+              let itemText = fourArgs.args[i] || '';
+              const isTrue = itemText.includes('\\True');
+              itemText = itemText.replace(/\\True/g, '').trim();
+              return { label: lbl, text: itemText, isCorrect: isTrue };
+            });
 
-          questions.push({
-            id: 'q_' + count++,
-            type: 'tf',
-            stem,
-            items,
-            solution
-          });
-          continue;
+            questions.push({
+              id: 'q_' + count++,
+              type: 'tf',
+              stem,
+              items,
+              solution
+            });
+            continue;
+          }
         }
 
-        // 2. Check for \choice (MCQ 4 options)
-        const choiceMatch = mainContent.match(/\\choice\s*\{([\s\S]*?)\}\s*\{([\s\S]*?)\}\s*\{([\s\S]*?)\}\s*\{([\s\S]*?)\}/);
-        if (choiceMatch) {
-          const stem = mainContent.substring(0, choiceMatch.index).trim();
-          const keys = ['A', 'B', 'C', 'D'];
-          let correctKey = '';
-          const options = keys.map((key, i) => {
-            let optText = choiceMatch[i + 1].trim();
-            const isCorrect = optText.includes('\\True');
-            if (isCorrect) correctKey = key;
-            optText = optText.replace(/\\True/g, '').trim();
-            return { key, text: optText, isCorrect };
-          });
+        // 2. Check for MCQ 4 options (\choice, \choice[1..4], \motcot, \haicot, \boncot)
+        const mcqMatch = mainContent.match(/\\(?:choice|motcot|haicot|boncot|choicecol)(?:\[.*?\])?/);
+        if (mcqMatch) {
+          const matchIdx = mcqMatch.index;
+          const fourArgs = extract4BracedArgs(mainContent, matchIdx + mcqMatch[0].length);
+          if (fourArgs) {
+            const stem = window.cleanLatexWrappers(mainContent.substring(0, matchIdx)).trim();
+            const keys = ['A', 'B', 'C', 'D'];
+            let correctKey = '';
+            const options = keys.map((key, i) => {
+              let optText = fourArgs.args[i] || '';
+              const isCorrect = optText.includes('\\True');
+              if (isCorrect) correctKey = key;
+              optText = optText.replace(/\\True/g, '').trim();
+              return { key, text: optText, isCorrect };
+            });
 
-          questions.push({
-            id: 'q_' + count++,
-            type: 'mcq',
-            stem,
-            options,
-            correctKey,
-            solution
-          });
-          continue;
+            questions.push({
+              id: 'q_' + count++,
+              type: 'mcq',
+              stem,
+              options,
+              correctKey,
+              solution
+            });
+            continue;
+          }
         }
 
         // 3. Check for \shortans{...}
-        const shortMatch = mainContent.match(/\\shortans\{([\s\S]*?)\}/);
+        const shortMatch = mainContent.match(/\\shortans\s*\{([\s\S]*?)\}/);
         if (shortMatch) {
-          const stem = mainContent.substring(0, shortMatch.index).trim();
+          const stem = window.cleanLatexWrappers(mainContent.substring(0, shortMatch.index)).trim();
           const ans = shortMatch[1].trim();
           questions.push({
             id: 'q_' + count++,
@@ -3987,7 +5395,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           optHtml = `<div class="grid sm:grid-cols-2 gap-2 mt-2">
             ${(q.options || []).map(o => `
               <div class="p-2 rounded-lg border ${o.isCorrect ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold' : 'border-slate-200 bg-white'}">
-                ${o.key}. ${window.formatQuestionContent(o.text)} ${o.isCorrect ? '<span class="text-xs text-emerald-600 font-bold ml-1">✓ (Đáp án đúng)</span>' : ''}
+                ${o.key}. ${o.text} ${o.isCorrect ? '<span class="text-xs text-emerald-600 font-bold ml-1">✓ (Đáp án đúng)</span>' : ''}
               </div>
             `).join('')}
           </div>`;
@@ -3995,7 +5403,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           optHtml = `<div class="space-y-1 mt-2">
             ${(q.items || []).map(it => `
               <div class="p-2 rounded-lg border border-slate-200 bg-white flex justify-between items-center">
-                <span><strong>${it.label})</strong> ${window.formatQuestionContent(it.text)}</span>
+                <span><strong>${it.label})</strong> ${it.text}</span>
                 <span class="px-2 py-0.5 rounded text-xs font-bold ${it.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
                   ${it.isCorrect ? 'ĐÚNG' : 'SAI'}
                 </span>
@@ -5673,9 +7081,12 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
 
       window.pendingExamLaunch = { examId, isPracticeMode, exam: targetExam };
 
+      const validVariants = (targetExam.codeVariants && Array.isArray(targetExam.codeVariants))
+        ? targetExam.codeVariants.filter(v => v.questions && v.questions.length > 0)
+        : [];
       const subTitleEl = document.getElementById('rules-exam-subtitle');
       if (subTitleEl) {
-        subTitleEl.innerText = `Bài thi: ${targetExam.title} | Lớp: ${targetExam.classId || 'Chung'} | Mã đề: Ngẫu nhiên`;
+        subTitleEl.innerText = `Bài thi: ${targetExam.title} | Lớp: ${targetExam.classId || 'Chung'} | Mã đề: ${validVariants.length > 0 ? validVariants.length + ' mã đề (Đưa & trộn ngẫu nhiên)' : 'Ngẫu nhiên'}`;
       }
       const durEl = document.getElementById('rules-badge-duration');
       if (durEl) durEl.innerText = `${targetExam.duration || 90} phút`;
@@ -5732,17 +7143,28 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       window.isViolationAlertShowing = false;
       window.examFullscreenActive = false;
 
-      const randomVariants = ['101', '102', '103', '104', '105', '106'];
-      const assignedCode = randomVariants[Math.floor(Math.random() * randomVariants.length)];
+      // 6-Variant Selection & Randomization Logic:
+      let assignedCode = '101';
+      let baseQuestions = targetExam.questions || [];
 
-      // Deep clone and randomize options
-      const randomizedQuestions = (targetExam.questions || []).map(q => {
-        const qClone = JSON.parse(JSON.stringify(q));
-        if (qClone.type === 'mcq' && qClone.options) {
-          qClone.options = window.shuffleArray(qClone.options);
-        }
-        return qClone;
-      });
+      const validVariants = (targetExam.codeVariants && Array.isArray(targetExam.codeVariants))
+        ? targetExam.codeVariants.filter(v => v && Array.isArray(v.questions) && v.questions.length > 0)
+        : [];
+
+      if (validVariants.length > 0) {
+        // Randomly select one among the uploaded variants
+        const chosenVariant = validVariants[Math.floor(Math.random() * validVariants.length)];
+        assignedCode = chosenVariant.code || ('Mã ' + (chosenVariant.slot || 1));
+        baseQuestions = chosenVariant.questions;
+      } else {
+        const randomVariants = ['101', '102', '103', '104', '105', '106'];
+        assignedCode = randomVariants[Math.floor(Math.random() * randomVariants.length)];
+        baseQuestions = targetExam.questions || [];
+      }
+
+      // "được trộn ngẫu nhiên của mã đề đó":
+      // Randomize questions & options for that chosen variant
+      const randomizedQuestions = window.randomizeExamQuestionsAndOptions(baseQuestions);
 
       window.activeExamState = {
         examId: targetExam.id,
@@ -5786,6 +7208,18 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       document.getElementById('exam-header-code').innerText = state.examCode;
       document.getElementById('exam-current-strikes').innerText = state.strikes;
       document.getElementById('exam-max-strikes').innerText = state.maxStrikes;
+
+      if (!state.isPracticeMode) {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'info',
+          title: `Đã phát Mã đề: ${state.examCode}`,
+          text: 'Đề thi đã được xáo trộn câu hỏi và các phương án ngẫu nhiên.',
+          timer: 3500,
+          showConfirmButton: false
+        });
+      }
 
       if (state.isPracticeMode) {
         document.getElementById('practice-banner-notice').classList.remove('hidden');
@@ -6810,7 +8244,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         queue.push(record);
         localStorage.setItem('mathexam_offline_queue', JSON.stringify(queue));
       } catch (e) {
-        console.error('Error queuing offline submission:', e);
+        console.warn('Notice queuing offline submission:', e);
       }
     };
 
@@ -6835,7 +8269,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           });
         }
       } catch (e) {
-        console.error('Error syncing offline submissions:', e);
+        console.warn('Notice syncing offline submissions:', e);
       }
     };
 
