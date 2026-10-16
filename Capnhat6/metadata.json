@@ -1,0 +1,6 @@
+{
+  "name": "MathExam Pro",
+  "description": "Nền tảng thi trắc nghiệm Toán học",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
