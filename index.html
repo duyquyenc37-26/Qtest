@@ -137,6 +137,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script>
+    try {
+      if (window.firebase && window.firebase.firestore && typeof window.firebase.firestore.setLogLevel === 'function') {
+        window.firebase.firestore.setLogLevel('silent');
+      }
+    } catch (e) {}
+  </script>
 
   <!-- Pyodide for Python Regex in WebAssembly -->
   <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
@@ -369,7 +376,7 @@
         </div>
         <div class="min-w-0">
           <h1 class="text-base sm:text-xl font-extrabold bg-gradient-to-r from-indigo-700 via-violet-700 to-purple-700 bg-clip-text text-transparent truncate">MathExam Pro</h1>
-          <p class="text-[10px] sm:text-xs text-slate-500 font-medium truncate">Khảo thí & Ôn tập Toán học Thông minh</p>
+          <p class="text-[10px] sm:text-xs text-slate-500 font-medium truncate">Hệ thống thi trắc nghiệm Toán học trực tuyến</p>
         </div>
       </div>
       <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -381,67 +388,66 @@
 
     <!-- Main Hero -->
     <main class="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-12 flex-1 flex flex-col justify-center w-full">
-      <div class="text-center max-w-2xl mx-auto mb-6 sm:mb-10">
+      <div class="text-center max-w-2xl mx-auto mb-6 sm:mb-8">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200 mb-3 sm:mb-4 shadow-sm">
-          <i class="fa-solid fa-shield-halved text-indigo-600"></i>  
+          <i class="fa-solid fa-shield-halved text-indigo-600"></i> 
         </span>
-        <h2 class="text-2xl sm:text-4xl md:text-5xl font-black text-slate-800 tracking-tight leading-tight mb-3 sm:mb-4">
-           <span class="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent"> </span>
+        <h2 class="text-2xl sm:text-4xl md:text-5xl font-black text-slate-800 tracking-tight leading-tight mb-3">
+          <br class="hidden sm:inline" />
+          <span class="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent"></span>
         </h2>
-        <p class="text-slate-600 text-xs sm:text-sm md:text-base leading-relaxed px-2">
-         
+        <p class="text-slate-600 text-xs sm:text-sm md:text-base leading-relaxed px-2 max-w-xl mx-auto">
+          
         </p>
       </div>
 
-      <!-- Portal Chooser Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto w-full">
+      <!-- Portal Chooser: Centered Student Portal -->
+      <div class="max-w-xl mx-auto w-full">
         <!-- Student Portal Card -->
-        <div onclick="window.switchView('view-student-login')" class="glass-card p-5 sm:p-8 rounded-2xl sm:rounded-3xl cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition duration-300 border border-white/60 relative overflow-hidden group">
-          <div class="absolute -right-8 -top-8 w-28 h-28 sm:w-32 sm:h-32 bg-indigo-500/10 rounded-full group-hover:scale-150 transition duration-500"></div>
-          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl sm:text-2xl mb-4 sm:mb-6 shadow-md shadow-indigo-600/30 group-hover:bg-indigo-700 transition">
-            <i class="fa-solid fa-graduation-cap"></i>
+        <div class="glass-card p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/80 shadow-2xl relative overflow-hidden group">
+          <div class="absolute -right-10 -top-10 w-36 h-36 bg-gradient-to-br from-indigo-500/15 to-violet-500/15 rounded-full group-hover:scale-125 transition duration-500 pointer-events-none"></div>
+          
+          <div class="flex items-center gap-3.5 sm:gap-4 mb-4">
+            <div class="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-indigo-600/30 shrink-0">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
+                 Học Sinh
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-sans">Đang Mở</span>
+              </h3>
+              <p class="text-slate-500 text-xs sm:text-sm mt-0.5 truncate"></p>
+            </div>
           </div>
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-xl sm:text-2xl font-bold text-slate-800 group-hover:text-indigo-600 transition">Học Sinh</h3>
-            <span class="text-indigo-600 font-semibold text-sm group-hover:translate-x-1 transition"><i class="fa-solid fa-arrow-right"></i></span>
-          </div>
-          <p class="text-slate-600 text-xs sm:text-sm mb-4 sm:mb-6 leading-relaxed">
-            Vào phòng thi.
-          </p>
-          <div class="flex flex-wrap gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
-            <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-lock mr-1"></i>Mã PIN 6 số</span>
-            <span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-bolt mr-1"></i>Làm bài mượt mà</span>
-            <span class="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Offline Sync</span>
-          </div>
-        </div>
 
-        <!-- Teacher Portal Card -->
-        <div onclick="window.switchView('view-teacher-login')" class="glass-card p-5 sm:p-8 rounded-2xl sm:rounded-3xl cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition duration-300 border border-white/60 relative overflow-hidden group">
-          <div class="absolute -right-8 -top-8 w-28 h-28 sm:w-32 sm:h-32 bg-violet-500/10 rounded-full group-hover:scale-150 transition duration-500"></div>
-          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-violet-600 text-white flex items-center justify-center text-xl sm:text-2xl mb-4 sm:mb-6 shadow-md shadow-violet-600/30 group-hover:bg-violet-700 transition">
-            <i class="fa-solid fa-chalkboard-user"></i>
-          </div>
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-xl sm:text-2xl font-bold text-slate-800 group-hover:text-violet-600 transition">Giáo Viên</h3>
-            <span class="text-violet-600 font-semibold text-sm group-hover:translate-x-1 transition"><i class="fa-solid fa-arrow-right"></i></span>
-          </div>
-          <p class="text-slate-600 text-xs sm:text-sm mb-4 sm:mb-6 leading-relaxed">
-            Tạo đề thi...
+          <p class="text-slate-600 text-xs sm:text-sm mb-6 leading-relaxed">
+            
           </p>
-          <div class="flex flex-wrap gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
-            <span class="bg-violet-50 text-violet-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>3 Parser Đề thi</span>
-            <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-file-excel mr-1"></i>Excel SheetJS</span>
-            <span class="bg-pink-50 text-pink-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-shuffle mr-1"></i>Sinh 6 mã đề</span>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <button type="button" onclick="window.openStudentPortal('login')" class="py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+              <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập
+            </button>
+            <button type="button" onclick="window.openStudentPortal('register')" class="py-3 px-4 rounded-xl bg-white hover:bg-indigo-50 border-2 border-indigo-200 hover:border-indigo-400 text-indigo-700 font-semibold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-2 transition active:scale-[0.98]">
+              <i class="fa-solid fa-user-plus text-indigo-600"></i> Đăng Ký
+            </button>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 sm:gap-2 text-[11px] sm:text-xs pt-4 border-t border-slate-100 text-slate-600">
+            <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-lock mr-1"></i></span>
+            <span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-shield-virus mr-1"></i></span>
+            <span class="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-shuffle mr-1"></i></span>
+            <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-bolt mr-1"></i></span>
           </div>
         </div>
       </div>
 
       <!-- Quick Feature Badges -->
       <div class="mt-12 text-center flex flex-wrap justify-center items-center gap-6 text-xs text-slate-500 font-medium">
-        <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-virus text-indigo-600"></i> Chống gian lận Tab / DevTools</span>
-        <span class="flex items-center gap-1.5"><i class="fa-solid fa-square-root-alt text-violet-600"></i> MathJax 3.0 & TikZJax</span>
-        <span class="flex items-center gap-1.5"><i class="fa-brands fa-python text-amber-600"></i> Python Regex (PyScript/Pyodide)</span>
-        <span class="flex items-center gap-1.5"><i class="fa-solid fa-database text-blue-600"></i> Lưu trữ Trực tuyến / Offline Cache</span>
+        <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-virus text-indigo-600"></i> </span>
+        <span class="flex items-center gap-1.5"><i class="fa-solid fa-square-root-alt text-violet-600"></i> </span>
+        <span class="flex items-center gap-1.5"><i class="fa-brands fa-python text-amber-600"></i> </span>
+        <span class="flex items-center gap-1.5"><i class="fa-solid fa-database text-blue-600"></i> </span>
       </div>
     </main>
 
@@ -506,7 +512,7 @@
           <h2 class="font-extrabold text-slate-800 text-xs sm:text-base flex items-center gap-1.5 sm:gap-2 truncate">
             MathExam Pro <span class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">Teacher</span>
           </h2>
-          <p class="text-[10px] sm:text-[11px] text-slate-500 truncate">ThS. Toán Học | <span id="teacher-header-db-status" onclick="window.showChangeServerModal()" class="text-emerald-600 font-medium cursor-pointer hover:underline" title="Nhấn để cấu hình / đổi server Firebase">Local Storage Active</span></p>
+          <p class="text-[10px] sm:text-[11px] text-slate-500 truncate"> Toán Học | <span id="teacher-header-db-status" onclick="window.showChangeServerModal()" class="text-emerald-600 font-medium cursor-pointer hover:underline" title="Nhấn để cấu hình / đổi server Firebase">Local Storage Active</span></p>
         </div>
       </div>
 
@@ -825,12 +831,39 @@
                 <h4 id="current-class-title" class="font-bold text-slate-800 text-sm">Lớp: 12A1</h4>
                 <p id="current-class-subtitle" class="text-[11px] text-slate-500">Tổng cộng: 0 học sinh</p>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="window.exportSingleClassGradesExcel(window.selectedClassId)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition shadow-sm flex items-center gap-1.5" title="Xuất bảng điểm bài thi riêng cho lớp này">
+                  <i class="fa-solid fa-file-excel"></i> Xuất Điểm Lớp
+                </button>
                 <button onclick="window.showAssignExamToClassModal(window.selectedClassId)" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5" title="Giao đề thi cho lớp này">
                   <i class="fa-solid fa-file-circle-plus"></i> Giao Đề Thi
                 </button>
                 <button onclick="window.showAddStudentModal()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition">
                   + Thêm Học Sinh
+                </button>
+                <button onclick="window.deleteClass(window.selectedClassId)" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold transition flex items-center gap-1.5" title="Xóa lớp học này">
+                  <i class="fa-regular fa-trash-can"></i> Xóa Lớp
+                </button>
+              </div>
+            </div>
+
+            <!-- Mã PIN Mặc Định Của Lớp Bar -->
+            <div class="px-5 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-amber-900 flex items-center gap-1.5">
+                  <i class="fa-solid fa-key text-amber-600"></i> Mã PIN mặc định cả lớp:
+                </span>
+                <span id="current-class-default-pin" class="font-mono font-black text-sm px-2.5 py-0.5 rounded-lg bg-white text-indigo-700 border border-amber-300 shadow-2xs">
+                  123456
+                </span>
+                <span class="text-[11px] text-amber-800 hidden sm:inline">(Học sinh trong lớp có thể dùng chung mã PIN này để đăng nhập vào làm bài thi)</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="window.showSetClassDefaultPinModal()" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold transition shadow-xs flex items-center gap-1" title="Đặt lại mã PIN mặc định cho lớp này">
+                  <i class="fa-solid fa-pen-to-square"></i> Đổi PIN mặc định
+                </button>
+                <button onclick="window.applyDefaultPinToAllStudents()" class="px-2.5 py-1 bg-white hover:bg-amber-100/70 text-amber-900 border border-amber-300 rounded-lg text-xs font-semibold transition shadow-xs flex items-center gap-1" title="Gán mã PIN mặc định này cho tất cả học sinh đang có trong danh sách">
+                  <i class="fa-solid fa-arrows-rotate"></i> Đồng bộ cho mọi HS
                 </button>
               </div>
             </div>
@@ -955,11 +988,32 @@
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 class="text-xl font-bold text-slate-800">Thống Kê Điểm Số & Lịch Sử Nộp Bài</h3>
-            <p class="text-xs text-slate-500">Xem phổ điểm, so sánh đáp án học sinh và đáp án đúng, xuất bảng điểm Excel</p>
+            <p class="text-xs text-slate-500">Xem phổ điểm, so sánh đáp án học sinh, lọc và xuất bảng điểm Excel riêng theo từng lớp</p>
           </div>
-          <button onclick="window.exportSubmissionsExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">
-            <i class="fa-solid fa-file-excel mr-1.5"></i> Xuất Bảng Điểm Excel
-          </button>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="window.exportSubmissionsExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition shadow-sm flex items-center gap-1.5" title="Xuất kết quả của lớp đang chọn hoặc tất cả">
+              <i class="fa-solid fa-file-excel"></i> Xuất Excel (<span id="gradebook-export-btn-label">Tất Cả</span>)
+            </button>
+            <button onclick="window.exportSubmissionsByClassModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition shadow-sm flex items-center gap-1.5" title="Xuất bảng điểm phân loại theo từng lớp">
+              <i class="fa-solid fa-layer-group"></i> Xuất Điểm Riêng Từng Lớp
+            </button>
+          </div>
+        </div>
+
+        <!-- Class Filter Bar -->
+        <div class="p-4 bg-white rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-semibold text-slate-700">
+            <label for="gradebook-class-filter" class="flex items-center gap-1.5 text-indigo-700 font-bold">
+              <i class="fa-solid fa-filter"></i> Lọc Điểm Theo Lớp:
+            </label>
+            <select id="gradebook-class-filter" onchange="window.onGradebookClassFilterChange()" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 min-w-[160px]">
+              <option value="ALL">-- Tất Cả Các Lớp --</option>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div id="gradebook-class-quick-exports" class="flex flex-wrap items-center gap-1.5 text-xs">
+            <!-- Dynamic quick export buttons per class -->
+          </div>
         </div>
 
         <!-- Grade Summary Stat Cards -->
@@ -1018,47 +1072,137 @@
         <i class="fa-solid fa-arrow-left"></i> Quay lại
       </button>
 
-      <div class="text-center mt-6 sm:mt-4 mb-6">
+      <div class="text-center mt-6 sm:mt-4 mb-5">
         <div class="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center text-xl sm:text-2xl mx-auto mb-3 sm:mb-4 shadow-lg shadow-indigo-500/30">
           <i class="fa-solid fa-user-graduate"></i>
         </div>
-        <h2 class="text-xl sm:text-2xl font-black text-slate-800">Cổng Thi Học Sinh</h2>
-        <p class="text-xs text-slate-500 mt-1">Xác thực 2 bước bằng Mã Lớp và Mã PIN 6 số</p>
+        <h2 id="student-portal-title" class="text-xl sm:text-2xl font-black text-slate-800">Cổng Thi Học Sinh</h2>
+        <p id="student-portal-subtitle" class="text-xs text-slate-500 mt-1">Xác thực đăng nhập hoặc đăng ký dự thi cho học sinh ngoài lớp</p>
       </div>
 
-      <!-- Step 1: Select or enter class -->
-      <div id="student-login-step-1" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Chọn hoặc Nhập Mã Lớp Học</label>
-          <select id="student-select-class" onchange="window.onStudentClassSelected()" class="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm font-medium">
-            <!-- Dynamically populated classes -->
-          </select>
-        </div>
-
-        <button type="button" onclick="window.proceedToStudentStep2()" class="w-full py-3 sm:py-3.5 rounded-xl bg-indigo-600 text-white font-semibold text-xs sm:text-sm hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 active:scale-[0.98]">
-          Tiếp Tục <i class="fa-solid fa-arrow-right"></i>
+      <!-- Auth Switcher Tabs -->
+      <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-xl mb-5 border border-slate-200/80">
+        <button type="button" id="tab-student-login-btn" onclick="window.setStudentAuthMode('login')" class="py-2 px-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-indigo-700 shadow-sm transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập
+        </button>
+        <button type="button" id="tab-student-register-btn" onclick="window.setStudentAuthMode('register')" class="py-2 px-2 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-indigo-600 transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-user-plus"></i> Đăng Ký Dự Thi
         </button>
       </div>
 
-      <!-- Step 2: Name & PIN -->
-      <div id="student-login-step-2" class="space-y-4 hidden">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Họ và Tên Học Sinh</label>
-          <input type="text" id="student-name-input" placeholder="Nhập chính xác họ và tên..." class="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm font-medium" />
-        </div>
+      <!-- Container 1: Student Login -->
+      <div id="student-login-container">
+        <!-- Step 1: Select or enter class -->
+        <div id="student-login-step-1" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Chọn Lớp Học Dự Thi</label>
+            <select id="student-select-class" class="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm font-medium">
+              <!-- Dynamically populated classes -->
+            </select>
+          </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Mã PIN Bảo Mật (6 số)</label>
-          <input type="password" id="student-pin-input" maxlength="6" placeholder="Ví dụ: 123456" class="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-center tracking-[0.3em] font-mono text-base sm:text-lg font-bold" />
-          <p class="text-[11px] text-slate-400 mt-1">Mã PIN được cấp bởi Giáo viên chủ nhiệm</p>
-        </div>
-
-        <div class="flex items-center gap-2 pt-2">
-          <button type="button" onclick="window.backToStudentStep1()" class="w-1/3 py-2.5 sm:py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-            Đổi Lớp
+          <button type="button" onclick="window.proceedToStudentStep2()" class="w-full py-3 sm:py-3.5 rounded-xl bg-indigo-600 text-white font-semibold text-xs sm:text-sm hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 active:scale-[0.98]">
+            Tiếp Tục <i class="fa-solid fa-arrow-right"></i>
           </button>
-          <button type="button" onclick="window.handleStudentLogin()" class="w-2/3 py-2.5 sm:py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30 active:scale-[0.98]">
-            <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Vào Phòng Học
+
+          <div class="pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
+            Học sinh bên ngoài lớp chưa có tên? 
+            <button type="button" onclick="window.setStudentAuthMode('register')" class="font-bold text-indigo-600 hover:text-indigo-800 underline ml-0.5">
+              Đăng ký dự thi ngay
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Name & PIN -->
+        <div id="student-login-step-2" class="space-y-4 hidden">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Họ và Tên Học Sinh</label>
+            <input type="text" id="student-name-input" placeholder="Nhập chính xác họ và tên..." class="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-sm font-medium" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Mã PIN Bảo Mật (Mã cá nhân hoặc Mã PIN chung của Lớp)</label>
+            <input type="password" id="student-pin-input" maxlength="6" placeholder="Ví dụ: 123456" class="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-center tracking-[0.3em] font-mono text-base sm:text-lg font-bold" />
+            <p class="text-[11px] text-slate-400 mt-1">Học sinh có thể dùng mã PIN cá nhân hoặc mã PIN mặc định của lớp do Giáo viên cấp</p>
+          </div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <button type="button" onclick="window.backToStudentStep1()" class="w-1/3 py-2.5 sm:py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+              Đổi Lớp
+            </button>
+            <button type="button" onclick="window.handleStudentLogin()" class="w-2/3 py-2.5 sm:py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30 active:scale-[0.98]">
+              <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Vào Phòng Học
+            </button>
+          </div>
+
+          <div class="pt-2 text-center text-xs text-slate-500">
+            Chưa có trong danh sách? 
+            <button type="button" onclick="window.setStudentAuthMode('register')" class="font-bold text-indigo-600 hover:underline">
+              Đăng ký tham gia thi
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Container 2: Outside Student Registration -->
+      <div id="student-register-container" class="space-y-3.5 hidden">
+        <div class="p-2.5 rounded-xl bg-indigo-50/80 border border-indigo-100 text-xs text-indigo-900 flex items-start gap-2">
+          <i class="fa-solid fa-user-plus text-indigo-600 mt-0.5 shrink-0 text-sm"></i>
+          <div>
+            <strong class="font-semibold block">Đăng ký dành cho học sinh ngoài lớp:</strong>
+            <span class="text-indigo-700/90 text-[11px]">Học sinh tự do điền thông tin và tạo mã PIN 6 số để tham gia thi và lưu điểm.</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Phòng Lớp Chỉ Định (Tách biệt với các lớp chính thức)</label>
+          <div class="px-3.5 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50/70 flex items-center justify-between text-xs sm:text-sm font-bold text-indigo-900 shadow-2xs">
+            <span class="flex items-center gap-2">
+              <i class="fa-solid fa-door-open text-indigo-600 text-sm"></i>
+              <span>Phòng Thi Tự Do (Thí sinh ngoài lớp)</span>
+            </span>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-800 shrink-0">Phòng riêng</span>
+          </div>
+          <input type="hidden" id="student-reg-class" value="TD_NGOAILOP" />
+          <p class="text-[11px] text-slate-400 mt-1">
+            <i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Thí sinh tự do được đưa vào phòng thi riêng, không được và không thể vào danh sách các lớp học chính thức.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Họ và Tên Thí Sinh <span class="text-rose-500">*</span></label>
+          <input type="text" id="student-reg-name" placeholder="Ví dụ: Nguyễn Hoàng Nam..." class="w-full px-3.5 py-2 sm:py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-xs sm:text-sm font-medium" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Trường Học / Lớp Bên Ngoài <span class="text-slate-400 font-normal">(Tùy chọn)</span></label>
+          <input type="text" id="student-reg-school" placeholder="Ví dụ: THPT Chuyên, Lớp tự do ngoài trường..." class="w-full px-3.5 py-2 sm:py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-xs sm:text-sm font-medium" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-700">Mã PIN 6 số <span class="text-rose-500">*</span></label>
+              <button type="button" onclick="window.generateRandomRegPin()" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium" title="Sinh mã PIN ngẫu nhiên">
+                <i class="fa-solid fa-arrows-rotate mr-0.5"></i> Tạo ngẫu nhiên
+              </button>
+            </div>
+            <input type="text" id="student-reg-pin" maxlength="6" placeholder="VD: 123456" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-center tracking-[0.2em] font-mono text-sm font-bold" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Nhập lại Mã PIN <span class="text-rose-500">*</span></label>
+            <input type="password" id="student-reg-pin-confirm" maxlength="6" placeholder="Nhập lại 6 số" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-center tracking-[0.2em] font-mono text-sm font-bold" />
+          </div>
+        </div>
+
+        <button type="button" onclick="window.handleStudentRegister()" class="w-full mt-2 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xs sm:text-sm transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 active:scale-[0.98]">
+          <i class="fa-solid fa-user-check"></i> Hoàn Tất Đăng Ký & Vào Thi Ngay
+        </button>
+
+        <div class="pt-2 text-center text-xs text-slate-500">
+          Đã có mã PIN hoặc tài khoản? 
+          <button type="button" onclick="window.setStudentAuthMode('login')" class="font-bold text-indigo-600 hover:underline">
+            Đăng nhập tại đây
           </button>
         </div>
       </div>
@@ -1826,6 +1970,7 @@ def parse_docx_math_text_py(raw_text):
           id: '12A1',
           name: 'Lớp 12A1 - Chuyên Toán',
           grade: '12',
+          defaultPin: '123456',
           students: [
             { id: 'hs_1', name: 'Nguyễn Văn An', pin: '123456', status: 'active' },
             { id: 'hs_2', name: 'Trần Thị Bình', pin: '654321', status: 'active' },
@@ -1838,10 +1983,19 @@ def parse_docx_math_text_py(raw_text):
           id: '12A2',
           name: 'Lớp 12A2 - Tự Nhiên',
           grade: '12',
+          defaultPin: '654321',
           students: [
             { id: 'hs_6', name: 'Vũ Quốc Hùng', pin: '112233', status: 'active' },
             { id: 'hs_7', name: 'Ngô Thanh Hương', pin: '445566', status: 'active' }
           ]
+        },
+        'TD_NGOAILOP': {
+          id: 'TD_NGOAILOP',
+          name: 'Phòng Thi Tự Do (Thí sinh ngoài lớp)',
+          grade: '12',
+          defaultPin: '123456',
+          isGuestRoom: true,
+          students: []
         }
       },
       exams: {
@@ -1849,6 +2003,7 @@ def parse_docx_math_text_py(raw_text):
           id: 'exam_sample_1',
           title: 'Đề Khảo Sát Toán 12 - Chuẩn Cấu Trúc Bộ GD 2025',
           classId: '12A1',
+          assignedClasses: ['12A1', '12A2', 'TD_NGOAILOP'],
           duration: 90,
           displayMode: 'scroll',
           minPercent: 50,
@@ -1996,6 +2151,9 @@ def parse_docx_math_text_py(raw_text):
         }
         if (!window.firebase.firestore) {
           await loadScript('https://cdn.jsdelivr.net/npm/firebase@10.8.0/firebase-firestore-compat.js');
+        }
+        if (window.firebase && window.firebase.firestore && typeof window.firebase.firestore.setLogLevel === 'function') {
+          try { window.firebase.firestore.setLogLevel('silent'); } catch (e) {}
         }
         return !!(window.firebase && window.firebase.firestore);
       } catch (err) {
@@ -2213,6 +2371,50 @@ def parse_docx_math_text_py(raw_text):
               }
             }
 
+            if (data.classes && typeof data.classes === 'object') {
+              if (!data.classes['TD_NGOAILOP']) {
+                data.classes['TD_NGOAILOP'] = {
+                  id: 'TD_NGOAILOP',
+                  name: 'Phòng Thi Tự Do (Thí sinh ngoài lớp)',
+                  grade: '12',
+                  defaultPin: '123456',
+                  isGuestRoom: true,
+                  students: []
+                };
+              } else {
+                data.classes['TD_NGOAILOP'].isGuestRoom = true;
+              }
+
+              // Isolate official class rosters from guest registrations
+              Object.keys(data.classes).forEach(cid => {
+                if (cid !== 'TD_NGOAILOP') {
+                  const offCls = data.classes[cid];
+                  if (Array.isArray(offCls.students)) {
+                    const guestStudents = offCls.students.filter(s => s.isSelfRegistered || s.isGuest);
+                    if (guestStudents.length > 0) {
+                      offCls.students = offCls.students.filter(s => !s.isSelfRegistered && !s.isGuest);
+                      guestStudents.forEach(gs => {
+                        if (!data.classes['TD_NGOAILOP'].students.some(s => s.id === gs.id || s.name === gs.name)) {
+                          data.classes['TD_NGOAILOP'].students.push(gs);
+                        }
+                      });
+                    }
+                  }
+                }
+                if (!data.classes[cid].defaultPin) {
+                  data.classes[cid].defaultPin = '123456';
+                }
+              });
+            }
+
+            if (data.exams && data.exams['exam_sample_1']) {
+              if (!Array.isArray(data.exams['exam_sample_1'].assignedClasses)) {
+                data.exams['exam_sample_1'].assignedClasses = ['12A1', '12A2', 'TD_NGOAILOP'];
+              } else if (!data.exams['exam_sample_1'].assignedClasses.includes('TD_NGOAILOP')) {
+                data.exams['exam_sample_1'].assignedClasses.push('TD_NGOAILOP');
+              }
+            }
+
             // Sanitize questions across all exams and practice sets
             if (data.exams && typeof data.exams === 'object') {
               Object.keys(data.exams).forEach(k => {
@@ -2281,6 +2483,18 @@ def parse_docx_math_text_py(raw_text):
         }
       }
 
+      isDummyConfig(cfg) {
+        if (!cfg) return true;
+        const pId = (cfg.projectId || '').toLowerCase().trim();
+        const apiKey = (cfg.apiKey || '').trim();
+        if (!pId || !apiKey) return true;
+        if (pId === 'mathexam-online' || pId === 'du-an-toan' || pId.includes('sample') ||
+            apiKey.includes('SAMPLE_KEY') || apiKey === 'AIzaSy...' || apiKey.includes('AIzaSy_SAMPLE')) {
+          return true;
+        }
+        return false;
+      }
+
       async initFirebaseIfConfigured() {
         const configStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
         if (!configStr) {
@@ -2292,53 +2506,68 @@ def parse_docx_math_text_py(raw_text):
 
         if (window.firebase && window.firebase.firestore) {
           try {
+            if (typeof window.firebase.firestore.setLogLevel === 'function') {
+              try { window.firebase.firestore.setLogLevel('silent'); } catch (e) {}
+            }
             const config = window.parseFirebaseConfig(configStr);
-            if (config && (config.apiKey || config.projectId)) {
-              if (firebase.apps && firebase.apps.length > 0) {
-                for (const app of [...firebase.apps]) {
-                  try { await app.delete(); } catch (e) {}
-                }
-              }
-              this.firebaseApp = firebase.initializeApp(config);
-              if (window.firebase && typeof firebase.auth === 'function') {
-                try {
-                  if (!firebase.auth().currentUser) {
-                    await firebase.auth().signInAnonymously();
-                  }
-                } catch (authErr) {
-                  console.warn('Anonymous auth notice (proceeding):', authErr.message || authErr);
-                }
-              }
-              this.firestore = firebase.firestore();
-              this.updateConnectionUI(true, `Firebase: ${config.projectId}`);
-
-              // Check if remote DB exists and load it, or seed if empty
-              try {
-                const docRef = this.firestore.collection('mathexam_app').doc('main_db');
-                const snap = await docRef.get();
-                if (snap.exists && snap.data() && snap.data().payload) {
-                  const remote = JSON.parse(snap.data().payload);
-                  this.db = remote;
-                  localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
-                  if (typeof window.refreshTeacherDashboard === 'function') {
-                    window.refreshTeacherDashboard();
-                  }
-                } else {
-                  await this.syncToFirebase();
-                }
-              } catch (connErr) {
-                console.warn('Initial sync or read from Firebase notice:', connErr.message || connErr);
-                if (connErr && (connErr.code === 'permission-denied' || (connErr.message && connErr.message.includes('permission')))) {
-                  this.updateConnectionUI(false, 'Lỗi Rules Firestore (Nhấp để sửa)');
-                }
-              }
-
-              this.listenFirebaseUpdates();
+            if (!config || this.isDummyConfig(config)) {
+              localStorage.removeItem(FIREBASE_CONFIG_KEY);
+              this.updateConnectionUI(false, 'Local Storage DB');
               return;
             }
+
+            if (firebase.apps && firebase.apps.length > 0) {
+              for (const app of [...firebase.apps]) {
+                try { await app.delete(); } catch (e) {}
+              }
+            }
+            this.firebaseApp = firebase.initializeApp(config);
+            if (window.firebase && typeof firebase.auth === 'function') {
+              try {
+                if (!firebase.auth().currentUser) {
+                  await firebase.auth().signInAnonymously();
+                }
+              } catch (authErr) {}
+            }
+            this.firestore = firebase.firestore();
+            try {
+              this.firestore.settings({
+                experimentalForceLongPolling: true,
+                merge: true
+              });
+            } catch (e) {}
+
+            this.updateConnectionUI(true, `Firebase: ${config.projectId}`);
+
+            // Check if remote DB exists and load it, or seed if empty with 3.5s timeout
+            try {
+              const docRef = this.firestore.collection('mathexam_app').doc('main_db');
+              const snap = await Promise.race([
+                docRef.get(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 3500))
+              ]);
+              if (snap && snap.exists && snap.data() && snap.data().payload) {
+                const remote = JSON.parse(snap.data().payload);
+                this.db = remote;
+                localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
+                if (typeof window.refreshTeacherDashboard === 'function') {
+                  window.refreshTeacherDashboard();
+                }
+              } else {
+                await this.syncToFirebase();
+              }
+            } catch (connErr) {
+              if (connErr && (connErr.code === 'permission-denied' || (connErr.message && connErr.message.includes('permission')))) {
+                this.updateConnectionUI(false, 'Lỗi Rules Firestore (Nhấp để sửa)');
+              } else {
+                this.updateConnectionUI(false, 'Local Storage DB');
+              }
+            }
+
+            this.listenFirebaseUpdates();
+            return;
           } catch (err) {
-            console.warn('Firebase config notice:', err.message || err);
-            this.updateConnectionUI(false, 'Lỗi kết nối Firebase');
+            this.updateConnectionUI(false, 'Local Storage DB');
             return;
           }
         }
@@ -2363,7 +2592,7 @@ def parse_docx_math_text_py(raw_text):
         this.firebaseApp = null;
         this.firestore = null;
 
-        if (!configObj) {
+        if (!configObj || this.isDummyConfig(configObj)) {
           localStorage.removeItem(FIREBASE_CONFIG_KEY);
           this.updateConnectionUI(false, 'Local Storage DB');
           return { success: true, mode: 'local' };
@@ -2381,6 +2610,9 @@ def parse_docx_math_text_py(raw_text):
         }
 
         try {
+          if (typeof window.firebase.firestore.setLogLevel === 'function') {
+            try { window.firebase.firestore.setLogLevel('silent'); } catch (e) {}
+          }
           this.firebaseApp = firebase.initializeApp(configObj);
           if (window.firebase && typeof firebase.auth === 'function') {
             try {
@@ -2392,14 +2624,23 @@ def parse_docx_math_text_py(raw_text):
             }
           }
           this.firestore = firebase.firestore();
+          try {
+            this.firestore.settings({
+              experimentalForceLongPolling: true,
+              merge: true
+            });
+          } catch (e) {}
 
           const docRef = this.firestore.collection('mathexam_app').doc('main_db');
           let remoteLoaded = false;
           let permError = null;
 
           try {
-            const snap = await docRef.get();
-            if (snap.exists && snap.data() && snap.data().payload) {
+            const snap = await Promise.race([
+              docRef.get(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 4000))
+            ]);
+            if (snap && snap.exists && snap.data() && snap.data().payload) {
               const remote = JSON.parse(snap.data().payload);
               this.db = remote;
               localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
@@ -2409,10 +2650,13 @@ def parse_docx_math_text_py(raw_text):
               }
             } else {
               try {
-                await docRef.set({
-                  payload: JSON.stringify(this.db),
-                  updatedAt: new Date().toISOString()
-                });
+                await Promise.race([
+                  docRef.set({
+                    payload: JSON.stringify(this.db),
+                    updatedAt: new Date().toISOString()
+                  }),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 4000))
+                ]);
               } catch (writeErr) {
                 permError = writeErr;
               }
@@ -2465,12 +2709,16 @@ def parse_docx_math_text_py(raw_text):
       async syncToFirebase() {
         if (!this.firestore) return;
         try {
-          await this.firestore.collection('mathexam_app').doc('main_db').set({
-            payload: JSON.stringify(this.db),
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
+          const docRef = this.firestore.collection('mathexam_app').doc('main_db');
+          await Promise.race([
+            docRef.set({
+              payload: JSON.stringify(this.db),
+              updatedAt: new Date().toISOString()
+            }, { merge: true }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 3500))
+          ]);
         } catch (err) {
-          console.warn('Firebase sync failed (will retry):', err.message || err);
+          console.warn('Firebase sync notice:', err.message || err);
           if (err && (err.code === 'permission-denied' || (err.message && err.message.includes('permission')))) {
             this.updateConnectionUI(false, 'Lỗi Rules Firestore (Nhấp để sửa)');
           }
@@ -2482,29 +2730,32 @@ def parse_docx_math_text_py(raw_text):
         if (typeof this.unsubscribeSnapshot === 'function') {
           try { this.unsubscribeSnapshot(); } catch (e) {}
         }
-        this.unsubscribeSnapshot = this.firestore.collection('mathexam_app').doc('main_db').onSnapshot((doc) => {
-          if (doc.exists && doc.data() && doc.data().payload) {
-            try {
-              const remote = JSON.parse(doc.data().payload);
-              if (JSON.stringify(remote) !== JSON.stringify(this.db)) {
-                this.db = remote;
-                localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
-                if (typeof window.refreshTeacherDashboard === 'function') {
-                  window.refreshTeacherDashboard();
+        try {
+          this.unsubscribeSnapshot = this.firestore.collection('mathexam_app').doc('main_db').onSnapshot((doc) => {
+            if (doc.exists && doc.data() && doc.data().payload) {
+              try {
+                const remote = JSON.parse(doc.data().payload);
+                if (JSON.stringify(remote) !== JSON.stringify(this.db)) {
+                  this.db = remote;
+                  localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
+                  if (typeof window.refreshTeacherDashboard === 'function') {
+                    window.refreshTeacherDashboard();
+                  }
                 }
+              } catch (e) {
+                console.warn('Error parsing remote update:', e.message || e);
               }
-            } catch (e) {
-              console.warn('Error parsing remote update:', e.message || e);
             }
-          }
-        }, (err) => {
-          console.warn('Firebase snapshot listener notice:', err.message || err);
-          if (err && (err.code === 'permission-denied' || (err.message && err.message.includes('permission')))) {
-            this.updateConnectionUI(false, 'Lỗi Rules Firestore (Nhấp để sửa)');
-          } else {
-            this.updateConnectionUI(false, 'Mất kết nối Firebase');
-          }
-        });
+          }, (err) => {
+            if (err && (err.code === 'permission-denied' || (err.message && err.message.includes('permission')))) {
+              this.updateConnectionUI(false, 'Lỗi Rules Firestore (Nhấp để sửa)');
+            } else {
+              this.updateConnectionUI(false, 'Local Storage DB');
+            }
+          });
+        } catch (e) {
+          this.updateConnectionUI(false, 'Local Storage DB');
+        }
       }
     }
 
@@ -3280,6 +3531,9 @@ def parse_docx_math_text_py(raw_text):
     window.refreshTeacherDashboard = () => {
       window.renderTeacherExamTable();
       window.populateClassSelects();
+      if (typeof window.populateGradebookClassFilter === 'function') {
+        window.populateGradebookClassFilter();
+      }
     };
 
     window.populateClassSelects = () => {
@@ -5553,18 +5807,35 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           (Array.isArray(ex.assignedClasses) && ex.assignedClasses.includes(cid))
         ).length;
 
+        const isGuest = cid === 'TD_NGOAILOP' || cls.isGuestRoom;
         return `
-          <button onclick="window.selectClass('${cid}')" class="w-full text-left p-3 rounded-xl border text-xs font-semibold flex items-center justify-between transition ${isActive ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}">
-            <span><i class="fa-solid fa-graduation-cap mr-2"></i> ${cls.name}</span>
-            <div class="flex items-center gap-1">
-              <span class="text-[10px] px-2 py-0.5 rounded-full ${isActive ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-600'}" title="Số lượng học sinh">
-                ${cls.students?.length || 0} HS
-              </span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? 'bg-indigo-500 text-white' : 'bg-indigo-100 text-indigo-700 font-bold'}" title="Số đề thi đã giao">
-                ${assignedCount} Đề
-              </span>
+          <div class="w-full rounded-xl border transition flex items-center justify-between p-2.5 ${isActive ? (isGuest ? 'bg-violet-700 text-white border-violet-700 shadow-md' : 'bg-indigo-600 text-white border-indigo-600 shadow-md') : (isGuest ? 'bg-violet-50 text-violet-900 border-violet-200 hover:bg-violet-100' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100')}">
+            <button type="button" onclick="window.selectClass('${cid}')" class="flex-1 text-left min-w-0 pr-2">
+              <div class="font-semibold text-xs flex items-center gap-1.5 truncate">
+                <i class="fa-solid ${isGuest ? 'fa-door-open text-amber-400' : 'fa-graduation-cap'}"></i> ${cls.name}
+              </div>
+              <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                <span class="text-[10px] px-1.5 py-0.2 rounded ${isActive ? 'bg-black/20 text-white' : (isGuest ? 'bg-violet-200 text-violet-800 font-bold' : 'bg-slate-200 text-slate-600')}">
+                  ${cls.students?.length || 0} ${isGuest ? 'Thí sinh' : 'HS'}
+                </span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded ${isActive ? 'bg-black/20 text-white' : 'bg-indigo-100 text-indigo-700 font-bold'}">
+                  ${assignedCount} Đề
+                </span>
+                <span class="text-[10px] font-mono px-1.5 py-0.2 rounded ${isActive ? 'bg-black/30 text-amber-300' : 'bg-amber-50 text-amber-800 border border-amber-200'}" title="Mã PIN mặc định cả lớp">
+                  PIN: ${cls.defaultPin || '123456'}
+                </span>
+                ${isGuest ? '<span class="text-[9px] font-bold px-1 rounded bg-amber-400 text-slate-900">Phòng Riêng</span>' : ''}
+              </div>
+            </button>
+            <div class="flex items-center gap-0.5 shrink-0">
+              <button type="button" onclick="event.stopPropagation(); window.exportSingleClassGradesExcel('${cid}')" class="p-1.5 rounded-lg ${isActive ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-slate-400 hover:text-emerald-600 hover:bg-slate-200'} transition" title="Xuất bảng điểm ${cls.name}">
+                <i class="fa-solid fa-file-excel"></i>
+              </button>
+              <button type="button" onclick="event.stopPropagation(); window.deleteClass('${cid}')" class="p-1.5 rounded-lg ${isActive ? 'text-white/80 hover:text-white hover:bg-rose-600' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'} transition" title="${isGuest ? 'Làm mới phòng thi tự do' : 'Xóa lớp học ' + cls.name}">
+                <i class="fa-solid ${isGuest ? 'fa-broom' : 'fa-trash-can'}"></i>
+              </button>
             </div>
-          </button>
+          </div>
         `;
       }).join('');
 
@@ -5583,6 +5854,10 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
 
       document.getElementById('current-class-title').innerText = cls.name;
       document.getElementById('current-class-subtitle').innerText = `Tổng cộng: ${cls.students?.length || 0} học sinh`;
+      const defPinEl = document.getElementById('current-class-default-pin');
+      if (defPinEl) {
+        defPinEl.innerText = cls.defaultPin || '123456';
+      }
 
       // 1. Render Assigned Exams for this Class
       const allExams = Object.values(db.exams);
@@ -5649,13 +5924,19 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       }
 
       tbody.innerHTML = students.map((hs, idx) => {
+        const badge = hs.isSelfRegistered 
+          ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-100 text-violet-700" title="${hs.school || 'Học sinh đăng ký ngoài lớp'}"><i class="fa-solid fa-user-plus text-[9px] mr-1"></i>Ngoài lớp</span>`
+          : `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">Hoạt động</span>`;
         return `
           <tr class="hover:bg-slate-50 transition">
             <td class="py-2.5 px-4 text-center text-slate-400 font-mono">${idx + 1}</td>
-            <td class="py-2.5 px-4 font-bold text-slate-800">${hs.name}</td>
+            <td class="py-2.5 px-4 font-bold text-slate-800">
+              ${hs.name}
+              ${hs.school ? `<div class="text-[10px] text-slate-400 font-normal mt-0.5"><i class="fa-solid fa-school text-[9px] mr-1"></i>${hs.school}</div>` : ''}
+            </td>
             <td class="py-2.5 px-4 text-center font-mono font-bold text-indigo-700 bg-indigo-50/50 rounded">${hs.pin}</td>
             <td class="py-2.5 px-4 text-center">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">Hoạt động</span>
+              ${badge}
             </td>
             <td class="py-2.5 px-4 text-right space-x-1">
               <button onclick="window.regenerateStudentPin('${hs.id}')" class="p-1 rounded text-slate-400 hover:text-amber-600" title="Sinh lại mã PIN"><i class="fa-solid fa-arrows-rotate"></i></button>
@@ -5804,6 +6085,105 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       });
     };
 
+    window.deleteClass = (classId) => {
+      const db = window.dbManager.db;
+      const targetCid = classId || window.selectedClassId;
+      const cls = db.classes[targetCid];
+      if (!cls) return;
+
+      if (targetCid === 'TD_NGOAILOP' || cls.isGuestRoom) {
+        Swal.fire({
+          title: `Làm mới ${cls.name}?`,
+          html: `
+            <div class="text-left text-xs text-slate-600 space-y-2">
+              <p>Phòng thi tự do hiện có <strong>${cls.students?.length || 0} thí sinh ngoài lớp</strong>.</p>
+              <p class="text-indigo-600 font-semibold"><i class="fa-solid fa-broom mr-1"></i> Làm mới sẽ xóa sạch danh sách thí sinh tự do để sẵn sàng cho đợt thi mới (Phòng thi vẫn được giữ lại để học sinh ngoài lớp tiếp tục đăng ký).</p>
+            </div>
+          `,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#e11d48',
+          confirmButtonText: '<i class="fa-solid fa-broom mr-1"></i> Xóa Hết Thí Sinh Tự Do',
+          cancelButtonText: 'Hủy'
+        }).then((res) => {
+          if (res.isConfirmed) {
+            cls.students = [];
+            window.dbManager.saveLocal();
+            window.renderTeacherClassesTab();
+            Swal.fire({
+              icon: 'success',
+              title: 'Đã làm mới phòng thi tự do!',
+              text: 'Đã xóa toàn bộ thí sinh ngoài lớp, sẵn sàng cho đợt thi mới.',
+              timer: 1500,
+              showConfirmButton: false
+            });
+          }
+        });
+        return;
+      }
+
+      const keys = Object.keys(db.classes);
+      if (keys.length <= 1) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Không thể xóa',
+          text: 'Hệ thống cần duy trì ít nhất 1 lớp học để quản lý học sinh và đề thi!'
+        });
+        return;
+      }
+
+      Swal.fire({
+        title: `Xác nhận xóa lớp ${cls.name}?`,
+        html: `
+          <div class="text-left text-xs text-slate-600 space-y-2">
+            <p>Lớp <strong>${cls.name}</strong> (${cls.id}) hiện có <strong>${cls.students?.length || 0} học sinh</strong>.</p>
+            <p class="text-rose-600 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Toàn bộ danh sách học sinh và phân công đề thi của lớp này sẽ bị xóa khỏi hệ thống.</p>
+          </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="fa-solid fa-trash mr-1"></i> Xóa Lớp Ngay',
+        cancelButtonText: 'Hủy'
+      }).then((res) => {
+        if (res.isConfirmed) {
+          delete db.classes[targetCid];
+
+          // Clean up exam assigned classes
+          Object.values(db.exams).forEach(ex => {
+            if (Array.isArray(ex.assignedClasses)) {
+              ex.assignedClasses = ex.assignedClasses.filter(c => c !== targetCid);
+            }
+            if (ex.classId === targetCid) {
+              ex.classId = ex.assignedClasses?.[0] || Object.keys(db.classes)[0] || '';
+            }
+          });
+
+          const remainingKeys = Object.keys(db.classes);
+          if (window.selectedClassId === targetCid) {
+            window.selectedClassId = remainingKeys.length > 0 ? remainingKeys[0] : '';
+          }
+
+          window.dbManager.saveLocal();
+          window.renderTeacherClassesTab();
+          window.populateClassSelects();
+          window.initStudentLoginView();
+          if (typeof window.populateGradebookClassFilter === 'function') {
+            window.populateGradebookClassFilter();
+          }
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Đã xóa lớp học!',
+            text: `Đã xóa lớp ${cls.name} thành công.`,
+            timer: 1500,
+            showConfirmButton: false
+          });
+        }
+      });
+    };
+
     window.showCreateClassModal = () => {
       Swal.fire({
         title: 'Tạo Lớp Học Mới',
@@ -5811,11 +6191,16 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           <div class="text-left space-y-3 text-xs">
             <div>
               <label class="font-bold text-slate-700 block mb-1">Mã Lớp (Viết liền, VD: 12A3):</label>
-              <input id="swal-class-id" type="text" placeholder="12A3" class="w-full p-2 border rounded-lg uppercase font-mono">
+              <input id="swal-class-id" type="text" placeholder="12A3" class="w-full p-2 border rounded-lg uppercase font-mono font-bold">
             </div>
             <div>
               <label class="font-bold text-slate-700 block mb-1">Tên Hiển Thị Lớp:</label>
               <input id="swal-class-name" type="text" placeholder="Lớp 12A3 - Ban A" class="w-full p-2 border rounded-lg">
+            </div>
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Mã PIN Mặc Định Cho Cả Lớp (6 số):</label>
+              <input id="swal-class-default-pin" type="text" maxlength="6" value="123456" placeholder="123456" class="w-full p-2 border rounded-lg font-mono font-bold text-indigo-700">
+              <p class="text-[10px] text-slate-400 mt-1">Tất cả học sinh trong lớp có thể dùng chung mã PIN này để đăng nhập vào làm bài thi</p>
             </div>
           </div>
         `,
@@ -5825,25 +6210,113 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         preConfirm: () => {
           const id = document.getElementById('swal-class-id').value.trim().toUpperCase();
           const name = document.getElementById('swal-class-name').value.trim();
+          let defaultPin = document.getElementById('swal-class-default-pin').value.trim();
           if (!id || !name) {
-            Swal.showValidationMessage('Vui lòng nhập đầy đủ thông tin!');
+            Swal.showValidationMessage('Vui lòng nhập đầy đủ thông tin mã và tên lớp!');
             return false;
           }
-          return { id, name };
+          if (!defaultPin || defaultPin.length !== 6) {
+            defaultPin = '123456';
+          }
+          return { id, name, defaultPin };
         }
       }).then((res) => {
         if (res.isConfirmed) {
-          const { id, name } = res.value;
-          window.dbManager.db.classes[id] = { id, name, grade: '12', students: [] };
+          const { id, name, defaultPin } = res.value;
+          window.dbManager.db.classes[id] = { id, name, grade: '12', defaultPin, students: [] };
           window.dbManager.saveLocal();
           window.selectedClassId = id;
           window.renderTeacherClassesTab();
-          Swal.fire('Thành công', `Đã tạo lớp ${name}`, 'success');
+          window.populateClassSelects();
+          window.initStudentLoginView();
+          if (typeof window.populateGradebookClassFilter === 'function') {
+            window.populateGradebookClassFilter();
+          }
+          Swal.fire('Thành công', `Đã tạo lớp ${name} (Mã PIN mặc định: ${defaultPin})`, 'success');
+        }
+      });
+    };
+
+    window.showSetClassDefaultPinModal = () => {
+      const cls = window.dbManager.db.classes[window.selectedClassId];
+      if (!cls) return;
+
+      Swal.fire({
+        title: `Đổi Mã PIN Mặc Định - ${cls.name}`,
+        html: `
+          <div class="text-left space-y-3 text-xs">
+            <p class="text-slate-600">Nhập mã PIN mặc định mới cho lớp <strong>${cls.name}</strong>:</p>
+            <div>
+              <label class="font-bold text-slate-700 block mb-1">Mã PIN Mặc Định Mới (6 số):</label>
+              <input id="swal-new-default-pin" type="text" maxlength="6" value="${cls.defaultPin || '123456'}" class="w-full p-2.5 border rounded-lg font-mono font-black text-center text-xl text-indigo-700 tracking-wider">
+            </div>
+            <div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200">
+              <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+                <input type="checkbox" id="swal-sync-all-students-chk" checked class="w-4 h-4 text-indigo-600 rounded">
+                <span class="font-semibold text-[11px]">Đồng bộ cập nhật mã PIN này cho tất cả ${cls.students?.length || 0} học sinh hiện có trong lớp</span>
+              </label>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Lưu Mã PIN',
+        cancelButtonText: 'Hủy',
+        preConfirm: () => {
+          const newPin = document.getElementById('swal-new-default-pin').value.trim();
+          const syncAll = document.getElementById('swal-sync-all-students-chk').checked;
+          if (!newPin || newPin.length !== 6) {
+            Swal.showValidationMessage('Mã PIN phải gồm đúng 6 chữ số!');
+            return false;
+          }
+          return { newPin, syncAll };
+        }
+      }).then((res) => {
+        if (res.isConfirmed) {
+          const { newPin, syncAll } = res.value;
+          cls.defaultPin = newPin;
+          if (syncAll && Array.isArray(cls.students)) {
+            cls.students.forEach(s => s.pin = newPin);
+          }
+          window.dbManager.saveLocal();
+          window.renderTeacherClassesTab();
+          Swal.fire({
+            icon: 'success',
+            title: 'Đã cập nhật mã PIN mặc định!',
+            text: `Mã PIN mặc định mới của ${cls.name}: ${newPin}${syncAll ? ' (Đã đồng bộ cho toàn bộ học sinh)' : ''}`,
+            timer: 2000,
+            showConfirmButton: false
+          });
+        }
+      });
+    };
+
+    window.applyDefaultPinToAllStudents = () => {
+      const cls = window.dbManager.db.classes[window.selectedClassId];
+      if (!cls || !cls.students || cls.students.length === 0) {
+        Swal.fire('Lớp trống', 'Chưa có học sinh nào trong lớp để áp dụng.', 'info');
+        return;
+      }
+      const pin = cls.defaultPin || '123456';
+      Swal.fire({
+        title: 'Đồng bộ PIN mặc định?',
+        text: `Áp dụng mã PIN mặc định "${pin}" cho toàn bộ ${cls.students.length} học sinh trong lớp ${cls.name}?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Đồng ý',
+        cancelButtonText: 'Hủy'
+      }).then((res) => {
+        if (res.isConfirmed) {
+          cls.students.forEach(s => s.pin = pin);
+          window.dbManager.saveLocal();
+          window.renderCurrentClassStudents();
+          Swal.fire('Thành công', `Đã đổi mã PIN của tất cả học sinh thành ${pin}!`, 'success');
         }
       });
     };
 
     window.showAddStudentModal = () => {
+      const cls = window.dbManager.db.classes[window.selectedClassId];
+      const defaultPinSuggestion = (cls && cls.defaultPin) ? cls.defaultPin : '123456';
       Swal.fire({
         title: 'Thêm Học Sinh Mới',
         html: `
@@ -5853,8 +6326,9 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
               <input id="swal-student-name" type="text" placeholder="Nguyễn Văn A" class="w-full p-2 border rounded-lg">
             </div>
             <div>
-              <label class="font-bold text-slate-700 block mb-1">Mã PIN 6 số (để trống sẽ tự sinh ngẫu nhiên):</label>
-              <input id="swal-student-pin" type="text" maxlength="6" placeholder="Tự sinh ngẫu nhiên" class="w-full p-2 border rounded-lg font-mono">
+              <label class="font-bold text-slate-700 block mb-1">Mã PIN 6 số (mặc định của lớp là ${defaultPinSuggestion}):</label>
+              <input id="swal-student-pin" type="text" maxlength="6" value="${defaultPinSuggestion}" placeholder="${defaultPinSuggestion}" class="w-full p-2 border rounded-lg font-mono">
+              <p class="text-[10px] text-slate-400 mt-0.5">Để trống sẽ lấy mã PIN mặc định của lớp (${defaultPinSuggestion})</p>
             </div>
           </div>
         `,
@@ -5869,13 +6343,12 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
             return false;
           }
           if (!pin || pin.length !== 6) {
-            pin = Math.floor(100000 + Math.random() * 900000).toString();
+            pin = defaultPinSuggestion;
           }
           return { name, pin };
         }
       }).then((res) => {
         if (res.isConfirmed) {
-          const cls = window.dbManager.db.classes[window.selectedClassId];
           if (!cls.students) cls.students = [];
           cls.students.push({
             id: 'hs_' + window.uid(),
@@ -5957,11 +6430,13 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           if (!cls.students) cls.students = [];
 
           let addedCount = 0;
+          const defaultPin = cls.defaultPin || '123456';
           rows.forEach((row, rIdx) => {
             if (rIdx === 0 && (row[0] === 'STT' || row[0] === 'Họ và tên' || row[1] === 'Họ và tên')) return; // Header
             const nameCandidate = row[1] || row[0];
             if (nameCandidate && typeof nameCandidate === 'string' && nameCandidate.trim().length > 1) {
-              const pin = Math.floor(100000 + Math.random() * 900000).toString();
+              const explicitPin = row[2] ? String(row[2]).trim() : '';
+              const pin = (explicitPin && explicitPin.length === 6) ? explicitPin : defaultPin;
               cls.students.push({
                 id: 'hs_' + window.uid(),
                 name: nameCandidate.trim(),
@@ -5974,7 +6449,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
 
           window.dbManager.saveLocal();
           window.renderCurrentClassStudents();
-          Swal.fire('Nhập Excel Thành Công!', `Đã thêm ${addedCount} học sinh vào lớp kèm mã PIN 6 số tự động.`, 'success');
+          Swal.fire('Nhập Excel Thành Công!', `Đã thêm ${addedCount} học sinh vào lớp ${cls.name} (mã PIN mặc định: ${defaultPin}).`, 'success');
         } catch (err) {
           Swal.fire('Lỗi đọc Excel', err.message, 'error');
         }
@@ -5983,19 +6458,20 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
     };
 
     // SheetJS: Export Student PIN list to Excel
-    window.exportClassPinsExcel = () => {
-      const cls = window.dbManager.db.classes[window.selectedClassId];
+    window.exportClassPinsExcel = (classId) => {
+      const targetCid = classId || window.selectedClassId;
+      const cls = window.dbManager.db.classes[targetCid];
       if (!cls || !cls.students || cls.students.length === 0) {
         Swal.fire('Không có dữ liệu', 'Chưa có học sinh nào để xuất Excel.', 'info');
         return;
       }
 
       const excelData = [
-        ['STT', 'HỌ VÀ TÊN', 'LỚP HỌC', 'MÃ PIN BẢO MẬT', 'TRẠNG THÁI']
+        ['STT', 'HỌ VÀ TÊN', 'LỚP HỌC', 'MÃ PIN CÁ NHÂN', 'MÃ PIN MẶC ĐỊNH LỚP', 'TRẠNG THÁI']
       ];
 
       cls.students.forEach((s, idx) => {
-        excelData.push([idx + 1, s.name, cls.name, s.pin, 'Kích hoạt']);
+        excelData.push([idx + 1, s.name, cls.name, s.pin, cls.defaultPin || '123456', 'Kích hoạt']);
       });
 
       const ws = XLSX.utils.aoa_to_sheet(excelData);
@@ -6692,9 +7168,62 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
     // =========================================================================
     // 10. GRADES & SUBMISSIONS MANAGEMENT (EXCEL SHEETJS EXPORT)
     // =========================================================================
+    window.selectedGradebookClass = 'ALL';
+
+    window.populateGradebookClassFilter = () => {
+      const select = document.getElementById('gradebook-class-filter');
+      if (!select) return;
+      const db = window.dbManager.db;
+      const classes = db.classes || {};
+      const keys = Object.keys(classes);
+      const subs = db.submissions || [];
+      
+      const currentVal = window.selectedGradebookClass || 'ALL';
+      let html = `<option value="ALL" ${currentVal === 'ALL' ? 'selected' : ''}>-- Tất Cả Các Lớp (${subs.length} bài) --</option>`;
+      keys.forEach(cid => {
+        const cls = classes[cid];
+        const count = subs.filter(s => s.classId === cid).length;
+        html += `<option value="${cid}" ${currentVal === cid ? 'selected' : ''}>${cls.name} (${count} bài)</option>`;
+      });
+      select.innerHTML = html;
+
+      // Quick export buttons per class
+      const quickContainer = document.getElementById('gradebook-class-quick-exports');
+      if (quickContainer) {
+        quickContainer.innerHTML = keys.map(cid => {
+          const cls = classes[cid];
+          const count = subs.filter(s => s.classId === cid).length;
+          return `
+            <button type="button" onclick="window.exportSingleClassGradesExcel('${cid}')" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition text-[11px] font-semibold flex items-center gap-1 shadow-2xs" title="Xuất bảng điểm lớp ${cls.name}">
+              <i class="fa-solid fa-file-excel text-emerald-600"></i> ${cid} (${count})
+            </button>
+          `;
+        }).join('');
+      }
+
+      const labelEl = document.getElementById('gradebook-export-btn-label');
+      if (labelEl) {
+        if (currentVal === 'ALL') {
+          labelEl.innerText = 'Tất Cả';
+        } else {
+          labelEl.innerText = (classes[currentVal]?.name || currentVal);
+        }
+      }
+    };
+
+    window.onGradebookClassFilterChange = () => {
+      const select = document.getElementById('gradebook-class-filter');
+      window.selectedGradebookClass = select ? select.value : 'ALL';
+      window.renderGradesTab();
+    };
+
     window.renderGradesTab = () => {
       const db = window.dbManager.db;
-      const subs = db.submissions || [];
+      window.populateGradebookClassFilter();
+
+      const allSubs = db.submissions || [];
+      const currentClass = window.selectedGradebookClass || 'ALL';
+      const subs = currentClass === 'ALL' ? allSubs : allSubs.filter(s => s.classId === currentClass);
 
       // Stats
       document.getElementById('stat-total-submissions').innerText = subs.length;
@@ -6716,16 +7245,17 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       // Submissions table
       const tbody = document.getElementById('teacher-submissions-table-body');
       if (subs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">Chưa có bài nộp nào của học sinh.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">Chưa có bài nộp nào ${currentClass === 'ALL' ? 'của học sinh' : 'của lớp ' + currentClass}.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = subs.map((sub, idx) => {
+        const originalIndex = allSubs.indexOf(sub);
         return `
           <tr class="hover:bg-slate-50 transition">
             <td class="py-3 px-4 text-slate-500 text-[11px] font-mono">${new Date(sub.submittedAt).toLocaleTimeString('vi-VN')} ${new Date(sub.submittedAt).toLocaleDateString('vi-VN')}</td>
             <td class="py-3 px-4 font-bold text-slate-800">${sub.studentName}</td>
-            <td class="py-3 px-4 text-slate-600">${sub.classId}</td>
+            <td class="py-3 px-4 text-slate-600 font-semibold"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">${sub.classId}</span></td>
             <td class="py-3 px-4 text-slate-700 font-semibold">${sub.examTitle || 'Đề Toán'} <span class="text-indigo-600 font-mono text-[11px]">(${sub.examCode || '101'})</span></td>
             <td class="py-3 px-4 text-center font-mono">${sub.timeSpentFormatted || '00:00'}</td>
             <td class="py-3 px-4 text-center">
@@ -6737,7 +7267,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
               <span class="text-sm font-extrabold ${sub.score >= 5 ? 'text-emerald-600' : 'text-rose-600'}">${sub.score.toFixed(2)}</span>
             </td>
             <td class="py-3 px-4 text-right">
-              <button onclick="window.viewSubmissionDetail(${idx})" class="px-2.5 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold">
+              <button onclick="window.viewSubmissionDetail(${originalIndex})" class="px-2.5 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold">
                 Xem Bài
               </button>
             </td>
@@ -6786,10 +7316,65 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       });
     };
 
-    window.exportSubmissionsExcel = () => {
-      const subs = window.dbManager.db.submissions || [];
+    // Xuất bảng điểm cho 1 lớp cụ thể
+    window.exportSingleClassGradesExcel = (classId) => {
+      const db = window.dbManager.db;
+      const targetCid = classId || window.selectedClassId;
+      const cls = db.classes[targetCid];
+      const className = cls ? cls.name : targetCid;
+      const subs = (db.submissions || []).filter(s => s.classId === targetCid);
+      
       if (subs.length === 0) {
-        Swal.fire('Chưa có dữ liệu', 'Chưa có bài nộp nào để xuất bảng điểm.', 'info');
+        Swal.fire({
+          icon: 'info',
+          title: 'Chưa có bài nộp',
+          text: `Lớp ${className} (${targetCid}) chưa có bài nộp nào để xuất bảng điểm.`
+        });
+        return;
+      }
+
+      const rows = [
+        ['STT', 'HỌ VÀ TÊN', 'LỚP HỌC', 'TÊN ĐỀ THI', 'MÃ ĐỀ', 'ĐIỂM SỐ', 'THỜI GIAN LÀM', 'SỐ VI PHẠM', 'BÁO CÁO NGOẠI LỆ', 'THỜI ĐIỂM NỘP']
+      ];
+
+      subs.forEach((s, i) => {
+        rows.push([
+          i + 1,
+          s.studentName,
+          s.classId,
+          s.examTitle || 'Đề Toán',
+          s.examCode || '101',
+          s.score,
+          s.timeSpentFormatted || '00:00',
+          s.strikes || 0,
+          s.incidentReport || 'Không',
+          new Date(s.submittedAt).toLocaleString('vi-VN')
+        ]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, `Lop_${targetCid}`.slice(0, 31));
+      XLSX.writeFile(wb, `Bang_Diem_Lop_${targetCid}_MathExam_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Xuất Bảng Điểm Thành Công!',
+        text: `Đã xuất ${subs.length} kết quả thi của lớp ${className} sang tệp Excel.`,
+        timer: 1600,
+        showConfirmButton: false
+      });
+    };
+
+    // Xuất bảng điểm hiện tại (theo filter đang chọn)
+    window.exportSubmissionsExcel = () => {
+      const db = window.dbManager.db;
+      const allSubs = db.submissions || [];
+      const currentClass = window.selectedGradebookClass || 'ALL';
+      const subs = currentClass === 'ALL' ? allSubs : allSubs.filter(s => s.classId === currentClass);
+
+      if (subs.length === 0) {
+        Swal.fire('Chưa có dữ liệu', `Chưa có bài nộp nào ${currentClass === 'ALL' ? '' : 'của lớp ' + currentClass} để xuất bảng điểm.`, 'info');
         return;
       }
 
@@ -6814,21 +7399,230 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
 
       const ws = XLSX.utils.aoa_to_sheet(rows);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "BangDiem");
-      XLSX.writeFile(wb, `Bang_Diem_MathExam_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      const sheetName = currentClass === 'ALL' ? 'TatCa' : `Lop_${currentClass}`.slice(0, 31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      const fileName = currentClass === 'ALL' 
+        ? `Bang_Diem_Tong_Hop_MathExam_${new Date().toISOString().slice(0, 10)}.xlsx`
+        : `Bang_Diem_Lop_${currentClass}_MathExam_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    };
+
+    // Modal xuất bảng điểm phân theo từng lớp học
+    window.exportSubmissionsByClassModal = () => {
+      const db = window.dbManager.db;
+      const classes = db.classes || {};
+      const keys = Object.keys(classes);
+      const subs = db.submissions || [];
+
+      if (keys.length === 0) {
+        Swal.fire('Chưa có lớp học', 'Hệ thống chưa có lớp học nào.', 'info');
+        return;
+      }
+
+      const classRowsHtml = keys.map(cid => {
+        const cls = classes[cid];
+        const classSubs = subs.filter(s => s.classId === cid);
+        return `
+          <div class="p-3 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-3 text-xs">
+            <div class="min-w-0">
+              <div class="font-bold text-slate-800 text-sm flex items-center gap-1.5 truncate">
+                <i class="fa-solid fa-graduation-cap text-indigo-600"></i> ${cls.name}
+              </div>
+              <div class="text-[11px] text-slate-500 mt-0.5">
+                Mã lớp: <strong class="font-mono text-slate-700">${cid}</strong> | Đã nộp: <strong class="${classSubs.length > 0 ? 'text-indigo-700' : 'text-slate-400'}">${classSubs.length} bài</strong> | PIN lớp: <span class="font-mono text-amber-700 font-bold">${cls.defaultPin || '123456'}</span>
+              </div>
+            </div>
+            <button type="button" onclick="Swal.close(); window.exportSingleClassGradesExcel('${cid}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1 transition shrink-0 ${classSubs.length === 0 ? 'opacity-60' : 'shadow-xs'}">
+              <i class="fa-solid fa-file-excel"></i> Xuất Lớp ${cid}
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      Swal.fire({
+        title: '<div class="text-indigo-700 font-bold text-base flex items-center justify-center gap-2"><i class="fa-solid fa-layer-group"></i> Xuất Bảng Điểm Riêng Từng Lớp</div>',
+        width: '600px',
+        html: `
+          <div class="text-left space-y-3 pt-1">
+            <p class="text-xs text-slate-600">Chọn từng lớp học để tải bảng điểm Excel riêng biệt, hoặc bấm nút dưới để tải tệp tổng hợp có từng Sheet riêng cho mỗi lớp:</p>
+            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+              ${classRowsHtml}
+            </div>
+            <div class="pt-3 border-t border-slate-200 flex flex-wrap gap-2 justify-between items-center text-xs">
+              <button type="button" id="swal-btn-export-multi-sheets" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-excel text-base"></i> Tải Về Tệp Excel Đa Sheet (Mỗi Lớp 1 Sheet Riêng Biệt)
+              </button>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        showConfirmButton: false,
+        cancelButtonText: 'Đóng',
+        didOpen: () => {
+          const btn = document.getElementById('swal-btn-export-multi-sheets');
+          if (btn) {
+            btn.onclick = () => {
+              Swal.close();
+              window.exportMultiSheetClassesExcel();
+            };
+          }
+        }
+      });
+    };
+
+    // Xuất Excel nhiều sheets (mỗi lớp 1 sheet)
+    window.exportMultiSheetClassesExcel = () => {
+      const db = window.dbManager.db;
+      const classes = db.classes || {};
+      const keys = Object.keys(classes);
+      const subs = db.submissions || [];
+
+      if (subs.length === 0) {
+        Swal.fire('Chưa có bài nộp', 'Chưa có bài nộp nào của học sinh để xuất bảng điểm.', 'info');
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      let exportedSheetsCount = 0;
+
+      keys.forEach(cid => {
+        const classSubs = subs.filter(s => s.classId === cid);
+        if (classSubs.length > 0) {
+          const rows = [
+            ['STT', 'HỌ VÀ TÊN', 'LỚP', 'TÊN ĐỀ THI', 'MÃ ĐỀ', 'ĐIỂM SỐ', 'THỜI GIAN LÀM', 'SỐ VI PHẠM', 'BÁO CÁO NGOẠI LỆ', 'THỜI ĐIỂM NỘP']
+          ];
+          classSubs.forEach((s, i) => {
+            rows.push([
+              i + 1,
+              s.studentName,
+              s.classId,
+              s.examTitle || 'Đề Toán',
+              s.examCode || '101',
+              s.score,
+              s.timeSpentFormatted || '00:00',
+              s.strikes || 0,
+              s.incidentReport || 'Không',
+              new Date(s.submittedAt).toLocaleString('vi-VN')
+            ]);
+          });
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, `Lớp_${cid}`.slice(0, 31));
+          exportedSheetsCount++;
+        }
+      });
+
+      if (exportedSheetsCount === 0) {
+        Swal.fire('Chưa có bài nộp', 'Các lớp chưa có bài nộp nào.', 'info');
+        return;
+      }
+
+      XLSX.writeFile(wb, `Bang_Diem_Tung_Lop_MathExam_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Xuất Excel Thành Công!',
+        text: `Đã xuất bảng điểm ${exportedSheetsCount} lớp học thành từng Sheet riêng biệt trong một tệp Excel.`,
+        timer: 2000,
+        showConfirmButton: false
+      });
     };
 
     // =========================================================================
-    // 11. STUDENT PORTAL (2-STEP LOGIN & DASHBOARD)
+    // 11. STUDENT PORTAL (2-STEP LOGIN & REGISTRATION & DASHBOARD)
     // =========================================================================
     window.currentStudent = null;
+    window.currentStudentAuthMode = 'login';
+
+    window.openStudentPortal = (mode) => {
+      window.currentStudentAuthMode = mode || 'login';
+      window.switchView('view-student-login');
+      window.setStudentAuthMode(mode || 'login');
+    };
+
+    window.setStudentAuthMode = (mode) => {
+      window.currentStudentAuthMode = mode;
+      const loginBtn = document.getElementById('tab-student-login-btn');
+      const regBtn = document.getElementById('tab-student-register-btn');
+      const loginContainer = document.getElementById('student-login-container');
+      const regContainer = document.getElementById('student-register-container');
+      const titleEl = document.getElementById('student-portal-title');
+      const subEl = document.getElementById('student-portal-subtitle');
+
+      if (mode === 'register') {
+        if (loginBtn) {
+          loginBtn.className = 'py-2 px-2 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-indigo-600 transition flex items-center justify-center gap-1.5';
+        }
+        if (regBtn) {
+          regBtn.className = 'py-2 px-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-indigo-700 shadow-sm transition flex items-center justify-center gap-1.5';
+        }
+        if (loginContainer) loginContainer.classList.add('hidden');
+        if (regContainer) regContainer.classList.remove('hidden');
+        if (titleEl) titleEl.innerText = 'Đăng Ký Dự Thi';
+        if (subEl) subEl.innerText = 'Dành cho học sinh bên ngoài lớp tham gia khảo thí';
+        
+        // Auto focus on name
+        setTimeout(() => {
+          const inp = document.getElementById('student-reg-name');
+          if (inp) inp.focus();
+        }, 100);
+      } else {
+        if (loginBtn) {
+          loginBtn.className = 'py-2 px-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-indigo-700 shadow-sm transition flex items-center justify-center gap-1.5';
+        }
+        if (regBtn) {
+          regBtn.className = 'py-2 px-2 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-indigo-600 transition flex items-center justify-center gap-1.5';
+        }
+        if (loginContainer) loginContainer.classList.remove('hidden');
+        if (regContainer) regContainer.classList.add('hidden');
+        if (titleEl) titleEl.innerText = 'Cổng Thi Học Sinh';
+        if (subEl) subEl.innerText = 'Xác thực đăng nhập hoặc đăng ký dự thi cho học sinh ngoài lớp';
+      }
+    };
+
+    window.generateRandomRegPin = () => {
+      const pin = String(Math.floor(100000 + Math.random() * 900000));
+      const pinEl = document.getElementById('student-reg-pin');
+      const pinConfirmEl = document.getElementById('student-reg-pin-confirm');
+      if (pinEl) pinEl.value = pin;
+      if (pinConfirmEl) pinConfirmEl.value = pin;
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: `Đã sinh mã PIN ngẫu nhiên: ${pin}`,
+        timer: 1600,
+        showConfirmButton: false
+      });
+    };
 
     window.initStudentLoginView = () => {
       const db = window.dbManager.db;
-      const select = document.getElementById('student-select-class');
-      const keys = Object.keys(db.classes);
+      if (!db.classes['TD_NGOAILOP']) {
+        db.classes['TD_NGOAILOP'] = {
+          id: 'TD_NGOAILOP',
+          name: 'Phòng Thi Tự Do (Thí sinh ngoài lớp)',
+          grade: '12',
+          defaultPin: '123456',
+          isGuestRoom: true,
+          students: []
+        };
+      }
 
-      select.innerHTML = keys.map(k => `<option value="${k}">${db.classes[k].name}</option>`).join('');
+      const select = document.getElementById('student-select-class');
+      if (select) {
+        const officialClasses = Object.keys(db.classes).filter(k => k !== 'TD_NGOAILOP');
+        let optionsHtml = '';
+        if (officialClasses.length > 0) {
+          optionsHtml += `<optgroup label="Danh Sách Lớp Học Chính Thức">`;
+          optionsHtml += officialClasses.map(k => `<option value="${k}">${db.classes[k].name}</option>`).join('');
+          optionsHtml += `</optgroup>`;
+        }
+        optionsHtml += `<optgroup label="Phòng Thi Dành Cho Thí Sinh Ngoài Lớp">`;
+        optionsHtml += `<option value="TD_NGOAILOP">${db.classes['TD_NGOAILOP'].name}</option>`;
+        optionsHtml += `</optgroup>`;
+        select.innerHTML = optionsHtml;
+      }
+
+      window.setStudentAuthMode(window.currentStudentAuthMode || 'login');
       window.backToStudentStep1();
     };
 
@@ -6843,6 +7637,175 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       document.getElementById('student-login-step-2').classList.add('hidden');
     };
 
+    window.handleStudentRegister = () => {
+      const db = window.dbManager.db;
+      // Outside students ALWAYS register into their own dedicated room TD_NGOAILOP
+      const classId = 'TD_NGOAILOP';
+      if (!db.classes[classId]) {
+        db.classes[classId] = {
+          id: classId,
+          name: 'Phòng Thi Tự Do (Thí sinh ngoài lớp)',
+          grade: '12',
+          defaultPin: '123456',
+          isGuestRoom: true,
+          students: []
+        };
+      }
+      const cls = db.classes[classId];
+
+      const rawName = (document.getElementById('student-reg-name')?.value || '').trim();
+      const rawSchool = (document.getElementById('student-reg-school')?.value || '').trim();
+      const pin = (document.getElementById('student-reg-pin')?.value || '').trim();
+      const pinConfirm = (document.getElementById('student-reg-pin-confirm')?.value || '').trim();
+
+      if (!rawName || rawName.length < 2) {
+        Swal.fire('Nhập Họ và Tên', 'Vui lòng nhập đầy đủ họ và tên thí sinh (tối thiểu 2 ký tự).', 'warning');
+        return;
+      }
+
+      if (!/^\d{6}$/.test(pin)) {
+        Swal.fire('Mã PIN Không Hợp Lệ', 'Mã PIN bảo mật phải gồm đúng 6 chữ số (ví dụ: 123456).', 'warning');
+        return;
+      }
+
+      if (pin !== pinConfirm) {
+        Swal.fire('Mã PIN Không Khớp', 'Mã xác nhận PIN không trùng khớp với mã PIN vừa tạo.', 'warning');
+        return;
+      }
+
+      const normalizedInput = window.normalizeName(rawName);
+      const existing = (cls.students || []).find(s => window.normalizeName(s.name) === normalizedInput);
+
+      if (existing) {
+        Swal.fire({
+          icon: 'info',
+          title: 'Học sinh đã có trong phòng thi tự do',
+          html: `Họ tên <b>${existing.name}</b> đã được đăng ký trong <b>${cls.name}</b>.<br>Bạn có thể chuyển sang màn hình Đăng Nhập để vào làm bài!`,
+          confirmButtonText: '<i class="fa-solid fa-right-to-bracket mr-1"></i> Sang Đăng Nhập',
+          showCancelButton: true,
+          cancelButtonText: 'Đổi tên khác'
+        }).then(r => {
+          if (r.isConfirmed) {
+            window.setStudentAuthMode('login');
+            const sel = document.getElementById('student-select-class');
+            if (sel) sel.value = classId;
+            window.proceedToStudentStep2();
+            document.getElementById('student-name-input').value = existing.name;
+            document.getElementById('student-pin-input').value = '';
+            document.getElementById('student-pin-input').focus();
+          }
+        });
+        return;
+      }
+
+      // Check if student belongs to an official class roster
+      let officialCls = null;
+      Object.keys(db.classes).forEach(cid => {
+        if (cid !== 'TD_NGOAILOP') {
+          const c = db.classes[cid];
+          if ((c.students || []).some(s => window.normalizeName(s.name) === normalizedInput)) {
+            officialCls = c;
+          }
+        }
+      });
+
+      if (officialCls) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Tên đã có trong danh sách lớp chính thức',
+          html: `Thí sinh <b>${rawName}</b> đã có sẵn trong danh sách lớp chính thức <b>${officialCls.name}</b>.<br><br>Nếu bạn là học sinh của lớp này, vui lòng chọn <b>"Đăng Nhập"</b> với lớp ${officialCls.name}!`,
+          showCancelButton: true,
+          confirmButtonText: 'Về Đăng Nhập',
+          cancelButtonText: 'Vẫn Đăng Ký Phòng Riêng'
+        }).then(r => {
+          if (r.isConfirmed) {
+            window.setStudentAuthMode('login');
+            const sel = document.getElementById('student-select-class');
+            if (sel) sel.value = officialCls.id;
+            window.proceedToStudentStep2();
+            document.getElementById('student-name-input').value = rawName;
+            document.getElementById('student-pin-input').focus();
+            return;
+          }
+          window.executeGuestRegistration(cls, rawName, rawSchool, pin);
+        });
+        return;
+      }
+
+      window.executeGuestRegistration(cls, rawName, rawSchool, pin);
+    };
+
+    window.executeGuestRegistration = (cls, rawName, rawSchool, pin) => {
+      // Create student record strictly inside TD_NGOAILOP
+      const newStudent = {
+        id: 'hs_' + window.uid(),
+        name: rawName,
+        pin: pin,
+        school: rawSchool || 'Thí sinh ngoài lớp',
+        isSelfRegistered: true,
+        status: 'active',
+        registeredAt: new Date().toISOString()
+      };
+
+      if (!Array.isArray(cls.students)) cls.students = [];
+      cls.students.push(newStudent);
+      window.dbManager.saveLocal();
+
+      // Set active student
+      window.currentStudent = {
+        id: newStudent.id,
+        name: newStudent.name,
+        classId: cls.id,
+        className: cls.name,
+        pin: newStudent.pin,
+        school: newStudent.school,
+        isSelfRegistered: true
+      };
+
+      // Clear input fields
+      const nameInp = document.getElementById('student-reg-name');
+      const schInp = document.getElementById('student-reg-school');
+      const pinInp = document.getElementById('student-reg-pin');
+      const pinConfInp = document.getElementById('student-reg-pin-confirm');
+      if (nameInp) nameInp.value = '';
+      if (schInp) schInp.value = '';
+      if (pinInp) pinInp.value = '';
+      if (pinConfInp) pinConfInp.value = '';
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Đăng Ký Thành Công!',
+        html: `
+          <div class="text-left text-xs space-y-2.5 p-3.5 bg-indigo-50/80 rounded-2xl border border-indigo-100 text-slate-700">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i>
+              <span>Thí sinh: <strong class="text-slate-900 text-sm">${newStudent.name}</strong></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-door-open text-indigo-600"></i>
+              <span>Phòng thi riêng biệt: <strong class="text-slate-900">${cls.name}</strong></span>
+            </div>
+            ${newStudent.school ? `
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-school text-violet-600"></i>
+              <span>Đơn vị: <strong class="text-slate-900">${newStudent.school}</strong></span>
+            </div>` : ''}
+            <div class="p-2 bg-white rounded-xl border border-indigo-200 flex items-center justify-between">
+              <span class="text-slate-500 font-medium">Mã PIN cá nhân:</span>
+              <strong class="font-mono text-indigo-700 tracking-[0.25em] text-base font-bold">${pin}</strong>
+            </div>
+            <p class="text-[11px] text-slate-500 pt-1 border-t border-indigo-100 italic">
+              * Hồ sơ được lưu độc lập tại Phòng Thi Tự Do (không vào danh sách lớp chính thức).
+            </p>
+          </div>
+        `,
+        confirmButtonText: '<i class="fa-solid fa-right-to-bracket mr-1.5"></i> Bắt Đầu Vào Phòng Thi',
+        confirmButtonColor: '#4f46e5'
+      }).then(() => {
+        window.switchView('view-student-dashboard');
+      });
+    };
+
     window.handleStudentLogin = () => {
       const classId = document.getElementById('student-select-class').value;
       const rawName = document.getElementById('student-name-input').value.trim();
@@ -6855,16 +7818,35 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
 
       const db = window.dbManager.db;
       const cls = db.classes[classId];
-      if (!cls || !cls.students) {
-        Swal.fire('Lớp chưa có học sinh', 'Vui lòng liên hệ Giáo viên bộ môn.', 'error');
+      if (!cls) {
+        Swal.fire('Lớp không tồn tại', 'Vui lòng liên hệ Giáo viên bộ môn.', 'error');
         return;
       }
 
-      // Check name normalized and PIN
       const normalizedInput = window.normalizeName(rawName);
-      const student = cls.students.find(s => {
-        return window.normalizeName(s.name) === normalizedInput && s.pin === pin;
+      const isGuestRoom = (classId === 'TD_NGOAILOP' || cls.isGuestRoom);
+
+      // Check name normalized and PIN
+      let student = (cls.students || []).find(s => {
+        const nameMatches = window.normalizeName(s.name) === normalizedInput;
+        const pinMatches = s.pin === pin || (cls.defaultPin && cls.defaultPin === pin);
+        return nameMatches && pinMatches;
       });
+
+      // ONLY in guest room: allow auto-adding if guest enters valid defaultPin
+      if (!student && isGuestRoom && cls.defaultPin && cls.defaultPin === pin && rawName.length >= 2) {
+        student = {
+          id: 'hs_' + window.uid(),
+          name: rawName,
+          pin: cls.defaultPin,
+          school: 'Thí sinh ngoài lớp',
+          isSelfRegistered: true,
+          status: 'active'
+        };
+        if (!Array.isArray(cls.students)) cls.students = [];
+        cls.students.push(student);
+        window.dbManager.saveLocal();
+      }
 
       if (student) {
         window.currentStudent = {
@@ -6872,7 +7854,8 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           name: student.name,
           classId: classId,
           className: cls.name,
-          pin: student.pin
+          pin: student.pin,
+          school: student.school
         };
 
         Swal.fire({
@@ -6885,11 +7868,19 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
 
         window.switchView('view-student-dashboard');
       } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Thông tin không chính xác',
-          text: 'Họ tên hoặc mã PIN không khớp với danh sách lớp. Vui lòng kiểm tra lại!'
-        });
+        if (!isGuestRoom) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Không có quyền truy cập lớp này',
+            html: `Học sinh <b>${rawName}</b> không có tên trong danh sách chính thức của lớp <b>${cls.name}</b>.<br><br><span class="text-xs text-slate-600">Thí sinh ngoài lớp không được vào lớp đã có sẵn danh sách. Vui lòng bấm <b>"Đăng ký dự thi"</b> để tham gia vào Phòng Thi Tự Do riêng biệt!</span>`
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Thông tin không chính xác',
+            text: 'Họ tên hoặc mã PIN không khớp trong Phòng Thi Tự Do. Vui lòng kiểm tra lại hoặc thực hiện Đăng Ký Dự Thi!'
+          });
+        }
       }
     };
 
@@ -6902,7 +7893,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       if (!window.currentStudent) return;
       const stu = window.currentStudent;
       document.getElementById('student-dash-name').innerText = `Học sinh: ${stu.name}`;
-      document.getElementById('student-dash-class').innerText = `${stu.className} | Mã PIN: ******`;
+      document.getElementById('student-dash-class').innerText = `${stu.className}${stu.school ? ' (' + stu.school + ')' : ''} | Mã PIN: ******`;
 
       const db = window.dbManager.db;
 
