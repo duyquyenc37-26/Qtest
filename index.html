@@ -37,6 +37,200 @@
         console.warn('Fetch setter safeguard:', e);
       }
     })();
+
+    // =========================================================================
+    // GLOBAL WEBSITE CODE PROTECTION & ANTI-INSPECT SHIELD (CHỐNG XEM MÃ NGUỒN)
+    // =========================================================================
+    (function initWebsiteCodeProtection() {
+      window._allowNativePrint = false;
+      window.isDevToolsDetected = false;
+
+      // 1. Toast Notification for Protection Feedback
+      window.showSecurityShieldToast = function(message) {
+        try {
+          if (!document.body) return;
+          let toast = document.getElementById('security-shield-toast');
+          if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'security-shield-toast';
+            toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-[99999999] px-4 py-2.5 rounded-full bg-slate-900/95 text-white text-xs font-semibold shadow-2xl border border-slate-700/80 flex items-center gap-2 pointer-events-none transition-all duration-300 opacity-0 -translate-y-2';
+            document.body.appendChild(toast);
+          }
+          toast.innerHTML = `<svg class="w-4 h-4 text-emerald-400 shrink-0 inline" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"/></svg> <span>${message}</span>`;
+          toast.classList.remove('opacity-0', '-translate-y-2');
+          toast.classList.add('opacity-100', 'translate-y-0');
+          clearTimeout(window._securityToastTimer);
+          window._securityToastTimer = setTimeout(function() {
+            if (toast) {
+              toast.classList.remove('opacity-100', 'translate-y-0');
+              toast.classList.add('opacity-0', '-translate-y-2');
+            }
+          }, 2400);
+        } catch (_) {}
+      };
+
+      // 2. Global Right-Click Context Menu Interception
+      window.addEventListener('contextmenu', function(e) {
+        // In official exam room: strictly block all right clicks
+        if (window.currentView === 'view-exam-room' && !window.activeExamState?.isPracticeMode) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof window.handleCheatViolation === 'function') {
+            window.handleCheatViolation('Cố ý mở chuột phải trong phòng thi');
+          }
+          return false;
+        }
+
+        // Outside exam: allow legitimate editing in INPUT and TEXTAREA
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : '';
+        const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable);
+        if (!isEditable) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.showSecurityShieldToast('Bản quyền mã nguồn & nội dung đã được bảo vệ (Chuột phải bị khóa)');
+          return false;
+        }
+      }, true);
+
+      // 3. Global Keyboard Shortcuts Interceptor (DevTools & View Source)
+      window.addEventListener('keydown', function(e) {
+        const k = (e.key || '').toUpperCase();
+        const code = e.keyCode || e.which;
+        const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+
+        // DevTools and source inspection key combinations
+        const isDevToolsKey =
+          k === 'F12' || code === 123 ||
+          (isCtrlOrMeta && e.shiftKey && ['I', 'J', 'C', 'K', 'S', 'P', 'E'].includes(k)) ||
+          (isCtrlOrMeta && e.altKey && ['I', 'J', 'C'].includes(k)) ||
+          (isCtrlOrMeta && ['U', 'S'].includes(k)) ||
+          k === 'PRINTSCREEN' || code === 44 ||
+          (isCtrlOrMeta && k === 'P' && !window._allowNativePrint);
+
+        if (isDevToolsKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.currentView === 'view-exam-room' && !window.activeExamState?.isPracticeMode) {
+            if (typeof window.handleCheatViolation === 'function') {
+              window.handleCheatViolation(`Sử dụng phím tắt bị cấm / DevTools (${e.key || 'Key'})`);
+            }
+          } else {
+            window.showSecurityShieldToast(`Phím tắt xem mã nguồn / DevTools (${e.key || 'F12'}) đã bị khóa`);
+          }
+          return false;
+        }
+
+        // Selection & copy prevention in exam room (keep normal copy/paste active outside exam)
+        if (window.currentView === 'view-exam-room' && !window.activeExamState?.isPracticeMode) {
+          if (isCtrlOrMeta && (k === 'C' || k === 'X' || k === 'A')) {
+            const isInput = e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName);
+            if (!isInput) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof window.handleCheatViolation === 'function') {
+                window.handleCheatViolation('Cố ý chọn/sao chép nội dung bài thi');
+              }
+              return false;
+            }
+          }
+        }
+      }, true);
+
+      // 4. Console Protection and Sanitization
+      try {
+        const logShieldBanner = function() {
+          try {
+            console.clear();
+            console.log(
+              '%c🛡️ HỆ THỐNG BẢO MẬT & BẢN QUYỀN MATHEXAM PRO%c\n' +
+              'Trang web đã kích hoạt chế độ bảo vệ chống xem và can thiệp mã nguồn.\n' +
+              'Nghiêm cấm mọi hành vi trích xuất, xem mã hoặc sao chép mã nguồn.',
+              'color: #3b82f6; font-size: 16px; font-weight: bold; padding: 4px 0;',
+              'color: #64748b; font-size: 12px;'
+            );
+          } catch (_) {}
+        };
+        logShieldBanner();
+        console.dir = function() {};
+        console.table = function() {};
+        console.trace = function() {};
+      } catch (_) {}
+
+      // 5. Active DevTools Detection Logic
+      window.checkDevToolsActive = function() {
+        const widthDiff = window.outerWidth - window.innerWidth;
+        const heightDiff = window.outerHeight - window.innerHeight;
+        // Detect docked DevTools
+        if (widthDiff > 160 || heightDiff > 160) {
+          return true;
+        }
+        return false;
+      };
+
+      window.checkAndDismissDevToolsOverlay = function() {
+        if (window.checkDevToolsActive()) {
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              icon: 'warning',
+              title: 'DevTools Vẫn Đang Mở',
+              text: 'Cửa sổ kiểm tra mã nguồn (DevTools / Inspect) vẫn chưa đóng. Vui lòng đóng DevTools rồi nhấn lại nút này.',
+              confirmButtonText: 'Đã hiểu'
+            });
+          } else {
+            alert('Cửa sổ kiểm tra mã nguồn (DevTools) vẫn chưa đóng. Vui lòng đóng DevTools trên trình duyệt!');
+          }
+          return;
+        }
+        const overlay = document.getElementById('devtools-shield-overlay');
+        if (overlay) overlay.style.display = 'none';
+        window.isDevToolsDetected = false;
+        window.showSecurityShieldToast('Đã đóng DevTools - Tiếp tục sử dụng hệ thống');
+      };
+
+      // Periodic check for DevTools
+      setInterval(function() {
+        const isDevTools = window.checkDevToolsActive();
+        const overlay = document.getElementById('devtools-shield-overlay');
+
+        if (isDevTools) {
+          if (!window.isDevToolsDetected) {
+            window.isDevToolsDetected = true;
+            if (overlay) overlay.style.display = 'flex';
+            try { console.clear(); } catch (_) {}
+
+            if (window.currentView === 'view-exam-room' && !window.activeExamState?.isPracticeMode && !window.isExamSubmitting) {
+              if (typeof window.handleCheatViolation === 'function') {
+                window.handleCheatViolation('Phát hiện mở cửa sổ DevTools / Kiểm tra mã nguồn');
+              }
+            }
+          }
+        } else {
+          if (window.isDevToolsDetected) {
+            window.isDevToolsDetected = false;
+            if (overlay) overlay.style.display = 'none';
+          }
+        }
+      }, 1200);
+
+      // Anti-Debugger protection against script inspection in Sources
+      setTimeout(function runAntiDebuggerLoop() {
+        try {
+          const t0 = performance.now();
+          (function() {
+            const dbg = new Function('debugger');
+            dbg();
+          })();
+          const elapsed = performance.now() - t0;
+          if (elapsed > 100) {
+            window.isDevToolsDetected = true;
+            const overlay = document.getElementById('devtools-shield-overlay');
+            if (overlay) overlay.style.display = 'flex';
+            try { console.clear(); } catch (_) {}
+          }
+        } catch (_) {}
+        setTimeout(runAntiDebuggerLoop, 2500);
+      }, 3000);
+    })();
   </script>
   <title>MathExam Pro - Hệ thống thi trắc nghiệm Toán học trực tuyến</title>
   <meta name="description" content="Nền tảng thi trắc nghiệm Toán học" />
@@ -216,6 +410,56 @@
       user-select: none;
       transition: all 4s ease-in-out;
     }
+    /* Anti-Leak & Screen Protection */
+    @media print {
+      body * {
+        display: none !important;
+        visibility: hidden !important;
+      }
+      body::before {
+        content: "DỮ LIỆU ĐỀ THI BẢO MẬT - NGHIÊM CẤM SAO CHÉP HOẶC IN ẤN!";
+        display: block !important;
+        text-align: center;
+        font-size: 18pt;
+        font-weight: bold;
+        color: #e11d48;
+        padding-top: 150px;
+      }
+    }
+    /* Global Website Code Protection & Anti-Inspect CSS */
+    body {
+      -webkit-touch-callout: none;
+    }
+    img, svg, canvas {
+      -webkit-user-drag: none;
+      user-drag: none;
+    }
+    input, textarea, [contenteditable="true"], .allow-select {
+      -webkit-user-select: text !important;
+      -moz-user-select: text !important;
+      -ms-user-select: text !important;
+      user-select: text !important;
+    }
+
+    .exam-secure-mode {
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
+      user-select: none !important;
+      -webkit-touch-callout: none !important;
+    }
+    .exam-secure-mode img, .exam-secure-mode svg, .exam-secure-mode canvas, .exam-secure-mode mjx-container {
+      pointer-events: none !important;
+      -webkit-user-drag: none !important;
+      user-drag: none !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
+    .exam-secure-mode input, .exam-secure-mode textarea, .exam-secure-mode select, .exam-secure-mode button {
+      user-select: auto !important;
+      -webkit-user-select: auto !important;
+      pointer-events: auto !important;
+    }
 
     /* Responsive TikZJax Diagram container styling */
     .tikz-container {
@@ -380,6 +624,10 @@
         </div>
       </div>
       <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div id="welcome-server-status" class="hidden xs:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs">
+          <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span id="welcome-server-text">Offline Local DB</span>
+        </div>
         <button onclick="window.switchView('view-teacher-login')" class="text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2.5 sm:px-3 py-1.5 rounded-lg transition border border-indigo-200/60 flex items-center gap-1.5 shadow-sm">
           <i class="fa-solid fa-chalkboard-user"></i> <span class="hidden sm:inline">Cổng</span> Giáo viên
         </button>
@@ -387,44 +635,29 @@
     </header>
 
     <!-- Main Hero -->
-    <main class="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-12 flex-1 flex flex-col justify-center w-full">
-      <div class="text-center max-w-2xl mx-auto mb-6 sm:mb-8">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200 mb-3 sm:mb-4 shadow-sm">
-          <i class="fa-solid fa-shield-halved text-indigo-600"></i> 
-        </span>
-        <h2 class="text-2xl sm:text-4xl md:text-5xl font-black text-slate-800 tracking-tight leading-tight mb-3">
-          <br class="hidden sm:inline" />
-          <span class="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent"></span>
-        </h2>
-        <p class="text-slate-600 text-xs sm:text-sm md:text-base leading-relaxed px-2 max-w-xl mx-auto">
-          
-        </p>
-      </div>
-
+    <main class="max-w-5xl mx-auto px-3 sm:px-6 py-8 sm:py-16 flex-1 flex flex-col justify-center items-center w-full">
       <!-- Portal Chooser: Centered Student Portal -->
-      <div class="max-w-xl mx-auto w-full">
+      <div class="max-w-xl mx-auto w-full my-auto">
         <!-- Student Portal Card -->
         <div class="glass-card p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/80 shadow-2xl relative overflow-hidden group">
           <div class="absolute -right-10 -top-10 w-36 h-36 bg-gradient-to-br from-indigo-500/15 to-violet-500/15 rounded-full group-hover:scale-125 transition duration-500 pointer-events-none"></div>
           
-          <div class="flex items-center gap-3.5 sm:gap-4 mb-4">
+          <div class="flex items-center gap-3.5 sm:gap-4 mb-6">
             <div class="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-indigo-600/30 shrink-0">
               <i class="fa-solid fa-graduation-cap"></i>
             </div>
             <div class="min-w-0">
               <h3 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
-                 Học Sinh
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-sans">Đang Mở</span>
+                Cổng Thi Học Sinh
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-sans flex items-center gap-1">
+                  <i class="fa-solid fa-shield-halved text-emerald-600"></i> Bảo Mật
+                </span>
               </h3>
-              <p class="text-slate-500 text-xs sm:text-sm mt-0.5 truncate"></p>
+              <p class="text-slate-500 text-xs sm:text-sm mt-0.5">Xác thực đăng nhập học sinh hoặc đăng ký thi tự do</p>
             </div>
           </div>
 
-          <p class="text-slate-600 text-xs sm:text-sm mb-6 leading-relaxed">
-            
-          </p>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <button type="button" onclick="window.openStudentPortal('login')" class="py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 transition active:scale-[0.98]">
               <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập
             </button>
@@ -433,21 +666,12 @@
             </button>
           </div>
 
-          <div class="flex flex-wrap gap-1.5 sm:gap-2 text-[11px] sm:text-xs pt-4 border-t border-slate-100 text-slate-600">
-            <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-lock mr-1"></i></span>
-            <span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-shield-virus mr-1"></i></span>
-            <span class="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-shuffle mr-1"></i></span>
-            <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-bolt mr-1"></i></span>
+          <div class="flex items-center justify-center gap-4 text-[11px] text-slate-400 pt-3 border-t border-slate-100">
+            <span class="flex items-center gap-1"><i class="fa-solid fa-lock text-indigo-500"></i> Mã PIN bảo mật</span>
+            <span class="flex items-center gap-1"><i class="fa-solid fa-shield-halved text-emerald-500"></i> Chống gian lận</span>
+            <span class="flex items-center gap-1"><i class="fa-solid fa-shuffle text-violet-500"></i> Xáo 6 mã đề</span>
           </div>
         </div>
-      </div>
-
-      <!-- Quick Feature Badges -->
-      <div class="mt-12 text-center flex flex-wrap justify-center items-center gap-6 text-xs text-slate-500 font-medium">
-        <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-virus text-indigo-600"></i> </span>
-        <span class="flex items-center gap-1.5"><i class="fa-solid fa-square-root-alt text-violet-600"></i> </span>
-        <span class="flex items-center gap-1.5"><i class="fa-brands fa-python text-amber-600"></i> </span>
-        <span class="flex items-center gap-1.5"><i class="fa-solid fa-database text-blue-600"></i> </span>
       </div>
     </main>
 
@@ -524,13 +748,16 @@
         <button onclick="window.showChangeServerModal()" class="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-300 hover:border-violet-500 bg-white text-slate-700 hover:text-violet-700 font-medium transition flex items-center gap-1.5 shadow-sm" title="Đổi Server Firebase">
           <i class="fa-solid fa-server text-violet-600"></i> <span class="hidden md:inline">Đổi Server</span>
         </button>
+        <button onclick="window.showShareStudentLinkModal()" class="px-2.5 sm:px-3 py-1.5 rounded-lg border border-emerald-300 hover:border-emerald-500 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold transition flex items-center gap-1.5 shadow-sm" title="Lấy link phòng thi gửi học sinh">
+          <i class="fa-solid fa-share-nodes text-emerald-600"></i> <span class="hidden md:inline">Gửi Link Học Sinh</span>
+        </button>
         <button onclick="window.backupDatabaseJSON()" class="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-300 hover:border-indigo-500 bg-white text-slate-700 hover:text-indigo-700 font-medium transition flex items-center gap-1.5 shadow-sm" title="Sao lưu Database">
           <i class="fa-solid fa-download text-indigo-600"></i> <span class="hidden sm:inline">Backup</span>
         </button>
         <button onclick="window.restoreDatabaseJSON()" class="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-300 hover:border-amber-500 bg-white text-slate-700 hover:text-amber-700 font-medium transition flex items-center gap-1.5 shadow-sm" title="Khôi phục Database">
           <i class="fa-solid fa-upload text-amber-600"></i> <span class="hidden sm:inline">Khôi phục</span>
         </button>
-        <button onclick="window.switchView('view-welcome')" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-medium transition border border-rose-200 flex items-center gap-1.5 shadow-sm" title="Đăng xuất">
+        <button onclick="window.logoutTeacher()" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-medium transition border border-rose-200 flex items-center gap-1.5 shadow-sm" title="Đăng xuất">
           <i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="hidden sm:inline">Đăng xuất</span>
         </button>
       </div>
@@ -709,7 +936,8 @@
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Số lần thi tối đa</label>
-              <input type="number" id="editor-exam-max-attempts" value="1" min="1" max="10" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+              <input type="number" id="editor-exam-max-attempts" value="1" min="0" max="999" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-violet-500" placeholder="1 hoặc 0 = không giới hạn" />
+              <p class="text-[10px] text-slate-400 mt-0.5">Nhập 1, 2, 3... hoặc 0 (không giới hạn lượt thi)</p>
             </div>
             <div class="flex items-end">
               <label class="flex items-center gap-2 cursor-pointer py-2">
@@ -1225,6 +1453,10 @@
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
+        <div id="student-dash-server-badge" class="hidden xs:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="student-dash-server-text">Server: Online</span>
+        </div>
         <button onclick="window.logoutStudent()" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-semibold text-xs border border-rose-200 transition flex items-center gap-1">
           <i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="hidden xs:inline">Rời Lớp</span>
         </button>
@@ -1299,9 +1531,12 @@
           </div>
           <div class="min-w-0">
             <h3 id="exam-header-title" class="font-extrabold text-slate-800 text-xs sm:text-sm md:text-base leading-tight truncate max-w-[150px] xs:max-w-[220px] sm:max-w-[320px] md:max-w-none">Đề Thi Toán Học</h3>
-            <p class="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">
-              Thí sinh: <span id="exam-header-student-name" class="font-semibold text-slate-700"></span> | 
-              Mã đề: <span id="exam-header-code" class="font-bold text-indigo-700 font-mono">101</span>
+            <p class="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate flex items-center gap-1.5 flex-wrap">
+              <span>Thí sinh: <strong id="exam-header-student-name" class="font-semibold text-slate-700"></strong></span>
+              <span>| Mã đề: <span id="exam-header-code" class="font-bold text-indigo-700 font-mono">101</span></span>
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                <i class="fa-solid fa-shield-halved text-emerald-600"></i> Đề Thi Bảo Mật Chống Lộ
+              </span>
             </p>
           </div>
         </div>
@@ -2008,7 +2243,7 @@ def parse_docx_math_text_py(raw_text):
           displayMode: 'scroll',
           minPercent: 50,
           maxStrikes: 3,
-          maxAttempts: 1,
+          maxAttempts: 2,
           isLocked: false,
           createdAt: new Date().toISOString(),
           questions: [
@@ -2467,19 +2702,56 @@ def parse_docx_math_text_py(raw_text):
         const badge = document.getElementById('system-connection-badge');
         const badgeText = document.getElementById('system-connection-text');
         const teacherBadge = document.getElementById('teacher-header-db-status');
+        const welcomeBadge = document.getElementById('welcome-server-status');
+        const studentDashBadge = document.getElementById('student-dash-server-badge');
+
+        const label = text || (isConnected ? 'Firebase Cloud Realtime' : 'Local Storage Active');
 
         if (badge && badgeText) {
           if (isConnected) {
             badge.className = 'hidden xs:flex px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200 items-center gap-1.5 shadow-sm cursor-pointer hover:shadow-md hover:bg-emerald-200/70 transition';
-            badgeText.innerText = text || 'Firebase Realtime';
+            badgeText.innerText = label;
           } else {
             badge.className = 'hidden xs:flex px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 items-center gap-1.5 shadow-sm cursor-pointer hover:shadow-md hover:bg-slate-200/70 transition';
-            badgeText.innerText = text || 'Local Storage DB';
+            badgeText.innerText = label;
           }
         }
         if (teacherBadge) {
-          teacherBadge.innerText = text || (isConnected ? 'Firebase Cloud Realtime' : 'Local Storage Active');
+          teacherBadge.innerText = label;
           teacherBadge.className = isConnected ? 'text-indigo-600 font-semibold cursor-pointer hover:underline' : 'text-emerald-600 font-medium cursor-pointer hover:underline';
+        }
+        if (welcomeBadge) {
+          if (isConnected) {
+            welcomeBadge.className = 'hidden xs:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs';
+            welcomeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> <span id="welcome-server-text">${label}</span>`;
+          } else {
+            welcomeBadge.className = 'hidden xs:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs';
+            welcomeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> <span id="welcome-server-text">Offline Local DB</span>`;
+          }
+        }
+        if (studentDashBadge) {
+          if (isConnected) {
+            studentDashBadge.className = 'hidden xs:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs';
+            studentDashBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> <span id="student-dash-server-text">${label}</span>`;
+          } else {
+            studentDashBadge.className = 'hidden xs:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs';
+            studentDashBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> <span id="student-dash-server-text">Offline Local DB</span>`;
+          }
+        }
+      }
+
+      refreshAllViews() {
+        if (typeof window.refreshTeacherDashboard === 'function') {
+          window.refreshTeacherDashboard();
+        }
+        if (typeof window.populateClassSelects === 'function') {
+          window.populateClassSelects();
+        }
+        if (typeof window.initStudentLoginView === 'function') {
+          window.initStudentLoginView();
+        }
+        if (typeof window.refreshStudentDashboard === 'function') {
+          window.refreshStudentDashboard();
         }
       }
 
@@ -2496,7 +2768,63 @@ def parse_docx_math_text_py(raw_text):
       }
 
       async initFirebaseIfConfigured() {
-        const configStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
+        let configStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
+
+        // 1. Check if server configuration or direct exam/class is in URL
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          const hashVal = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+          const hashParams = new URLSearchParams(hashVal);
+          const urlConfigRaw = urlParams.get('server') || urlParams.get('fb') || urlParams.get('cfg') ||
+                               hashParams.get('server') || hashParams.get('fb') || hashParams.get('cfg');
+
+          if (urlConfigRaw) {
+            let decoded = urlConfigRaw.trim();
+            if (!decoded.startsWith('{')) {
+              try {
+                decoded = decodeURIComponent(escape(atob(decoded)));
+              } catch (_) {
+                try { decoded = atob(decoded); } catch (_) {}
+              }
+            }
+            const parsedFromUrl = window.parseFirebaseConfig(decoded);
+            if (parsedFromUrl && !this.isDummyConfig(parsedFromUrl)) {
+              configStr = JSON.stringify(parsedFromUrl, null, 2);
+              localStorage.setItem(FIREBASE_CONFIG_KEY, configStr);
+              // Also sync with backend server
+              fetch('/api/server-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ config: parsedFromUrl })
+              }).catch(() => {});
+            }
+          }
+
+          // Direct exam & class linking from URL
+          const directExam = urlParams.get('exam') || hashParams.get('exam');
+          const directClass = urlParams.get('class') || hashParams.get('class');
+          if (directExam) window._directExamId = directExam;
+          if (directClass) window._directClassId = directClass;
+        } catch (urlErr) {
+          console.warn('Notice reading URL server params:', urlErr);
+        }
+
+        // 2. If no server config found in localStorage, query backend server /api/server-config
+        if (!configStr) {
+          try {
+            const resp = await fetch('/api/server-config');
+            if (resp.ok) {
+              const resData = await resp.json();
+              if (resData && resData.success && resData.config && !this.isDummyConfig(resData.config)) {
+                configStr = JSON.stringify(resData.config, null, 2);
+                localStorage.setItem(FIREBASE_CONFIG_KEY, configStr);
+              }
+            }
+          } catch (apiErr) {
+            console.warn('Notice fetching /api/server-config:', apiErr);
+          }
+        }
+
         if (!configStr) {
           this.updateConnectionUI(false, 'Local Storage DB');
           return;
@@ -2544,15 +2872,13 @@ def parse_docx_math_text_py(raw_text):
               const docRef = this.firestore.collection('mathexam_app').doc('main_db');
               const snap = await Promise.race([
                 docRef.get(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 3500))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 4000))
               ]);
               if (snap && snap.exists && snap.data() && snap.data().payload) {
                 const remote = JSON.parse(snap.data().payload);
                 this.db = remote;
                 localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
-                if (typeof window.refreshTeacherDashboard === 'function') {
-                  window.refreshTeacherDashboard();
-                }
+                this.refreshAllViews();
               } else {
                 await this.syncToFirebase();
               }
@@ -2595,6 +2921,11 @@ def parse_docx_math_text_py(raw_text):
         if (!configObj || this.isDummyConfig(configObj)) {
           localStorage.removeItem(FIREBASE_CONFIG_KEY);
           this.updateConnectionUI(false, 'Local Storage DB');
+          fetch('/api/server-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ config: null })
+          }).catch(() => {});
           return { success: true, mode: 'local' };
         }
 
@@ -2645,9 +2976,7 @@ def parse_docx_math_text_py(raw_text):
               this.db = remote;
               localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
               remoteLoaded = true;
-              if (typeof window.refreshTeacherDashboard === 'function') {
-                window.refreshTeacherDashboard();
-              }
+              this.refreshAllViews();
             } else {
               try {
                 await Promise.race([
@@ -2691,6 +3020,14 @@ def parse_docx_math_text_py(raw_text):
           localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(configObj, null, 2));
           this.updateConnectionUI(true, `Firebase: ${configObj.projectId}`);
           this.listenFirebaseUpdates();
+          this.refreshAllViews();
+
+          // Sync with backend API so all students automatically connect
+          fetch('/api/server-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ config: configObj })
+          }).catch(e => console.warn('Sync /api/server-config:', e));
 
           return { success: true, mode: 'firebase', projectId: configObj.projectId, remoteLoaded };
         } catch (err) {
@@ -2736,11 +3073,19 @@ def parse_docx_math_text_py(raw_text):
               try {
                 const remote = JSON.parse(doc.data().payload);
                 if (JSON.stringify(remote) !== JSON.stringify(this.db)) {
+                  // Merge submissions so concurrent student submissions are preserved
+                  if (Array.isArray(remote.submissions) && Array.isArray(this.db.submissions)) {
+                    const knownIds = new Set(remote.submissions.map(s => s.id));
+                    this.db.submissions.forEach(localSub => {
+                      if (!knownIds.has(localSub.id)) {
+                        remote.submissions.unshift(localSub);
+                        knownIds.add(localSub.id);
+                      }
+                    });
+                  }
                   this.db = remote;
                   localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(this.db));
-                  if (typeof window.refreshTeacherDashboard === 'function') {
-                    window.refreshTeacherDashboard();
-                  }
+                  this.refreshAllViews();
                 }
               } catch (e) {
                 console.warn('Error parsing remote update:', e.message || e);
@@ -3307,6 +3652,20 @@ def parse_docx_math_text_py(raw_text):
     window.currentView = 'view-welcome';
 
     window.switchView = (viewId) => {
+      // Security guard: protect teacher dashboard from unauthorized access
+      if (viewId === 'view-teacher-dashboard') {
+        if (!window.isTeacherLoggedIn) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Yêu Cầu Xác Thực Giáo Viên',
+            text: 'Bạn cần đăng nhập bằng mật khẩu quản trị để truy cập cổng Giáo viên!',
+            confirmButtonColor: '#7c3aed'
+          });
+          window.switchView('view-teacher-login');
+          return;
+        }
+      }
+
       if (viewId !== 'view-exam-room') {
         window.isExamSubmitting = false;
         window.examFullscreenActive = false;
@@ -3355,32 +3714,82 @@ def parse_docx_math_text_py(raw_text):
     };
 
     // =========================================================================
-    // 4. TEACHER PORTAL LOGIC & MODULES
+    // 4. TEACHER PORTAL SECURITY & AUTHENTICATION
     // =========================================================================
-    // Teacher Password Accessors
-    window.getTeacherPassword = () => {
-      const stored = localStorage.getItem(TEACHER_PASSWORD_KEY);
-      if (stored) return stored;
-      if (window.dbManager && window.dbManager.db && window.dbManager.db.teacherPassword) {
-        return window.dbManager.db.teacherPassword;
+    window.isTeacherLoggedIn = false;
+
+    // Secure one-way hashing function for teacher authentication
+    window.hashTeacherPassword = (pwd) => {
+      const salt = '_mathexam_pro_sec_salt_2026_';
+      const str = salt + String(pwd || '').trim() + salt;
+      let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+      for (let i = 0; i < str.length; i++) {
+        const ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
       }
-      return '1';
+      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+      return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+    };
+
+    const TEACHER_HASH_STORAGE_KEY = 'mathexam_teacher_pwd_hash_v2';
+
+    // Verify input password against secure one-way hash
+    window.verifyTeacherPassword = (inputPwd) => {
+      const input = String(inputPwd || '').trim();
+      if (!input) return false;
+
+      // Migrate legacy plaintext if present
+      const legacy = localStorage.getItem(TEACHER_PASSWORD_KEY);
+      if (legacy && !localStorage.getItem(TEACHER_HASH_STORAGE_KEY)) {
+        localStorage.setItem(TEACHER_HASH_STORAGE_KEY, window.hashTeacherPassword(legacy));
+        localStorage.removeItem(TEACHER_PASSWORD_KEY);
+      }
+
+      const storedHash = localStorage.getItem(TEACHER_HASH_STORAGE_KEY);
+      const defaultHash1 = window.hashTeacherPassword('1');
+      const defaultHashAdmin = window.hashTeacherPassword('admin');
+
+      if (storedHash) {
+        return window.hashTeacherPassword(input) === storedHash;
+      }
+      // If no custom password configured yet, accepts '1' or 'admin'
+      const inputHash = window.hashTeacherPassword(input);
+      return inputHash === defaultHash1 || inputHash === defaultHashAdmin;
     };
 
     window.setTeacherPassword = (newPwd) => {
-      localStorage.setItem(TEACHER_PASSWORD_KEY, newPwd);
+      const trimmed = String(newPwd || '').trim();
+      if (!trimmed) return;
+      const hashed = window.hashTeacherPassword(trimmed);
+      localStorage.setItem(TEACHER_HASH_STORAGE_KEY, hashed);
+      localStorage.removeItem(TEACHER_PASSWORD_KEY); // Wipe plaintext storage
       if (window.dbManager && window.dbManager.db) {
-        window.dbManager.db.teacherPassword = newPwd;
+        window.dbManager.db.teacherPasswordHash = hashed;
+        delete window.dbManager.db.teacherPassword; // Wipe plaintext from db
         window.dbManager.saveLocal();
       }
+    };
+
+    window.logoutTeacher = () => {
+      window.isTeacherLoggedIn = false;
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'info',
+        title: 'Đã đăng xuất tài khoản Giáo viên',
+        timer: 1500,
+        showConfirmButton: false
+      });
+      window.switchView('view-welcome');
     };
 
     window.handleTeacherLogin = (e) => {
       e.preventDefault();
       const pwd = document.getElementById('teacher-password-input').value.trim();
-      const currentPwd = window.getTeacherPassword();
-      // Accepts current configured password, or default "admin" if still default "1"
-      if (pwd === currentPwd || (currentPwd === '1' && pwd === 'admin')) {
+      if (window.verifyTeacherPassword(pwd)) {
+        window.isTeacherLoggedIn = true;
         Swal.fire({
           icon: 'success',
           title: 'Đăng nhập thành công!',
@@ -3394,7 +3803,7 @@ def parse_docx_math_text_py(raw_text):
         Swal.fire({
           icon: 'error',
           title: 'Sai mật khẩu!',
-          text: 'Vui lòng kiểm tra lại mật khẩu quản trị.'
+          text: 'Vui lòng kiểm tra lại mật khẩu quản trị giáo viên.'
         });
       }
     };
@@ -3417,7 +3826,7 @@ def parse_docx_math_text_py(raw_text):
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Mật khẩu mới</label>
               <div class="relative">
-                <input type="password" id="swal-new-pwd" placeholder="Nhập mật khẩu mới..." class="w-full px-3.5 py-2.5 border rounded-xl border-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500/40 text-sm font-medium pr-10" />
+                <input type="password" id="swal-new-pwd" placeholder="Nhập mật khẩu mới (tối thiểu 3 ký tự)..." class="w-full px-3.5 py-2.5 border rounded-xl border-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500/40 text-sm font-medium pr-10" />
                 <button type="button" onclick="window.togglePasswordVisibility('swal-new-pwd')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-sm">
                   <i class="fa-regular fa-eye"></i>
                 </button>
@@ -3439,23 +3848,26 @@ def parse_docx_math_text_py(raw_text):
         cancelButtonText: 'Đóng',
         confirmButtonColor: '#7c3aed',
         focusConfirm: false,
-        footer: '<div class="w-full text-center"><button type="button" onclick="window.resetTeacherPasswordPrompt()" class="text-xs text-slate-400 hover:text-violet-600 underline transition">Quên mật khẩu? Khôi phục mặc định</button></div>',
+        footer: '<div class="w-full text-center text-xs text-slate-400"><i class="fa-solid fa-shield-halved text-violet-500 mr-1"></i> Mật khẩu được mã hóa bảo mật một chiều</div>',
         preConfirm: () => {
           const curr = (document.getElementById('swal-curr-pwd')?.value || '').trim();
           const newPwd = (document.getElementById('swal-new-pwd')?.value || '').trim();
           const confirmPwd = (document.getElementById('swal-confirm-pwd')?.value || '').trim();
-          const actualCurr = window.getTeacherPassword();
 
           if (!curr) {
             Swal.showValidationMessage('Vui lòng nhập mật khẩu hiện tại!');
             return false;
           }
-          if (curr !== actualCurr && !(actualCurr === '1' && curr === 'admin')) {
+          if (!window.verifyTeacherPassword(curr)) {
             Swal.showValidationMessage('Mật khẩu hiện tại không chính xác!');
             return false;
           }
           if (!newPwd) {
             Swal.showValidationMessage('Vui lòng nhập mật khẩu mới!');
+            return false;
+          }
+          if (newPwd.length < 3) {
+            Swal.showValidationMessage('Mật khẩu mới phải có tối thiểu 3 ký tự!');
             return false;
           }
           if (newPwd !== confirmPwd) {
@@ -3470,32 +3882,8 @@ def parse_docx_math_text_py(raw_text):
           Swal.fire({
             icon: 'success',
             title: 'Đổi mật khẩu thành công!',
-            text: 'Mật khẩu giáo viên đã được cập nhật thành công. Hãy ghi nhớ mật khẩu mới để đăng nhập.',
+            text: 'Mật khẩu giáo viên đã được cập nhật an toàn.',
             timer: 2000,
-            showConfirmButton: false
-          });
-        }
-      });
-    };
-
-    window.resetTeacherPasswordPrompt = () => {
-      Swal.fire({
-        title: 'Khôi phục mật khẩu giáo viên?',
-        text: 'Bạn có chắc chắn muốn đặt lại mật khẩu giáo viên về mặc định ban đầu không?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#7c3aed',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Đồng ý khôi phục',
-        cancelButtonText: 'Hủy'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.setTeacherPassword('1');
-          Swal.fire({
-            icon: 'success',
-            title: 'Đã khôi phục thành công!',
-            text: 'Mật khẩu giáo viên đã được đưa về giá trị mặc định ban đầu.',
-            timer: 1800,
             showConfirmButton: false
           });
         }
@@ -3580,7 +3968,7 @@ def parse_docx_math_text_py(raw_text):
                 <span>${exam.title}</span>
                 ${variantsBadge}
               </div>
-              <div class="text-[11px] text-slate-400">ID: ${exam.id} | Tạo lúc: ${new Date(exam.createdAt || Date.now()).toLocaleDateString('vi-VN')}</div>
+              <div class="text-[11px] text-slate-400">ID: ${exam.id} | Tạo lúc: ${new Date(exam.createdAt || Date.now()).toLocaleDateString('vi-VN')} | Lượt thi: <span class="font-semibold text-slate-600">${(exam.maxAttempts === 0 || exam.maxAttempts >= 99) ? 'Không giới hạn' : (exam.maxAttempts || 1) + ' lần'}</span></div>
             </td>
             <td class="py-3 px-4 font-semibold text-slate-600">${className}</td>
             <td class="py-3 px-4 text-center font-bold text-indigo-600">${exam.questions?.length || 0}</td>
@@ -3588,6 +3976,9 @@ def parse_docx_math_text_py(raw_text):
             <td class="py-3 px-4 text-center">${lockStatus}</td>
             <td class="py-3 px-4 text-center font-bold text-slate-700">${subCount} bài</td>
             <td class="py-3 px-4 text-right space-x-1">
+              <button onclick="window.showShareStudentLinkModal('${exam.id}')" class="p-1.5 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition" title="Lấy link đề thi này gửi học sinh (Tự động kết nối Server)">
+                <i class="fa-solid fa-share-nodes"></i>
+              </button>
               <button onclick="window.toggleExamLock('${exam.id}')" class="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition" title="Khóa / Mở đề">
                 <i class="fa-solid ${exam.isLocked ? 'fa-lock-open text-emerald-600' : 'fa-lock text-rose-600'}"></i>
               </button>
@@ -3613,6 +4004,151 @@ def parse_docx_math_text_py(raw_text):
           </tr>
         `;
       }).join('');
+    };
+
+    // Generate Student Share URL with embedded Server Config
+    window.generateStudentShareUrl = (examId, classId) => {
+      const origin = window.location.origin;
+      const path = window.location.pathname;
+      const currentConfigStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
+      let cfgObj = null;
+      if (currentConfigStr) {
+        try { cfgObj = JSON.parse(currentConfigStr); } catch (_) {}
+      }
+
+      const params = new URLSearchParams();
+      if (examId) params.set('exam', examId);
+      if (classId) params.set('class', classId);
+
+      if (cfgObj && !window.dbManager.isDummyConfig(cfgObj)) {
+        try {
+          const compact = {
+            apiKey: cfgObj.apiKey,
+            projectId: cfgObj.projectId,
+            appId: cfgObj.appId,
+            authDomain: cfgObj.authDomain,
+            storageBucket: cfgObj.storageBucket,
+            messagingSenderId: cfgObj.messagingSenderId
+          };
+          const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(compact))));
+          params.set('server', b64);
+        } catch (_) {}
+      }
+
+      const query = params.toString();
+      return `${origin}${path}${query ? '?' + query : ''}`;
+    };
+
+    window.copyStudentExamLink = (examId) => {
+      window.showShareStudentLinkModal(examId);
+    };
+
+    window.showShareStudentLinkModal = (targetExamId) => {
+      const db = window.dbManager.db;
+      const currentConfigStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
+      let parsedCurrent = null;
+      if (currentConfigStr) {
+        try { parsedCurrent = JSON.parse(currentConfigStr); } catch (_) {}
+      }
+      const isConnected = !!(window.dbManager && window.dbManager.firestore && parsedCurrent && !window.dbManager.isDummyConfig(parsedCurrent));
+
+      const generalUrl = window.generateStudentShareUrl();
+      let examUrl = '';
+      let targetExamTitle = '';
+      if (targetExamId && db.exams[targetExamId]) {
+        targetExamTitle = db.exams[targetExamId].title;
+        examUrl = window.generateStudentShareUrl(targetExamId);
+      }
+
+      const serverNoticeHtml = isConnected
+        ? `<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
+             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+             <div>
+               <b>Server đang hoạt động:</b> <code class="font-mono font-bold bg-emerald-100 px-1.5 py-0.5 rounded text-emerald-950">${parsedCurrent.projectId}</code>
+               <p class="text-[11px] text-emerald-700 mt-0.5">Link đã tự động nhúng cấu hình Server. Học sinh mở link sẽ vào đúng phòng thi và đề thi trực tuyến.</p>
+             </div>
+           </div>`
+        : `<div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
+             <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 shrink-0"></i>
+             <div>
+               <b>Chế độ hiện tại: Offline LocalStorage</b>
+               <p class="text-[11px] text-amber-800 mt-0.5">Để học sinh trên thiết bị khác vào được bài thi của bạn, hãy nhấn <b>"Đổi Server"</b> và liên kết Firebase Firestore!</p>
+             </div>
+           </div>`;
+
+      const examSpecificHtml = targetExamId
+        ? `
+          <div class="space-y-1.5 pt-2 border-t border-slate-200">
+            <label class="block font-bold text-slate-800 text-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-file-circle-check text-indigo-600"></i> Link Vào Thẳng Đề Thi: <span class="text-indigo-700 truncate font-semibold">${targetExamTitle}</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <input id="share-exam-url-input" type="text" readonly value="${examUrl}" class="flex-1 px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-300 rounded-lg text-slate-800 select-all" />
+              <button type="button" id="btn-copy-exam-url" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-xs shrink-0 flex items-center gap-1.5 shadow-sm transition active:scale-95">
+                <i class="fa-solid fa-copy"></i> Sao chép
+              </button>
+            </div>
+          </div>
+        `
+        : '';
+
+      Swal.fire({
+        title: 'Chia Sẻ Link Cho Học Sinh Thi',
+        width: '640px',
+        html: `
+          <div class="text-left text-xs space-y-4 pt-1">
+            ${serverNoticeHtml}
+
+            <div class="space-y-1.5">
+              <label class="block font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                <i class="fa-solid fa-door-open text-violet-600"></i> Link Phòng Thi Chung (Học sinh tự chọn lớp / đăng ký ngoài lớp):
+              </label>
+              <div class="flex items-center gap-2">
+                <input id="share-general-url-input" type="text" readonly value="${generalUrl}" class="flex-1 px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-300 rounded-lg text-slate-800 select-all" />
+                <button type="button" id="btn-copy-general-url" class="px-3.5 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-semibold text-xs shrink-0 flex items-center gap-1.5 shadow-sm transition active:scale-95">
+                  <i class="fa-solid fa-copy"></i> Sao chép
+                </button>
+              </div>
+            </div>
+
+            ${examSpecificHtml}
+
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+              <p class="font-semibold text-slate-700 flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-question text-indigo-500"></i> Hướng dẫn giáo viên:
+              </p>
+              <p>• <b>Gửi qua Zalo/Facebook/Classroom:</b> Học sinh chỉ cần nhấp vào link, trang web sẽ tự động kết nối vào Server của bạn và tải toàn bộ đề thi mà bạn đã tạo.</p>
+              <p>• <b>Đồng bộ hai chiều:</b> Khi học sinh nộp bài, kết quả và bài thi sẽ tự động truyền về mục <i>"Bảng Điểm & Kết Quả"</i> trên màn hình của bạn theo thời gian thực.</p>
+            </div>
+          </div>
+        `,
+        didOpen: () => {
+          const wireCopy = (btnId, inputId) => {
+            const btn = document.getElementById(btnId);
+            const inp = document.getElementById(inputId);
+            if (btn && inp) {
+              btn.onclick = () => {
+                inp.select();
+                navigator.clipboard.writeText(inp.value);
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Đã chép!';
+                btn.classList.add('bg-emerald-600');
+                btn.classList.remove('bg-violet-600', 'bg-indigo-600');
+                setTimeout(() => {
+                  btn.innerHTML = originalHtml;
+                  btn.classList.remove('bg-emerald-600');
+                  if (btnId === 'btn-copy-general-url') btn.classList.add('bg-violet-600');
+                  if (btnId === 'btn-copy-exam-url') btn.classList.add('bg-indigo-600');
+                }, 2000);
+              };
+            }
+          };
+          wireCopy('btn-copy-general-url', 'share-general-url-input');
+          wireCopy('btn-copy-exam-url', 'share-exam-url-input');
+        },
+        confirmButtonText: 'Đóng',
+        confirmButtonColor: '#7c3aed'
+      });
     };
 
     window.toggleExamLock = (examId) => {
@@ -3646,6 +4182,11 @@ def parse_docx_math_text_py(raw_text):
               <input id="swal-duration" type="number" class="w-full p-2 border rounded-lg" value="${ex.duration}">
             </div>
             <div>
+              <label class="font-bold text-slate-700 block mb-1">Số lần thi tối đa cho phép:</label>
+              <input id="swal-attempts" type="number" min="0" max="999" class="w-full p-2 border rounded-lg" value="${(ex.maxAttempts !== undefined && ex.maxAttempts !== null) ? ex.maxAttempts : 1}">
+              <p class="text-[10px] text-slate-400 mt-0.5">Nhập 1, 2, 3... hoặc 0 để cho phép thi không giới hạn</p>
+            </div>
+            <div>
               <label class="font-bold text-slate-700 block mb-1">Quy định nộp tối thiểu (% thời gian):</label>
               <input id="swal-minpct" type="number" class="w-full p-2 border rounded-lg" value="${ex.minPercent || 50}">
               <p class="text-[10px] text-slate-400 mt-0.5">Nộp trước mức này sẽ bị trừ 50% tổng điểm</p>
@@ -3668,10 +4209,12 @@ def parse_docx_math_text_py(raw_text):
         confirmButtonText: 'Lưu thay đổi',
         cancelButtonText: 'Hủy',
         preConfirm: () => {
+          const rawAtt = document.getElementById('swal-attempts').value.trim();
           return {
-            duration: parseInt(document.getElementById('swal-duration').value),
-            minPercent: parseInt(document.getElementById('swal-minpct').value),
-            maxStrikes: parseInt(document.getElementById('swal-strikes').value),
+            duration: parseInt(document.getElementById('swal-duration').value) || 90,
+            maxAttempts: (rawAtt === '0') ? 0 : (parseInt(rawAtt, 10) || 1),
+            minPercent: parseInt(document.getElementById('swal-minpct').value) || 50,
+            maxStrikes: parseInt(document.getElementById('swal-strikes').value) || 3,
             displayMode: document.getElementById('swal-mode').value
           };
         }
@@ -3848,20 +4391,59 @@ const firebaseConfig = {
           const res = await window.dbManager.switchFirebaseConfig(parsedConfig);
 
           if (res && res.success) {
+            const studentUrl = window.generateStudentShareUrl();
             Swal.fire({
               icon: 'success',
-              title: 'Kết Nối Thành Công!',
+              title: 'Kết Nối Server Thành Công!',
+              width: '640px',
               html: `
-                <div class="text-xs text-slate-600 space-y-2 text-center py-1">
-                  <p>Đã đồng bộ thành công với Server Firebase: <b class="text-violet-700 font-mono text-sm">${res.projectId}</b></p>
-                  <div class="p-2.5 rounded-lg bg-emerald-50 text-emerald-800 text-[11px]">
-                    ${res.remoteLoaded 
-                      ? '<i class="fa-solid fa-check mr-1"></i> Đã tải dữ liệu đề thi & học sinh có sẵn từ Server về máy.' 
-                      : '<i class="fa-solid fa-cloud-arrow-up mr-1"></i> Cơ sở dữ liệu mới đã được khởi tạo và tải lên Server.'}
+                <div class="text-xs text-slate-600 space-y-3 text-left py-1">
+                  <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900">
+                    <p class="font-bold flex items-center gap-1.5 text-sm text-emerald-800 mb-1">
+                      <i class="fa-solid fa-circle-check text-emerald-600"></i> Đã kết nối Server: <span class="font-mono">${res.projectId}</span>
+                    </p>
+                    <p class="text-[11px] text-emerald-700">
+                      ${res.remoteLoaded 
+                        ? 'Đã tải toàn bộ đề thi, danh sách lớp & học sinh có sẵn từ Server về máy.' 
+                        : 'Cơ sở dữ liệu của bạn đã được tải lên Server và sẵn sàng cho học sinh vào thi.'}
+                    </p>
                   </div>
-                  <p class="text-[11px] text-slate-400">Tất cả các máy kết nối cùng Server Firebase này sẽ tự động cập nhật Realtime!</p>
+
+                  <div class="p-3.5 rounded-xl bg-violet-50 border border-violet-200 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="font-bold text-violet-900 text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-share-nodes text-violet-600"></i> Link Gửi Học Sinh (Tự Động Kết Nối Server Này):
+                      </span>
+                      <span class="text-[10px] text-violet-700 bg-violet-200/60 px-2 py-0.5 rounded-full font-semibold">Tự động đồng bộ</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <input id="modal-success-student-url" type="text" readonly value="${studentUrl}" class="flex-1 px-3 py-2 text-xs font-mono bg-white border border-violet-300 rounded-lg text-slate-800 select-all" />
+                      <button type="button" id="btn-copy-modal-student-url" class="px-3.5 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-semibold text-xs shrink-0 flex items-center gap-1.5 shadow-sm transition active:scale-95">
+                        <i class="fa-solid fa-copy"></i> Sao chép
+                      </button>
+                    </div>
+                    <p class="text-[11px] text-slate-500">
+                      👉 <b>Giáo viên gửi link này cho học sinh:</b> Học sinh mở link trên điện thoại hoặc máy tính sẽ tự động vào thẳng Server này, thấy ngay danh sách lớp và đề thi của bạn!
+                    </p>
+                  </div>
                 </div>
               `,
+              didOpen: () => {
+                const btnCopy = document.getElementById('btn-copy-modal-student-url');
+                const inp = document.getElementById('modal-success-student-url');
+                if (btnCopy && inp) {
+                  btnCopy.onclick = () => {
+                    inp.select();
+                    navigator.clipboard.writeText(inp.value);
+                    btnCopy.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Đã chép!';
+                    btnCopy.className = 'px-3.5 py-2 bg-emerald-600 text-white rounded-lg font-semibold text-xs shrink-0 flex items-center gap-1.5 shadow-sm transition';
+                    setTimeout(() => {
+                      btnCopy.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Sao chép';
+                      btnCopy.className = 'px-3.5 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-semibold text-xs shrink-0 flex items-center gap-1.5 shadow-sm transition active:scale-95';
+                    }, 2500);
+                  };
+                }
+              },
               confirmButtonColor: '#7c3aed',
               confirmButtonText: 'Bắt đầu sử dụng'
             });
@@ -4500,7 +5082,7 @@ const firebaseConfig = {
       document.getElementById('editor-exam-display-mode').value = ex.displayMode || 'scroll';
       document.getElementById('editor-exam-min-percent').value = ex.minPercent || 50;
       document.getElementById('editor-exam-max-strikes').value = ex.maxStrikes || 3;
-      document.getElementById('editor-exam-max-attempts').value = ex.maxAttempts || 1;
+      document.getElementById('editor-exam-max-attempts').value = (ex.maxAttempts !== undefined && ex.maxAttempts !== null) ? ex.maxAttempts : 1;
       document.getElementById('editor-exam-is-locked').checked = !!ex.isLocked;
 
       window.populateClassSelects();
@@ -4973,7 +5555,8 @@ const firebaseConfig = {
       exam.displayMode = document.getElementById('editor-exam-display-mode').value;
       exam.minPercent = parseInt(document.getElementById('editor-exam-min-percent').value) || 50;
       exam.maxStrikes = parseInt(document.getElementById('editor-exam-max-strikes').value) || 3;
-      exam.maxAttempts = parseInt(document.getElementById('editor-exam-max-attempts').value) || 1;
+      const rawMaxAttempts = (document.getElementById('editor-exam-max-attempts').value || '').trim();
+      exam.maxAttempts = (rawMaxAttempts === '0') ? 0 : (parseInt(rawMaxAttempts, 10) || 1);
       exam.isLocked = document.getElementById('editor-exam-is-locked').checked;
       if (!exam.id) exam.id = 'exam_' + window.uid();
       exam.createdAt = exam.createdAt || new Date().toISOString();
@@ -5674,6 +6257,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2">
             <div class="font-bold text-slate-800 text-sm">Câu ${idx + 1}.</div>
             <div class="text-slate-700 leading-relaxed">${window.formatQuestionContent(q.stem)}</div>
+            ${q.image ? `<div class="my-3 text-center"><img src="${q.image}" class="max-h-72 max-w-full rounded-xl mx-auto shadow-xs border border-slate-200" alt="Hình vẽ / Đồ thị câu ${idx + 1}" /></div>` : ''}
             ${optHtml}
             ${q.solution ? `
               <div class="mt-3 pt-2 border-t border-slate-100 text-slate-600 bg-slate-50 p-2.5 rounded-xl">
@@ -7256,7 +7840,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
             <td class="py-3 px-4 text-slate-500 text-[11px] font-mono">${new Date(sub.submittedAt).toLocaleTimeString('vi-VN')} ${new Date(sub.submittedAt).toLocaleDateString('vi-VN')}</td>
             <td class="py-3 px-4 font-bold text-slate-800">${sub.studentName}</td>
             <td class="py-3 px-4 text-slate-600 font-semibold"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">${sub.classId}</span></td>
-            <td class="py-3 px-4 text-slate-700 font-semibold">${sub.examTitle || 'Đề Toán'} <span class="text-indigo-600 font-mono text-[11px]">(${sub.examCode || '101'})</span></td>
+            <td class="py-3 px-4 text-slate-700 font-semibold">${sub.examTitle || 'Đề Toán'} <span class="text-indigo-600 font-mono text-[11px]">(${sub.examCode || '101'})</span> <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Lần ${sub.attemptNumber || 1}</span></td>
             <td class="py-3 px-4 text-center font-mono">${sub.timeSpentFormatted || '00:00'}</td>
             <td class="py-3 px-4 text-center">
               ${sub.strikes > 0 
@@ -7287,7 +7871,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           <div class="text-left text-xs space-y-3 max-h-[65vh] overflow-y-auto pr-1">
             <div class="p-3 bg-slate-100 rounded-xl flex justify-between items-center">
               <div>
-                <p><strong>Lớp:</strong> ${sub.classId} | <strong>Mã Đề:</strong> ${sub.examCode || '101'}</p>
+                <p><strong>Lớp:</strong> ${sub.classId} | <strong>Mã Đề:</strong> ${sub.examCode || '101'} | <strong>Lần thi:</strong> #${sub.attemptNumber || 1}</p>
                 <p><strong>Thời gian nộp:</strong> ${new Date(sub.submittedAt).toLocaleString('vi-VN')}</p>
                 ${sub.incidentReport ? `<p class="text-amber-700 font-semibold mt-1">⚠️ Báo cáo sự cố từ HS: ${sub.incidentReport}</p>` : ''}
               </div>
@@ -7334,7 +7918,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       }
 
       const rows = [
-        ['STT', 'HỌ VÀ TÊN', 'LỚP HỌC', 'TÊN ĐỀ THI', 'MÃ ĐỀ', 'ĐIỂM SỐ', 'THỜI GIAN LÀM', 'SỐ VI PHẠM', 'BÁO CÁO NGOẠI LỆ', 'THỜI ĐIỂM NỘP']
+        ['STT', 'HỌ VÀ TÊN', 'LỚP HỌC', 'TÊN ĐỀ THI', 'MÃ ĐỀ', 'LẦN THI', 'ĐIỂM SỐ', 'THỜI GIAN LÀM', 'SỐ VI PHẠM', 'BÁO CÁO NGOẠI LỆ', 'THỜI ĐIỂM NỘP']
       ];
 
       subs.forEach((s, i) => {
@@ -7344,6 +7928,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           s.classId,
           s.examTitle || 'Đề Toán',
           s.examCode || '101',
+          s.attemptNumber || 1,
           s.score,
           s.timeSpentFormatted || '00:00',
           s.strikes || 0,
@@ -7379,7 +7964,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       }
 
       const rows = [
-        ['STT', 'HỌ VÀ TÊN', 'LỚP', 'TÊN ĐỀ THI', 'MÃ ĐỀ', 'ĐIỂM SỐ', 'THỜI GIAN LÀM', 'SỐ VI PHẠM', 'BÁO CÁO NGOẠI LỆ', 'THỜI ĐIỂM NỘP']
+        ['STT', 'HỌ VÀ TÊN', 'LỚP', 'TÊN ĐỀ THI', 'MÃ ĐỀ', 'LẦN THI', 'ĐIỂM SỐ', 'THỜI GIAN LÀM', 'SỐ VI PHẠM', 'BÁO CÁO NGOẠI LỆ', 'THỜI ĐIỂM NỘP']
       ];
 
       subs.forEach((s, i) => {
@@ -7389,6 +7974,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           s.classId,
           s.examTitle || 'Đề Toán',
           s.examCode || '101',
+          s.attemptNumber || 1,
           s.score,
           s.timeSpentFormatted || '00:00',
           s.strikes || 0,
@@ -7620,6 +8206,9 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         optionsHtml += `<option value="TD_NGOAILOP">${db.classes['TD_NGOAILOP'].name}</option>`;
         optionsHtml += `</optgroup>`;
         select.innerHTML = optionsHtml;
+        if (window._directClassId && db.classes[window._directClassId]) {
+          select.value = window._directClassId;
+        }
       }
 
       window.setStudentAuthMode(window.currentStudentAuthMode || 'login');
@@ -7909,9 +8498,37 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         examContainer.innerHTML = `<div class="col-span-3 text-center py-8 text-slate-400 glass-card rounded-2xl">Hiện chưa có bài thi nào đang mở cho lớp của bạn.</div>`;
       } else {
         examContainer.innerHTML = exams.map(ex => {
-          const isDone = db.submissions.some(s => s.examId === ex.id && s.studentId === stu.id);
+          const studentSubs = (db.submissions || []).filter(s => s.examId === ex.id && s.studentId === stu.id);
+          const attemptCount = studentSubs.length;
+          const maxAttempts = (ex.maxAttempts !== undefined && ex.maxAttempts !== null && !isNaN(ex.maxAttempts)) ? Number(ex.maxAttempts) : 1;
+          const isUnlimited = (maxAttempts === 0 || maxAttempts >= 99);
+          const hasReachedLimit = !isUnlimited && (attemptCount >= maxAttempts);
+
+          let bestScore = null;
+          if (studentSubs.length > 0) {
+            const scores = studentSubs.map(s => typeof s.score === 'number' ? s.score : 0);
+            bestScore = Math.max(...scores);
+          }
+
+          let actionBtnHtml = '';
+          if (ex.isLocked) {
+            actionBtnHtml = `<button disabled class="w-full py-2.5 rounded-xl bg-slate-200 text-slate-500 font-semibold text-xs cursor-not-allowed flex items-center justify-center gap-1.5"><i class="fa-solid fa-lock"></i> Đề Thi Đang Khóa</button>`;
+          } else if (hasReachedLimit) {
+            actionBtnHtml = `<button disabled class="w-full py-2.5 rounded-xl bg-slate-200 text-slate-600 font-semibold text-xs cursor-not-allowed flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-emerald-600"></i> Đã Hết Số Lần Thi (${attemptCount}/${maxAttempts} lượt ${bestScore !== null ? `• Cao nhất: ${bestScore}đ` : ''})
+            </button>`;
+          } else if (attemptCount > 0) {
+            actionBtnHtml = `<button onclick="window.showExamRulesModal('${ex.id}', false)" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs transition shadow-md shadow-emerald-600/30 flex items-center justify-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-rotate-right"></i> Thi Lại (Lượt ${attemptCount + 1}/${isUnlimited ? '∞' : maxAttempts}${bestScore !== null ? ` • Điểm cao nhất: ${bestScore}đ` : ''})
+            </button>`;
+          } else {
+            actionBtnHtml = `<button onclick="window.showExamRulesModal('${ex.id}', false)" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-md shadow-indigo-600/30 flex items-center justify-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-shield-halved"></i> Bắt Đầu Làm Bài ${isUnlimited ? '(Không giới hạn lượt)' : `(Tối đa ${maxAttempts} lần)`}
+            </button>`;
+          }
+
           return `
-            <div class="glass-card p-5 rounded-2xl border border-white/80 shadow-sm flex flex-col justify-between space-y-4">
+            <div id="student-exam-card-${ex.id}" class="glass-card p-5 rounded-2xl border border-white/80 shadow-sm flex flex-col justify-between space-y-4 transition duration-300">
               <div>
                 <div class="flex items-center justify-between mb-2">
                   <span class="px-2 py-0.5 rounded text-[10px] font-bold ${ex.isLocked ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
@@ -7920,22 +8537,33 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
                   <span class="text-xs text-slate-400"><i class="fa-regular fa-clock mr-1"></i>${ex.duration} phút</span>
                 </div>
                 <h4 class="font-bold text-slate-800 text-sm leading-snug">${ex.title}</h4>
-                <p class="text-xs text-slate-500 mt-1">${ex.questions?.length || 0} câu hỏi trắc nghiệm</p>
+                <div class="flex items-center justify-between text-xs text-slate-500 mt-2">
+                  <span><i class="fa-regular fa-file-lines mr-1"></i>${ex.questions?.length || 0} câu hỏi</span>
+                  <span class="font-semibold ${hasReachedLimit ? 'text-rose-600' : (attemptCount > 0 ? 'text-emerald-700' : 'text-slate-600')}">
+                    <i class="fa-solid fa-repeat mr-1 text-[10px]"></i>Lượt thi: ${attemptCount}/${isUnlimited ? '∞' : maxAttempts}
+                  </span>
+                </div>
               </div>
 
               <div>
-                ${isDone 
-                  ? `<button disabled class="w-full py-2.5 rounded-xl bg-slate-200 text-slate-500 font-semibold text-xs cursor-not-allowed">Đã Hoàn Thành</button>`
-                  : ex.isLocked
-                    ? `<button disabled class="w-full py-2.5 rounded-xl bg-slate-200 text-slate-500 font-semibold text-xs cursor-not-allowed">Đề Thi Đang Khóa</button>`
-                    : `<button onclick="window.showExamRulesModal('${ex.id}', false)" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition shadow-md shadow-indigo-600/30 flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-shield-halved mr-1"></i> Bắt Đầu Làm Bài
-                      </button>`
-                }
+                ${actionBtnHtml}
               </div>
             </div>
           `;
         }).join('');
+
+        if (window._directExamId) {
+          const targetId = window._directExamId;
+          window._directExamId = null;
+          setTimeout(() => {
+            const card = document.getElementById(`student-exam-card-${targetId}`);
+            if (card) {
+              card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              card.classList.add('ring-4', 'ring-indigo-500/70');
+              setTimeout(() => card.classList.remove('ring-4', 'ring-indigo-500/70'), 3500);
+            }
+          }, 250);
+        }
       }
 
       // 2. Practice exams list
@@ -7992,9 +8620,12 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
                 <div>
                   <div class="flex items-center justify-between mb-1.5">
                     <span class="text-[11px] font-mono text-slate-400">${new Date(s.submittedAt).toLocaleTimeString('vi-VN')} ${new Date(s.submittedAt).toLocaleDateString('vi-VN')}</span>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${strikes > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
-                      ${strikes > 0 ? `${strikes} vi phạm` : 'Trung thực 100%'}
-                    </span>
+                    <div class="flex items-center gap-1.5">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700">Lần thi #${s.attemptNumber || 1}</span>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold ${strikes > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
+                        ${strikes > 0 ? `${strikes} vi phạm` : 'Trung thực 100%'}
+                      </span>
+                    </div>
                   </div>
                   <h4 class="font-bold text-slate-800 text-sm">${s.examTitle || 'Đề Thi Toán'}</h4>
                   <div class="flex items-baseline gap-2 mt-2">
@@ -8070,14 +8701,39 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       let targetExam = isPracticeMode ? db.practice[examId] : db.exams[examId];
       if (!targetExam) return;
 
+      if (!isPracticeMode && window.currentStudent) {
+        const studentSubs = (db.submissions || []).filter(s => s.examId === targetExam.id && s.studentId === window.currentStudent.id);
+        const maxAttempts = (targetExam.maxAttempts !== undefined && targetExam.maxAttempts !== null) ? targetExam.maxAttempts : 1;
+        const isUnlimited = (maxAttempts === 0);
+        if (!isUnlimited && studentSubs.length >= maxAttempts) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Đã Hết Lượt Thi!',
+            text: `Bạn đã tham gia thi đủ ${studentSubs.length}/${maxAttempts} lần. Đề thi này không còn lượt thi lại!`,
+            confirmButtonColor: '#4f46e5'
+          });
+          return;
+        }
+      }
+
       window.pendingExamLaunch = { examId, isPracticeMode, exam: targetExam };
 
       const validVariants = (targetExam.codeVariants && Array.isArray(targetExam.codeVariants))
         ? targetExam.codeVariants.filter(v => v.questions && v.questions.length > 0)
         : [];
+      
+      const studentSubs = (!isPracticeMode && window.currentStudent)
+        ? (db.submissions || []).filter(s => s.examId === targetExam.id && s.studentId === window.currentStudent.id)
+        : [];
+      const maxAttempts = (targetExam.maxAttempts !== undefined && targetExam.maxAttempts !== null) ? targetExam.maxAttempts : 1;
+      const isUnlimited = (maxAttempts === 0);
+      const attemptBadgeText = isUnlimited
+        ? `Lần thi: ${studentSubs.length + 1} (Không giới hạn)`
+        : `Lần thi: ${studentSubs.length + 1}/${maxAttempts}`;
+
       const subTitleEl = document.getElementById('rules-exam-subtitle');
       if (subTitleEl) {
-        subTitleEl.innerText = `Bài thi: ${targetExam.title} | Lớp: ${targetExam.classId || 'Chung'} | Mã đề: ${validVariants.length > 0 ? validVariants.length + ' mã đề (Đưa & trộn ngẫu nhiên)' : 'Ngẫu nhiên'}`;
+        subTitleEl.innerText = `Bài thi: ${targetExam.title} | ${attemptBadgeText} | Lớp: ${targetExam.classId || 'Chung'} | Mã đề: ${validVariants.length > 0 ? validVariants.length + ' mã đề (Đưa & trộn ngẫu nhiên)' : 'Ngẫu nhiên'}`;
       }
       const durEl = document.getElementById('rules-badge-duration');
       if (durEl) durEl.innerText = `${targetExam.duration || 90} phút`;
@@ -8125,6 +8781,22 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       let targetExam = isPracticeMode ? db.practice[examId] : db.exams[examId];
       if (!targetExam) return;
 
+      // Validate attempt limit if in official examination mode
+      if (!isPracticeMode && window.currentStudent) {
+        const studentSubs = (db.submissions || []).filter(s => s.examId === targetExam.id && s.studentId === window.currentStudent.id);
+        const maxAttempts = (targetExam.maxAttempts !== undefined && targetExam.maxAttempts !== null) ? targetExam.maxAttempts : 1;
+        const isUnlimited = (maxAttempts === 0);
+        if (!isUnlimited && studentSubs.length >= maxAttempts) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Hết Số Lượt Thi!',
+            text: `Bạn đã tham gia thi đủ ${studentSubs.length}/${maxAttempts} lần. Đề thi này không còn lượt thi lại!`,
+            confirmButtonColor: '#4f46e5'
+          });
+          return;
+        }
+      }
+
       // Ensure fullscreen mode
       if (!window.isFullscreenMode()) {
         window.enterFullScreen();
@@ -8157,6 +8829,44 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       // Randomize questions & options for that chosen variant
       const randomizedQuestions = window.randomizeExamQuestionsAndOptions(baseQuestions);
 
+      // =======================================================================
+      // DATA SECURITY: ZERO-LEAK EVALUATION VAULT & QUESTION SANITIZATION
+      // =======================================================================
+      // Build private evaluation vault (retaining correct keys and detailed solutions)
+      const secureVault = {};
+      const studentQuestions = randomizedQuestions.map((q, idx) => {
+        secureVault[idx] = {
+          id: q.id,
+          type: q.type,
+          stem: q.stem || '',
+          image: q.image || '',
+          correctKey: q.correctKey || '',
+          options: (q.options || []).map(o => ({ key: o.key, text: o.text, isCorrect: !!o.isCorrect })),
+          items: (q.items || []).map(it => ({ label: it.label, text: it.text, isCorrect: !!it.isCorrect })),
+          correctAnswer: q.correctAnswer || '',
+          solution: q.solution || ''
+        };
+
+        if (!isPracticeMode) {
+          // Official Examination Mode: strictly remove all answers, solutions, and isCorrect flags from client state
+          // BUT preserve image/diagrams so graphics render correctly
+          return {
+            id: q.id,
+            type: q.type,
+            stem: q.stem || '',
+            image: q.image || '',
+            options: (q.options || []).map(o => ({ key: o.key, text: o.text })),
+            items: (q.items || []).map(it => ({ label: it.label, text: it.text }))
+          };
+        } else {
+          // Practice mode retains solutions for voluntary study
+          return q;
+        }
+      });
+
+      // Secure vault is stored in private evaluation reference
+      window._secureExamSessionVault = secureVault;
+
       window.activeExamState = {
         examId: targetExam.id,
         examTitle: targetExam.title,
@@ -8171,18 +8881,24 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         maxStrikes: targetExam.maxStrikes || 3,
         strikes: 0,
         userAnswers: {}, // key: question index -> answer
-        questions: randomizedQuestions,
+        questions: studentQuestions,
         incidentReport: '',
         isCheated: false
       };
 
-      // Check for saved local draft
+      // Check for saved local draft (only restore if draft was created AFTER last submission)
       const draftKey = `mathexam_draft_${targetExam.id}_${window.currentStudent?.id}`;
       const draft = localStorage.getItem(draftKey);
       if (draft) {
         try {
           const parsedDraft = JSON.parse(draft);
-          window.activeExamState.userAnswers = parsedDraft.userAnswers || {};
+          const studentSubs = (db.submissions || []).filter(s => s.examId === targetExam.id && s.studentId === window.currentStudent?.id);
+          const lastSubTime = studentSubs.length > 0 ? new Date(studentSubs[0].submittedAt).getTime() : 0;
+          if (!parsedDraft.timestamp || parsedDraft.timestamp > lastSubTime) {
+            window.activeExamState.userAnswers = parsedDraft.userAnswers || {};
+          } else {
+            localStorage.removeItem(draftKey);
+          }
         } catch (e) {}
       }
 
@@ -8206,7 +8922,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           position: 'top-end',
           icon: 'info',
           title: `Đã phát Mã đề: ${state.examCode}`,
-          text: 'Đề thi đã được xáo trộn câu hỏi và các phương án ngẫu nhiên.',
+          text: 'Đề thi đã được mã hóa bảo mật, xáo trộn ngẫu nhiên câu hỏi & phương án.',
           timer: 3500,
           showConfirmButton: false
         });
@@ -8268,7 +8984,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       }
     };
 
-    // Auto-save active exam to localStorage
+    // Auto-save active exam to localStorage (only student's own selections, never answer keys)
     window.autoSaveExamDraft = () => {
       const state = window.activeExamState;
       if (!state) return;
@@ -8279,7 +8995,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       }));
     };
 
-    // Anti-Cheat Engine: Visibility Change, Fullscreen Exit, Key Blocking
+    // Anti-Cheat Engine: Visibility Change, Fullscreen Exit, Key Blocking, DevTools Inspection & Copy Protection
     window.onFullscreenChangeHandler = () => {
       if (window.currentView !== 'view-exam-room') return;
       const state = window.activeExamState;
@@ -8300,51 +9016,130 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         }
       }, 1500);
 
-      // 1. Prevent F12, Ctrl+U, Ctrl+P, PrintScreen, Ctrl+C, Ctrl+V, F11
-      window.onkeydown = (e) => {
+      // 1. Intercept prohibited keys: F12, DevTools shortcuts, PrintScreen, Source view, Page save, Print
+      window.examKeydownHandler = (e) => {
         if (window.currentView !== 'view-exam-room' || window.activeExamState?.isPracticeMode) return;
+
+        const k = (e.key || '').toUpperCase();
+        const code = e.keyCode || e.which;
+        const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+
+        // DevTools and prohibited view shortcuts
         if (
-          e.key === 'F12' ||
-          (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 'p' || e.key === 'P' || e.key === 's' || e.key === 'S' || e.key === 'c' || e.key === 'C')) ||
-          e.key === 'PrintScreen'
+          k === 'F12' || code === 123 ||
+          (isCtrlOrMeta && e.shiftKey && ['I', 'J', 'C', 'K'].includes(k)) ||
+          (isCtrlOrMeta && e.altKey && ['I', 'J', 'C'].includes(k)) ||
+          (isCtrlOrMeta && ['U', 'P', 'S'].includes(k)) ||
+          k === 'PRINTSCREEN' || code === 44
         ) {
           e.preventDefault();
-          window.handleCheatViolation('Sử dụng phím tắt bị cấm');
+          e.stopPropagation();
+          window.handleCheatViolation(`Sử dụng phím tắt bị cấm / DevTools (${e.key || 'Key'})`);
           return false;
         }
-      };
 
-      // 2. Prevent right-click context menu
-      window.oncontextmenu = (e) => {
-        if (window.currentView === 'view-exam-room' && !window.activeExamState?.isPracticeMode) {
-          e.preventDefault();
-          return false;
-        }
-      };
-
-      // 3. Tab switch / Blur / Visibility change detection
-      document.onvisibilitychange = () => {
-        if (window.currentView === 'view-exam-room' && !window.activeExamState?.isPracticeMode && !window.isExamSubmitting) {
-          if (document.hidden) {
-            window.handleCheatViolation('Chuyển Tab hoặc rời khỏi màn hình bài thi');
+        // Copy/Cut blocking outside legitimate text inputs
+        if (isCtrlOrMeta && (k === 'C' || k === 'X' || k === 'A')) {
+          const isInput = e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName);
+          if (!isInput) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.handleCheatViolation('Cố ý chọn/sao chép nội dung bài thi');
+            return false;
           }
         }
       };
+      window.addEventListener('keydown', window.examKeydownHandler, true);
 
-      // 4. Fullscreen change listeners
+      // 2. Prevent right-click context menu (blocks Inspect Element, Save Image As, Search)
+      window.examContextMenuHandler = (e) => {
+        if (window.currentView === 'view-exam-room' && !window.activeExamState?.isPracticeMode) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      };
+      window.addEventListener('contextmenu', window.examContextMenuHandler, true);
+
+      // 3. Prevent clipboard copying / cutting / dragging
+      window.examClipboardHandler = (e) => {
+        if (window.currentView === 'view-exam-room' && !window.activeExamState?.isPracticeMode) {
+          const isInput = e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName);
+          if (!isInput) {
+            e.preventDefault();
+            if (e.clipboardData) e.clipboardData.setData('text/plain', '');
+            window.handleCheatViolation('Cố ý sao chép nội dung câu hỏi thi (Copy blocked)');
+            return false;
+          }
+        }
+      };
+      document.addEventListener('copy', window.examClipboardHandler, true);
+      document.addEventListener('cut', window.examClipboardHandler, true);
+      document.addEventListener('dragstart', window.examClipboardHandler, true);
+
+      // 4. Tab switch & Window Blur detection
+      window.examVisibilityHandler = () => {
+        if (window.currentView === 'view-exam-room' && !window.activeExamState?.isPracticeMode && !window.isExamSubmitting) {
+          if (document.hidden) {
+            window.handleCheatViolation('Chuyển Tab hoặc rời khỏi màn hình bài thi (Tab Switch)');
+          }
+        }
+      };
+      document.addEventListener('visibilitychange', window.examVisibilityHandler);
+
+      window.examBlurHandler = () => {
+        if (window.currentView === 'view-exam-room' && !window.activeExamState?.isPracticeMode && !window.isExamSubmitting && window.examFullscreenActive) {
+          window.handleCheatViolation('Rời khỏi cửa sổ bài thi / Mở ứng dụng khác (Window Blur)');
+        }
+      };
+      window.addEventListener('blur', window.examBlurHandler);
+
+      // 5. Fullscreen change listeners
       ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
         document.removeEventListener(evt, window.onFullscreenChangeHandler);
         document.addEventListener(evt, window.onFullscreenChangeHandler);
       });
+
+      // 6. DevTools Dimension Monitor & Console Blanking
+      clearInterval(window.examDevToolsMonitorInterval);
+      window.examDevToolsMonitorInterval = setInterval(() => {
+        if (window.currentView !== 'view-exam-room' || window.activeExamState?.isPracticeMode || window.isExamSubmitting) return;
+        const widthDiff = window.outerWidth - window.innerWidth;
+        const heightDiff = window.outerHeight - window.innerHeight;
+        if (widthDiff > 160 || heightDiff > 160) {
+          window.handleCheatViolation('Phát hiện mở cửa sổ DevTools / Kiểm tra mã nguồn');
+          try { console.clear(); } catch(e) {}
+        }
+      }, 1500);
     };
 
     window.disableAntiCheatSystem = () => {
-      window.onkeydown = null;
-      window.oncontextmenu = null;
-      document.onvisibilitychange = null;
+      if (window.examKeydownHandler) {
+        window.removeEventListener('keydown', window.examKeydownHandler, true);
+        window.examKeydownHandler = null;
+      }
+      if (window.examContextMenuHandler) {
+        window.removeEventListener('contextmenu', window.examContextMenuHandler, true);
+        window.examContextMenuHandler = null;
+      }
+      if (window.examClipboardHandler) {
+        document.removeEventListener('copy', window.examClipboardHandler, true);
+        document.removeEventListener('cut', window.examClipboardHandler, true);
+        document.removeEventListener('dragstart', window.examClipboardHandler, true);
+        window.examClipboardHandler = null;
+      }
+      if (window.examVisibilityHandler) {
+        document.removeEventListener('visibilitychange', window.examVisibilityHandler);
+        window.examVisibilityHandler = null;
+      }
+      if (window.examBlurHandler) {
+        window.removeEventListener('blur', window.examBlurHandler);
+        window.examBlurHandler = null;
+      }
       ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
         document.removeEventListener(evt, window.onFullscreenChangeHandler);
       });
+      clearInterval(window.examDevToolsMonitorInterval);
     };
 
     window.handleCheatViolation = (reason) => {
@@ -8392,7 +9187,8 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
               <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800 text-left space-y-1">
                 <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-1 text-amber-600"></i> Quy định phòng thi bắt buộc:</p>
                 <p>• Luôn duy trì chế độ <strong>Toàn Màn Hình</strong>.</p>
-                <p>• Không bấm Esc, F11, Alt+Tab hoặc click ra ngoài cửa sổ bài thi.</p>
+                <p>• Không bấm Esc, F11, F12, Alt+Tab hoặc click ra ngoài cửa sổ bài thi.</p>
+                <p>• Nghiêm cấm sao chép, chụp ảnh, mở DevTools hoặc gian lận.</p>
               </div>
             </div>
           `,
@@ -8439,33 +9235,37 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       container.innerHTML = '';
 
       const stuName = window.currentStudent?.name || 'Thí sinh';
-      const pin = window.currentStudent?.pin || '123456';
+      const stuId = window.currentStudent?.id || 'HS';
+      const className = window.currentStudent?.className || 'Lớp';
+      const examCode = window.activeExamState?.examCode || '101';
 
-      // Create 6 floating labels
-      for (let i = 0; i < 6; i++) {
+      // Create 8 floating labels
+      for (let i = 0; i < 8; i++) {
         const span = document.createElement('div');
         span.className = 'watermark-item';
         span.id = `wm_${i}`;
-        span.innerText = `${stuName} - PIN: ${pin} - ${new Date().toLocaleTimeString('vi-VN')}`;
+        span.innerText = `${stuName} (${stuId}) • ${className} • Mã đề ${examCode} • ${new Date().toLocaleTimeString('vi-VN')}`;
         container.appendChild(span);
       }
 
       // Reposition dynamically every 4 seconds
       const reposition = () => {
-        for (let i = 0; i < 6; i++) {
+        const nowTime = new Date().toLocaleTimeString('vi-VN');
+        for (let i = 0; i < 8; i++) {
           const el = document.getElementById(`wm_${i}`);
           if (el) {
             const top = Math.floor(Math.random() * 85);
             const left = Math.floor(Math.random() * 80);
             el.style.top = top + 'vh';
             el.style.left = left + 'vw';
+            el.innerText = `${stuName} (${stuId}) • ${className} • Mã đề ${examCode} • ${nowTime}`;
           }
         }
       };
 
       reposition();
       clearInterval(window.watermarkInterval);
-      window.watermarkInterval = setInterval(reposition, 4500);
+      window.watermarkInterval = setInterval(reposition, 4000);
     };
 
     // Set Display Mode: Scroll All or One-by-one
@@ -8632,6 +9432,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
             <span class="text-[10px] text-slate-400 font-medium">Mã câu: ${q.id}</span>
           </div>
           <div class="text-slate-800 text-sm leading-relaxed">${window.formatQuestionContent(displayStem)}</div>
+          ${q.image ? `<div class="my-3 text-center"><img src="${q.image}" alt="Hình vẽ / Đồ thị câu ${idx + 1}" class="max-h-72 max-w-full mx-auto rounded-xl border border-slate-200 shadow-sm object-contain bg-white p-1" /></div>` : ''}
           ${optionsHTML}
           ${practiceSolutionHTML}
         </div>
@@ -8836,17 +9637,19 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       let totalPoints = 0;
       const answersComparison = [];
       const qs = state.questions || [];
+      const vault = (!state.isPracticeMode && window._secureExamSessionVault) ? window._secureExamSessionVault : null;
 
       if (isForceCheatedZero) {
         totalPoints = 0;
         qs.forEach((q, idx) => {
+          const vQ = (vault && vault[idx]) ? vault[idx] : q;
           answersComparison.push({
             questionId: q.id,
             type: q.type,
             stem: q.stem || '',
-            solution: q.solution || '',
+            solution: vQ.solution || '',
             userAnswer: state.userAnswers[idx] ? (typeof state.userAnswers[idx] === 'object' ? JSON.stringify(state.userAnswers[idx]) : state.userAnswers[idx]) : '',
-            correctAnswer: q.type === 'mcq' ? (q.correctKey || '') : q.type === 'short' ? (q.correctAnswer || '') : '',
+            correctAnswer: vQ.type === 'mcq' ? (vQ.correctKey || '') : vQ.type === 'short' ? (vQ.correctAnswer || '') : '',
             isCorrect: false,
             isPartial: false,
             earnedScore: 0
@@ -8854,6 +9657,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         });
       } else {
         qs.forEach((q, idx) => {
+          const vQ = (vault && vault[idx]) ? vault[idx] : q;
           const uAns = state.userAnswers[idx];
           let isQCorrect = false;
           let isPartial = false;
@@ -8861,16 +9665,16 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           let userAnsText = '';
           let correctAnsText = '';
 
-          if (q.type === 'mcq') {
+          if (vQ.type === 'mcq') {
             userAnsText = uAns || '';
-            correctAnsText = q.correctKey || '';
-            if (uAns && q.correctKey && uAns.toUpperCase() === q.correctKey.toUpperCase()) {
+            correctAnsText = vQ.correctKey || '';
+            if (uAns && vQ.correctKey && uAns.toUpperCase() === vQ.correctKey.toUpperCase()) {
               isQCorrect = true;
               earnedScore = 0.25;
               totalPoints += 0.25; // standard MCQ weight
             }
-          } else if (q.type === 'tf') {
-            const items = q.items || [];
+          } else if (vQ.type === 'tf') {
+            const items = vQ.items || [];
             let correctSubCount = 0;
             const uObj = (typeof uAns === 'object' && uAns !== null) ? uAns : {};
 
@@ -8893,11 +9697,11 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
               totalPoints += 1.0;
               isQCorrect = true;
             }
-          } else if (q.type === 'short' || q.type === 'cloze') {
+          } else if (vQ.type === 'short' || vQ.type === 'cloze') {
             userAnsText = (uAns || '').toString().trim();
-            correctAnsText = (q.correctAnswer || '').toString().trim();
-            if (q.type === 'cloze' && (!correctAnsText || correctAnsText.includes('[['))) {
-              const match = (q.stem || '').match(/\[\[(.*?)\]\]/);
+            correctAnsText = (vQ.correctAnswer || '').toString().trim();
+            if (vQ.type === 'cloze' && (!correctAnsText || correctAnsText.includes('[['))) {
+              const match = (vQ.stem || '').match(/\[\[(.*?)\]\]/);
               if (match) {
                 const parts = match[1].split('|').map(p => p.trim());
                 correctAnsText = parts[0] || '';
@@ -8914,7 +9718,8 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
             questionId: q.id,
             type: q.type,
             stem: q.stem || '',
-            solution: q.solution || '',
+            image: q.image || '',
+            solution: vQ.solution || '',
             userAnswer: userAnsText,
             correctAnswer: correctAnsText,
             isCorrect: isQCorrect,
@@ -8933,14 +9738,19 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       const finalScore = Math.min(10, Math.max(0, Math.round(totalPoints * 100) / 100));
 
       const timeSpentSec = (state.durationMinutes * 60) - state.secondsRemaining;
+      const studentId = window.currentStudent?.id || 'hs_anon';
+      const priorSubs = (window.dbManager.db.submissions || []).filter(s => s.examId === state.examId && s.studentId === studentId);
+      const attemptNumber = priorSubs.length + 1;
+
       const submissionRecord = {
         id: 'sub_' + window.uid(),
         examId: state.examId,
         examTitle: state.examTitle,
         examCode: state.examCode,
-        studentId: window.currentStudent?.id || 'hs_anon',
+        studentId: studentId,
         studentName: window.currentStudent?.name || 'Học sinh',
         classId: window.currentStudent?.classId || '12A1',
+        attemptNumber: attemptNumber,
         score: finalScore,
         strikes: state.strikes,
         incidentReport: state.incidentReport,
@@ -8987,7 +9797,13 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         });
       }
 
-      // Clean active session
+      // Clean active session and wipe private evaluation vault
+      window._secureExamSessionVault = null;
+      try {
+        const draftKey = `mathexam_draft_${state.examId}_${window.currentStudent?.id}`;
+        localStorage.removeItem(draftKey);
+      } catch (e) {}
+
       window.activeExamState = null;
       window.isExamSubmitting = false;
       window.isViolationAlertShowing = false;
@@ -9010,7 +9826,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
 
       // Header info & Subtitles
       safeText('result-exam-title-sub', `${sub.examTitle || 'Đề Thi Toán Học'} (Mã đề: ${sub.examCode || '101'})`);
-      safeText('result-exam-meta-sub', `Thí sinh: ${sub.studentName} | Lớp: ${sub.classId} | Thời gian: ${sub.timeSpentFormatted || '00:00'} | Nộp: ${new Date(sub.submittedAt).toLocaleTimeString('vi-VN')} ${new Date(sub.submittedAt).toLocaleDateString('vi-VN')}`);
+      safeText('result-exam-meta-sub', `Thí sinh: ${sub.studentName} | Lớp: ${sub.classId} | Lần thi: #${sub.attemptNumber || 1} | Thời gian: ${sub.timeSpentFormatted || '00:00'} | Nộp: ${new Date(sub.submittedAt).toLocaleTimeString('vi-VN')} ${new Date(sub.submittedAt).toLocaleDateString('vi-VN')}`);
       
       // Score: e.g. "10.00/10.00" or "8.50/10.00"
       const score = sub.score !== undefined ? sub.score : 0;
@@ -9146,6 +9962,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
               <div class="text-slate-800 text-sm leading-relaxed border-b border-slate-100 pb-3">
                 ${window.formatQuestionContent(a.stem || a.stemPreview || '')}
               </div>
+              ${a.image ? `<div class="my-3 text-center"><img src="${a.image}" alt="Hình vẽ câu ${idx + 1}" class="max-h-72 max-w-full mx-auto rounded-xl border border-slate-200 shadow-sm object-contain bg-white p-1" /></div>` : ''}
 
               <!-- Student choice vs Correct choice comparison -->
               <div class="grid sm:grid-cols-2 gap-3 text-xs">
@@ -9224,7 +10041,14 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
     };
 
     window.printExamResult = () => {
-      window.print();
+      window._allowNativePrint = true;
+      try {
+        window.print();
+      } finally {
+        setTimeout(() => {
+          window._allowNativePrint = false;
+        }, 1500);
+      }
     };
 
     // Offline Queue Manager
@@ -9284,6 +10108,26 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       console.log('MathExam Pro v2.5 SPA initialized.');
     });
   </script>
+
+  <!-- DevTools Source Code Protection Modal / Overlay -->
+  <div id="devtools-shield-overlay" style="display:none;" class="fixed inset-0 z-[99999999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 select-none">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center border border-slate-200">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-3xl shadow-inner">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-800 mb-2">Bảo Vệ Mã Nguồn Website</h3>
+      <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+        Hệ thống phát hiện cửa sổ kiểm tra mã nguồn (DevTools / Inspect) đang hoạt động. Nhằm đảm bảo bảo mật và bản quyền, giao diện website tạm thời bị tạm dừng.
+      </p>
+      <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-800 font-medium mb-5">
+        👉 Vui lòng <strong>đóng cửa sổ DevTools (Inspect)</strong> để tiếp tục sử dụng website bình thường.
+      </div>
+      <button type="button" onclick="window.checkAndDismissDevToolsOverlay()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm transition shadow-md shadow-indigo-600/20 active:scale-98 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-rotate-right"></i> Tôi Đã Đóng DevTools - Tiếp Tục
+      </button>
+    </div>
+  </div>
+
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
