@@ -1,0 +1,1108 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset='UTF-8'>
+        <meta http-equiv="Content-Security-Policy" content="default-src * data: blob: 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline'; font-src * data: blob: 'unsafe-inline';">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="theme-color" content="#2563eb">
+        
+            <style>
+:root{
+  --bg-1:#f8fbff;
+  --bg-2:#eef7ff;
+  --surface:#ffffff;
+  --surface-2:#f8fbff;
+  --text-1:#16324f;
+  --text-2:#49627d;
+  --line:#dbe7f3;
+  --line-strong:#bfd4e7;
+  --shadow:0 18px 50px rgba(38,70,108,.12);
+  --shadow-soft:0 8px 24px rgba(38,70,108,.08);
+  --primary:#2563eb;
+  --primary-2:#1d4ed8;
+  --accent:#0ea5e9;
+  --success:#16a34a;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+  --base-size:32px;
+  --opt-size:28px;
+  --badge-size:50px;
+  --math-scale:112%;
+  --radius-xl:24px;
+  --radius-lg:18px;
+  --radius-md:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background:
+    radial-gradient(circle at top left, #ffffff 0%, #f6fbff 32%, transparent 55%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  color:var(--text-1);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-height:100dvh;
+  overflow-x:hidden;
+  overflow-y:auto;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.slide-container{
+  width:min(95%, 1480px);
+  height:calc(100dvh - 18px);
+  margin:9px auto;
+  background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
+  border:1px solid rgba(191,212,231,.85);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow);
+  padding:22px 28px 20px;
+  display:none;
+  flex-direction:column;
+  position:relative;
+  overflow:hidden;
+}
+.slide-container::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto 0;
+  height:6px;
+  background:linear-gradient(90deg,var(--primary),var(--accent),#22c55e);
+}
+.slide-container.active{display:flex;animation:slideIn .28s ease-out}
+.q-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  padding-bottom:14px;
+  margin-bottom:14px;
+  border-bottom:1px solid var(--line);
+}
+.header-left,.header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.part-badge{
+  background:linear-gradient(135deg,var(--primary) 0%, var(--accent) 100%);
+  color:#fff;
+  padding:11px 22px;
+  border-radius:999px;
+  font-size:19px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  box-shadow:0 10px 20px rgba(37,99,235,.24);
+}
+.zoom-btn,.timer,.btn-exit-html,.slide-counter,.btn-action,.btn-option,.btn-tf,input.answer-input{transition:all .2s ease}
+.zoom-btn{
+  width:44px;height:44px;border-radius:50%;
+  border:1px solid var(--line-strong);
+  background:#fff;color:var(--text-1);
+  font-size:22px;font-weight:800;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-soft);
+}
+.zoom-btn:hover{transform:translateY(-1px);background:#f6fbff;border-color:#9fc1df}
+.zoom-btn:active{transform:translateY(1px) scale(.98)}
+.timer{
+  font-size:22px;color:var(--text-1);font-weight:800;
+  background:linear-gradient(180deg,#ffffff 0%, #f4f9ff 100%);
+  padding:10px 22px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line-strong);box-shadow:var(--shadow-soft);
+  display:flex;align-items:center;gap:8px;min-width:190px;justify-content:center;
+}
+.timer:hover{background:#edf6ff}
+.timer.running{
+  color:#b91c1c;
+  background:linear-gradient(180deg,#fff4f4 0%, #fee2e2 100%);
+  border-color:#fca5a5;
+  animation:pulse 1s infinite;
+}
+.btn-exit-html{
+  background:linear-gradient(135deg,#fb7185 0%, var(--danger) 100%);
+  color:#fff;border:none;padding:10px 22px;border-radius:999px;
+  font-size:18px;font-weight:800;cursor:pointer;
+  box-shadow:0 12px 24px rgba(239,68,68,.22);
+}
+.btn-exit-html:hover{transform:translateY(-1px);filter:saturate(1.05)}
+.content-wrapper{
+  flex-grow:1;overflow-y:auto;padding-right:10px;padding-bottom:20px;
+  display:flex;flex-direction:column;
+}
+.content-wrapper::-webkit-scrollbar{width:10px}
+.content-wrapper::-webkit-scrollbar-thumb{background:#cfe0ef;border-radius:999px;border:2px solid #f6fbff}
+.content-wrapper::-webkit-scrollbar-track{background:transparent}
+.question-content{
+  font-size:var(--base-size);font-weight:600;color:var(--text-1);
+  margin-bottom:12px;line-height:1.55;text-align:justify;
+}
+.q-label{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:86px;padding:6px 14px;margin-right:10px;border-radius:999px;
+  color:#fff;background:linear-gradient(135deg,#f59e0b 0%, #f97316 100%);
+  font-weight:900;box-shadow:0 8px 18px rgba(249,115,22,.24);
+}
+mjx-container{font-size:var(--math-scale)!important;margin:0 3px!important}
+.img-container{text-align:center;margin:8px 0 14px;width:100%;padding:10px 0}
+.real-image{
+  display:inline-block;max-width:46%;height:auto;max-height:205px;
+  border-radius:18px;border:1px solid #cfe0ef;background:#fff;
+  box-shadow:var(--shadow-soft);padding:6px;cursor:zoom-in;
+}
+.img-hint{font-size:13px;color:var(--text-2);font-style:italic;margin-top:6px}
+.table-container{
+  width:100%;overflow-x:auto;margin:18px 0;display:flex;justify-content:center;
+}
+.styled-table{
+  border-collapse:collapse;background:#fff;border:1px solid #cdddeb;min-width:60%;
+  text-align:center;box-shadow:var(--shadow-soft);border-radius:16px;overflow:hidden;
+}
+.styled-table th,.styled-table td{
+  border:1px solid #e2edf6;padding:12px 18px;font-size:var(--base-size);color:var(--text-1);
+}
+.styled-table th{background:linear-gradient(180deg,#f5faff 0%, #edf6ff 100%);font-weight:800}
+.options-grid-4,.options-grid-2,.options-grid-1{gap:16px;margin:10px 0 20px}
+.options-grid-4{display:grid;grid-template-columns:repeat(4,1fr)}
+.options-grid-2{display:grid;grid-template-columns:repeat(2,1fr)}
+.options-grid-1{display:grid;grid-template-columns:1fr}
+.btn-option{
+  background:linear-gradient(180deg,#ffffff 0%, #f9fcff 100%);
+  border:1px solid var(--line-strong);padding:16px 16px;font-size:var(--opt-size);
+  border-radius:18px;cursor:pointer;text-align:left;font-weight:600;color:var(--text-1);
+  display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-soft);
+}
+.btn-option:hover{transform:translateY(-2px);border-color:#9fc1df;background:#ffffff}
+.btn-option:active{transform:translateY(0)}
+.opt-badge{
+  width:var(--badge-size);height:var(--badge-size);
+  background:linear-gradient(135deg,var(--success) 0%, #22c55e 100%);
+  color:#fff;border-radius:14px;display:flex;justify-content:center;align-items:center;
+  font-weight:900;flex-shrink:0;box-shadow:0 10px 18px rgba(34,197,94,.18);
+}
+.btn-option.correct{
+  background:linear-gradient(180deg,#166534 0%, #14532d 100%)!important;
+  border-color:#14532d!important;color:#ffffff!important;
+}
+.btn-option.correct .opt-badge{background:linear-gradient(135deg,#052e16 0%, #166534 100%);color:#fff}
+.btn-option.wrong{
+  opacity:.72;background:linear-gradient(180deg,#fff5f5 0%, #fee2e2 100%)!important;
+  border-color:#fca5a5!important;
+}
+.btn-option.wrong .opt-badge{background:linear-gradient(135deg,#b91c1c 0%, #ef4444 100%)}
+.btn-option.disabled{pointer-events:none}
+.tf-container{display:flex;flex-direction:column;gap:14px;margin:8px 0 22px}
+.tf-row{
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  background:linear-gradient(180deg,#ffffff 0%, #f9fcff 100%);
+  padding:16px 18px;border-radius:18px;border:1px solid #dbe7f3;box-shadow:var(--shadow-soft);
+}
+.tf-content{font-size:var(--opt-size);font-weight:600;color:var(--text-1);flex-grow:1}
+.tf-buttons{display:flex;gap:12px;min-width:180px}
+.btn-tf{
+  border:1px solid var(--line-strong);background:linear-gradient(180deg,#ffffff 0%, #f4f9ff 100%);
+  padding:11px 0;border-radius:12px;font-weight:900;cursor:pointer;flex:1;color:var(--text-2);
+  text-align:center;font-size:22px;box-shadow:var(--shadow-soft);
+}
+.btn-tf:hover{transform:translateY(-1px);border-color:#9fc1df}
+.btn-tf.user-correct{background:linear-gradient(135deg,#22c55e 0%, #16a34a 100%)!important;color:#fff!important;border-color:#16a34a!important}
+.btn-tf.user-wrong{background:linear-gradient(135deg,#f87171 0%, #ef4444 100%)!important;color:#fff!important;border-color:#dc2626!important}
+.btn-tf.reveal-true{border:2px solid #22c55e!important;color:#166534!important;background:#ecfdf5!important}
+.btn-tf.reveal-false{border:2px solid #ef4444!important;color:#b91c1c!important;background:#fef2f2!important}
+.short-answer-area{
+  display:flex;flex-direction:column;align-items:center;margin:6px 0 28px;width:100%;
+}
+.input-group{position:relative;width:min(74%, 820px)}
+input.answer-input{
+  width:100%;padding:18px 24px;font-size:30px;border:2px solid #cdddeb;border-radius:18px;
+  outline:none;text-align:center;font-weight:800;color:var(--text-1);
+  background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);box-shadow:var(--shadow-soft);
+}
+input.answer-input:focus{
+  border-color:#93c5fd;background:#fff;box-shadow:0 0 0 5px rgba(59,130,246,.12);
+}
+.explanation-box{
+  display:none;margin-top:18px;padding:22px 24px;
+  background:linear-gradient(180deg,#f4fbff 0%, #e9f7ff 100%);
+  border:1px solid #bae6fd;border-left:8px solid var(--accent);
+  border-radius:18px;animation:fadeIn .35s;box-shadow:var(--shadow-soft);
+}
+.explanation-title{
+  font-weight:900;color:#0369a1;margin-bottom:10px;font-size:26px;
+  display:flex;align-items:center;gap:10px;
+}
+.explanation-content{font-size:var(--opt-size);color:var(--text-1);line-height:1.65}
+.actions-area{
+  display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;
+  margin-top:auto;padding-top:16px;border-top:1px solid var(--line);
+}
+.btn-action{
+  color:#fff;border:none;padding:12px 22px;font-size:18px;font-weight:800;border-radius:14px;
+  cursor:pointer;min-width:170px;display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 12px 22px rgba(15,23,42,.12);
+}
+.btn-action:hover{transform:translateY(-2px)}
+.btn-action:active{transform:translateY(0)}
+.btn-reveal{background:linear-gradient(135deg,#f59e0b 0%, #f97316 100%)}
+.btn-check{background:linear-gradient(135deg,#3b82f6 0%, var(--primary-2) 100%)}
+.btn-explain{background:linear-gradient(135deg,#10b981 0%, #059669 100%)}
+.slide-counter{
+  font-size:18px;font-weight:900;color:var(--text-1);
+  background:linear-gradient(180deg,#ffffff 0%, #edf6ff 100%);
+  padding:10px 22px;border-radius:999px;border:1px solid #d7e6f3;box-shadow:var(--shadow-soft);
+}
+.nav-arrow{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:58px;height:74px;background:rgba(37,99,235,.16);color:#fff;font-size:34px;border:none;
+  border-radius:18px;cursor:pointer;transition:.25s;z-index:100;display:flex;justify-content:center;
+  align-items:center;backdrop-filter:blur(10px);box-shadow:0 12px 28px rgba(37,99,235,.18);
+}
+.nav-arrow:hover{background:rgba(37,99,235,.9);transform:translateY(-50%) scale(1.04)}
+.nav-prev{left:10px}
+.nav-next{right:10px}
+.feedback-popup{
+  position:absolute;top:45%;left:50%;transform:translate(-50%,-50%) scale(.75);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;z-index:9999;
+  pointer-events:none;transition:all .35s cubic-bezier(.175,.885,.32,1.275);
+  filter:drop-shadow(0 18px 30px rgba(15,23,42,.2));background:rgba(255,255,255,.96);
+  padding:20px 44px;border-radius:28px;text-align:center;border:4px solid transparent;backdrop-filter:blur(8px);
+}
+.feedback-popup.correct{border-color:#4ade80;color:#15803d}
+.feedback-popup.wrong{border-color:#f87171;color:#b91c1c}
+.feedback-popup .emoji{font-size:92px;line-height:1;margin-bottom:10px}
+.feedback-popup .message{font-size:36px;font-weight:900;white-space:nowrap}
+.feedback-popup.pop{transform:translate(-50%,-50%) scale(1);opacity:1}
+@keyframes slideIn{from{opacity:0;transform:translateY(18px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(248,113,113,.35)}70%{box-shadow:0 0 0 14px rgba(248,113,113,0)}100%{box-shadow:0 0 0 0 rgba(248,113,113,0)}}
+@media (max-width:1024px){
+  :root{--base-size:26px;--opt-size:23px;--badge-size:44px;--math-scale:106%}
+  .options-grid-4{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:768px){
+  :root{--base-size:20px;--opt-size:18px;--badge-size:36px;--math-scale:100%}
+  .slide-container{width:100%;height:100dvh;padding:14px;border-radius:0;margin:0;border:none}
+  .q-header{flex-direction:column;align-items:stretch}
+  .header-left,.header-right{justify-content:space-between;width:100%}
+  .part-badge{font-size:15px;padding:8px 14px}
+  .btn-exit-html,.timer{font-size:15px;padding:8px 14px;min-width:118px}
+  .zoom-btn{width:36px;height:36px;font-size:18px}
+  .table-container{justify-content:flex-start}
+  .styled-table{min-width:100%}
+  .styled-table th,.styled-table td{padding:8px 10px}
+  .options-grid-4,.options-grid-2{grid-template-columns:1fr;gap:10px;margin-bottom:12px}
+  .btn-option{padding:12px}
+  .tf-row{flex-direction:column;align-items:stretch}
+  .tf-content{margin-bottom:8px}
+  .tf-buttons{min-width:100%}
+  .input-group{width:100%}
+  input.answer-input{font-size:24px;padding:15px}
+  .nav-arrow{display:none}
+  .actions-area{gap:10px}
+  .btn-action{flex:1;min-width:130px;font-size:15px;padding:10px}
+  .slide-counter{font-size:15px;width:100%;text-align:center;order:3;margin-top:4px}
+  .slide-counter::after{
+    content:"👈 Vuốt ngang để chuyển câu 👉";
+    display:block;font-size:13px;font-weight:700;color:#0f766e;margin-top:5px;
+  }
+}
+
+.draw-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.draw-sep{width:1px;height:34px;background:#d6e3f0;margin:0 2px}
+.draw-btn,.color-btn{
+  width:44px;height:44px;border-radius:50%;
+  border:1px solid var(--line-strong);background:#fff;color:var(--text-1);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:var(--shadow-soft);font-size:22px;font-weight:800;transition:all .2s ease;
+}
+.draw-btn:hover,.color-btn:hover{transform:translateY(-1px);background:#f6fbff;border-color:#9fc1df}
+.draw-btn.active{background:linear-gradient(135deg,var(--primary) 0%, var(--accent) 100%);color:#fff;border-color:transparent}
+.color-btn{position:relative;font-size:0}
+.color-btn::after{content:"";width:28px;height:28px;border-radius:50%;display:block;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.color-btn.active{border:2px solid #111827;transform:translateY(-1px) scale(1.04)}
+.color-btn[data-color="red"]::after{background:#ff5a47}
+.color-btn[data-color="blue"]::after{background:#3b82f6}
+.color-btn[data-color="green"]::after{background:#16a34a}
+.slide-draw-canvas{
+  position:absolute;left:0;right:0;top:72px;bottom:0;width:100%;height:calc(100% - 72px);
+  z-index:12;background:transparent;display:block;pointer-events:none;touch-action:none;
+}
+.slide-container.draw-mode-pen .slide-draw-canvas,
+.slide-container.draw-mode-eraser .slide-draw-canvas{pointer-events:auto}
+.slide-container.draw-mode-pen .slide-draw-canvas{cursor:crosshair}
+.slide-container.draw-mode-eraser .slide-draw-canvas{cursor:cell}
+.q-header,.actions-area{position:relative;z-index:20}
+.content-wrapper{position:relative;z-index:5}
+@media (max-width:768px){
+  .draw-toolbar{gap:8px}
+  .draw-btn,.color-btn{width:36px;height:36px;font-size:18px}
+  .color-btn::after{width:22px;height:22px}
+  .slide-draw-canvas{top:112px;height:calc(100% - 112px)}
+}
+
+
+
+/* --- TIMER CHUYÊN NGHIỆP: NÚT ĐỒNG HỒ + MODAL NHẬP mm:ss --- */
+.timer-edit-btn{
+  width:44px;height:44px;border-radius:50%;
+  border:1px solid var(--line-strong);
+  background:linear-gradient(180deg,#ffffff 0%, #f4f9ff 100%);
+  color:var(--text-1);font-size:22px;font-weight:900;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-soft);transition:all .2s ease;
+}
+.timer-edit-btn:hover{transform:translateY(-1px);background:#edf6ff;border-color:#9fc1df}
+.timer-edit-btn:active{transform:translateY(1px) scale(.98)}
+.timer-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;align-items:center;justify-content:center;z-index:10000;backdrop-filter:blur(8px);padding:18px}
+.timer-modal-backdrop.show{display:flex;animation:fadeIn .18s ease-out}
+.timer-modal{width:min(94vw,460px);background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);border:1px solid rgba(191,212,231,.95);border-radius:26px;box-shadow:0 26px 80px rgba(15,23,42,.22);padding:24px;position:relative;color:var(--text-1)}
+.timer-modal-title{font-size:26px;font-weight:900;margin:0 0 8px;display:flex;align-items:center;gap:10px}
+.timer-modal-subtitle{font-size:15px;color:var(--text-2);line-height:1.45;margin-bottom:16px}
+.timer-input-wrap{display:flex;align-items:center;gap:12px;margin:10px 0 8px}
+.timer-input-icon{width:54px;height:54px;border-radius:18px;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 12px 24px rgba(37,99,235,.22)}
+#timerModalInput{flex:1;min-width:0;padding:14px 16px;border-radius:18px;border:2px solid #cdddeb;outline:none;font-size:30px;font-weight:900;text-align:center;letter-spacing:1px;color:var(--text-1);background:#fff;box-shadow:var(--shadow-soft)}
+#timerModalInput:focus{border-color:#93c5fd;box-shadow:0 0 0 5px rgba(59,130,246,.12)}
+.timer-error{min-height:22px;color:#dc2626;font-size:14px;font-weight:700;margin-top:6px}
+.timer-quick-row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}
+.timer-quick{border:1px solid #cdddeb;background:#fff;border-radius:999px;padding:8px 12px;color:var(--text-1);font-size:14px;font-weight:800;cursor:pointer;box-shadow:var(--shadow-soft)}
+.timer-quick:hover{background:#edf6ff;border-color:#9fc1df}
+.timer-modal-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:8px}
+.timer-modal-btn{border:none;border-radius:14px;padding:11px 15px;font-size:15px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 10px 20px rgba(15,23,42,.12)}
+.timer-modal-btn:hover{transform:translateY(-1px)}
+.timer-modal-cancel{background:#eef2f7;color:#334155}
+.timer-modal-current{background:linear-gradient(135deg,#3b82f6 0%, #1d4ed8 100%);color:#fff}
+.timer-modal-all{background:linear-gradient(135deg,#10b981 0%, #059669 100%);color:#fff}
+.timer-modal-close{position:absolute;right:16px;top:14px;width:36px;height:36px;border-radius:50%;border:1px solid #dbe7f3;background:#fff;cursor:pointer;font-size:20px;font-weight:900;color:#64748b;display:flex;align-items:center;justify-content:center}
+.timer-modal-close:hover{background:#f1f5f9;color:#0f172a}
+@media (max-width:768px){.timer-edit-btn{width:36px;height:36px;font-size:18px}.timer-modal{padding:20px;border-radius:22px}.timer-modal-title{font-size:22px}#timerModalInput{font-size:26px;padding:12px}.timer-modal-actions{flex-direction:column}.timer-modal-btn{width:100%}}
+
+</style>
+        
+        <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']], processEscapes: true }, chtml: { scale: 1, matchFontHeight: false } };
+        </script>
+        <script defer src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js'></script>
+        <style id="imath-options-stack-style">
+/* Trắc nghiệm 4 phương án: A-B dòng 1, C-D dòng 2 */
+.options-stack{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px 16px;
+  width:100%;
+  margin:10px 0 20px;
+}
+.options-stack .btn-option{
+  width:100%;
+  min-width:0;
+  display:flex;
+  align-items:flex-start;
+  font-size:32px;
+}
+.options-stack .opt-text{flex:1;min-width:0;line-height:1.45}
+
+/* Nút truy cập nhanh đến câu hỏi */
+.quick-nav-btn{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:5000;
+  border:none;
+  border-radius:999px;
+  padding:12px 18px;
+  background:linear-gradient(135deg,#2563eb,#0ea5e9);
+  color:#fff;
+  font-size:17px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 12px 28px rgba(37,99,235,.28);
+}
+.quick-nav-btn:hover{transform:translateY(-2px);filter:saturate(1.08)}
+
+.quick-nav-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:10001;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(15,23,42,.45);
+  backdrop-filter:blur(7px);
+}
+.quick-nav-backdrop.show{display:flex;animation:fadeIn .18s ease-out}
+.quick-nav-panel{
+  width:min(94vw,760px);
+  max-height:min(82vh,720px);
+  overflow:auto;
+  background:#fff;
+  border:1px solid #dbe7f3;
+  border-radius:24px;
+  padding:22px;
+  box-shadow:0 26px 80px rgba(15,23,42,.25);
+}
+.quick-nav-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:16px;
+}
+.quick-nav-title{font-size:24px;font-weight:900;color:#16324f}
+.quick-nav-close{
+  width:40px;height:40px;border:1px solid #dbe7f3;border-radius:50%;
+  background:#f8fbff;color:#334155;font-size:22px;font-weight:900;cursor:pointer;
+}
+.quick-nav-grid{
+  display:grid;
+  grid-template-columns:repeat(8,minmax(0,1fr));
+  gap:10px;
+}
+.quick-nav-item{
+  min-height:48px;
+  border:1px solid #cdddeb;
+  border-radius:13px;
+  background:linear-gradient(180deg,#fff,#f4f9ff);
+  color:#16324f;
+  font-size:17px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 5px 14px rgba(38,70,108,.07);
+}
+.quick-nav-item:hover{border-color:#60a5fa;background:#eff6ff;transform:translateY(-1px)}
+.quick-nav-item.active{
+  background:linear-gradient(135deg,#2563eb,#0ea5e9);
+  color:#fff;border-color:transparent;
+}
+@media(max-width:768px){
+  .options-stack{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .options-stack .btn-option{padding:10px 8px;gap:8px;font-size:32px}
+  .options-stack .opt-badge{width:34px;height:34px;border-radius:10px}
+  .quick-nav-btn{right:12px;bottom:12px;font-size:15px;padding:10px 14px}
+  .quick-nav-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+  .quick-nav-item{min-height:42px;font-size:15px}
+  .quick-nav-panel{padding:16px;border-radius:20px}
+  .quick-nav-title{font-size:20px}
+}
+</style></head><body>
+        
+            <button class="nav-arrow nav-prev" onclick="prevSlide()" title="Câu trước (Mũi tên trái)">❮</button>
+            <button class="nav-arrow nav-next" onclick="nextSlide()" title="Câu sau (Mũi tên phải hoặc Enter)">❯</button>
+            <button class="quick-nav-btn" type="button" onclick="openQuickNav()" title="Chọn nhanh câu hỏi">☷ Câu hỏi</button>
+
+            <div class="quick-nav-backdrop" id="quickNavBackdrop" onclick="closeQuickNav(event)">
+              <div class="quick-nav-panel" role="dialog" aria-modal="true" aria-labelledby="quickNavTitle" onclick="event.stopPropagation()">
+                <div class="quick-nav-head">
+                  <div class="quick-nav-title" id="quickNavTitle">📋 Truy cập nhanh đến câu hỏi</div>
+                  <button class="quick-nav-close" type="button" onclick="closeQuickNav()" title="Đóng">×</button>
+                </div>
+                <div class="quick-nav-grid" id="quickNavGrid"></div>
+              </div>
+            </div>
+        
+
+        <div class="timer-modal-backdrop" id="timerModalBackdrop" onclick="closeTimerModal(event)">
+            <div class="timer-modal" role="dialog" aria-modal="true" aria-labelledby="timerModalTitle" onclick="event.stopPropagation()">
+                <button class="timer-modal-close" type="button" onclick="closeTimerModal()" title="Đóng">×</button>
+                <h2 class="timer-modal-title" id="timerModalTitle">🕘 Thiết lập thời gian</h2>
+                <div class="timer-modal-subtitle">Nhập thời gian theo dạng <b>mm:ss</b>, ví dụ <b>05:00</b>, <b>01:30</b>, <b>00:45</b>.</div>
+                <div class="timer-input-wrap">
+                    <div class="timer-input-icon">⏱</div>
+                    <input id="timerModalInput" type="text" inputmode="numeric" autocomplete="off" placeholder="mm:ss" value="01:00">
+                </div>
+                <div class="timer-error" id="timerModalError"></div>
+                <div class="timer-quick-row">
+                    <button class="timer-quick" type="button" onclick="setTimerModalValue('00:30')">30 giây</button>
+                    <button class="timer-quick" type="button" onclick="setTimerModalValue('01:00')">1 phút</button>
+                    <button class="timer-quick" type="button" onclick="setTimerModalValue('03:00')">3 phút</button>
+                    <button class="timer-quick" type="button" onclick="setTimerModalValue('05:00')">5 phút</button>
+                    <button class="timer-quick" type="button" onclick="setTimerModalValue('10:00')">10 phút</button>
+                </div>
+                <div class="timer-modal-actions">
+                    <button class="timer-modal-btn timer-modal-cancel" type="button" onclick="closeTimerModal()">Hủy</button>
+                    <button class="timer-modal-btn timer-modal-current" type="button" onclick="applyTimerFromModal(false)">✓ Áp dụng câu này</button>
+                    <button class="timer-modal-btn timer-modal-all" type="button" onclick="applyTimerFromModal(true)">✓ Áp dụng tất cả câu</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide-container" id="slide-0"><div class="q-header"><div class="header-left"><div class="part-badge">PHẦN III (Trả lời ngắn)</div></div><div class="header-right"><button class="zoom-btn" onclick="changeFontSize(-2)" title="Giảm cỡ chữ">A-</button><button class="zoom-btn" onclick="changeFontSize(2)" title="Tăng cỡ chữ">A+</button><button class="timer-edit-btn" type="button" onclick="openTimerModal(this)" title="Thiết lập thời gian">🕘</button><div class="timer" onclick="startTimer(this)" ondblclick="editTimer(this)" data-time="60" title="Click: Chạy/Dừng. Click đúp: Thiết lập thời gian.">⏳ Bắt đầu (01:00)</div><button class="btn-exit-html" onclick="document.title='EXIT_FULL_SCREEN'; if(typeof exitPresentation==='function'){exitPresentation();}" title="Thoát chế độ trình chiếu (Phím Esc)">❌ Thoát</button></div></div><div class="content-wrapper"><div class="question-content"><span class="q-label">Câu 1:</span> Một công ty vận tải có 16 xe tải, mỗi xe có thể chở được 10 tấn hàng trong 1 giờ. Chi phí chuẩn bị và khấu hao mỗi xe cho một chuyến là 148000 đồng. Chi phí thuê nhân viên điều phối là 82000 đồng/giờ. Công ty cần vận chuyển 3500 tấn hàng. Hãy tìm số xe tải cần sử dụng để chi phí nhỏ nhất.</div><div class="short-answer-area"><div class="input-group"><input type="text" class="answer-input" id="input-0" placeholder="Nhập kết quả..." onkeyup="handleEnter(event, 0, 'MTQ=')"></div></div><div class="actions-area"><button class="btn-action btn-check" id="btn-chk-0" onclick="checkShort(this, 'MTQ=')">✓ KIỂM TRA</button><button class="btn-action btn-reveal" onclick="revealShort(this, 'MTQ=')">👁 ĐÁP ÁN</button><div class="slide-counter" id="counter-0">Câu ? / ?</div><button class="btn-action btn-explain" onclick="toggleExpl(this)">💡 XEM LỜI GIẢI</button></div><div class="explanation-box"><div class="explanation-title">📝 LỜI GIẢI CHI TIẾT:</div><div class="explanation-content">Một công ty vận tải có 16 xe tải, mỗi xe có thể chở được 10 tấn hàng trong 1 giờ. Chi phí chuẩn bị và khấu hao mỗi xe cho một chuyến là 148000 đồng. Chi phí thuê nhân viên điều phối là 82000 đồng/giờ. Công ty cần vận chuyển 3500 tấn hàng. Hãy tìm số xe tải cần sử dụng để chi phí nhỏ nhất.<br><br>Lời giải:<br> Gọi ${x}$ là số lượng xe tải cần sử dụng.<br><br>Chi phí chuẩn bị và khấu hao là ${148000}x$.<br><br>Trong một giờ, với ${x}$ xe tải thì chở được số tấn hàng là ${10x}$.<br><br>Số giờ để chở hết 3500 tấn hàng là: $\dfrac{3500}{10x}=\dfrac{350}{x}$.<br><br>Chi phí thuê nhân viên điều phối là: $\dfrac{350}{x}.82000=\dfrac{28700000}{x}$.<br><br>Xét hàm số: $f(x)=148000x+\dfrac{28700000}{x}$.<br><br>$f'(x)=148000-\dfrac{28700000}{x^2}=\dfrac{148000x^2-28700000}{x^2}$.<br><br>$f'(x)=0\Leftrightarrow x=\sqrt{\dfrac{28700000}{148000}}=\sqrt{\frac{7175}{37}}=13,9$.<br><br>Vì số xe tải là số nguyên nên ta có:<br><br>$f(12)=4167667$.<br><br>$f(13)=4131692$.<br><br>$f(14)=4122000$.<br><br>Số xe tải để tổng chi phí nhỏ nhất là ${14}$. <br>Đáp án: 14</div></div></div></div><div class="slide-container" id="slide-1"><div class="q-header"><div class="header-left"><div class="part-badge">PHẦN III (Trả lời ngắn)</div></div><div class="header-right"><button class="zoom-btn" onclick="changeFontSize(-2)" title="Giảm cỡ chữ">A-</button><button class="zoom-btn" onclick="changeFontSize(2)" title="Tăng cỡ chữ">A+</button><button class="timer-edit-btn" type="button" onclick="openTimerModal(this)" title="Thiết lập thời gian">🕘</button><div class="timer" onclick="startTimer(this)" ondblclick="editTimer(this)" data-time="60" title="Click: Chạy/Dừng. Click đúp: Thiết lập thời gian.">⏳ Bắt đầu (01:00)</div><button class="btn-exit-html" onclick="document.title='EXIT_FULL_SCREEN'; if(typeof exitPresentation==='function'){exitPresentation();}" title="Thoát chế độ trình chiếu (Phím Esc)">❌ Thoát</button></div></div><div class="content-wrapper"><div class="question-content"><span class="q-label">Câu 2:</span> Một Homestay đang áp dụng mức giá cho thuê là ${1,5}$ triệu đồng/người/ngày. Tại mức giá này, trung bình mỗi tháng Homestay đón ${56}$ lượt khách và mỗi khách lưu trú ${3}$ ngày. Chủ Homestay dự tính điều chỉnh giá và thấy rằng cứ tăng giá thêm ${0,21}$ triệu đồng/người/ngày thì số khách sẽ giảm ${8}$ người và thời gian lưu trú trung bình giảm ${1}$ ngày. Ngược lại, nếu giảm giá thì các chỉ số sẽ tăng tương ứng. Biết chi phí vận hành cho mỗi khách một ngày là ${1}$ triệu đồng và mức giá trần không được vượt quá ${2,1}$ triệu đồng/người/ngày.<br><br>Hỏi Homestay nên áp dụng mức giá nào để đạt lợi nhuận cao nhất (kết quả làm tròn đến hàng phần mười)?</div><div class="short-answer-area"><div class="input-group"><input type="text" class="answer-input" id="input-1" placeholder="Nhập kết quả..." onkeyup="handleEnter(event, 1, 'MSw1')"></div></div><div class="actions-area"><button class="btn-action btn-check" id="btn-chk-1" onclick="checkShort(this, 'MSw1')">✓ KIỂM TRA</button><button class="btn-action btn-reveal" onclick="revealShort(this, 'MSw1')">👁 ĐÁP ÁN</button><div class="slide-counter" id="counter-1">Câu ? / ?</div><button class="btn-action btn-explain" onclick="toggleExpl(this)">💡 XEM LỜI GIẢI</button></div><div class="explanation-box"><div class="explanation-title">📝 LỜI GIẢI CHI TIẾT:</div><div class="explanation-content">Một Homestay đang áp dụng mức giá cho thuê là ${1,5}$ triệu đồng/người/ngày. Tại mức giá này, trung bình mỗi tháng Homestay đón ${56}$ lượt khách và mỗi khách lưu trú ${3}$ ngày. Chủ Homestay dự tính điều chỉnh giá và thấy rằng cứ tăng giá thêm ${0,21}$ triệu đồng/người/ngày thì số khách sẽ giảm ${8}$ người và thời gian lưu trú trung bình giảm ${1}$ ngày. Ngược lại, nếu giảm giá thì các chỉ số sẽ tăng tương ứng. Biết chi phí vận hành cho mỗi khách một ngày là ${1}$ triệu đồng và mức giá trần không được vượt quá ${2,1}$ triệu đồng/người/ngày.<br><br>Hỏi Homestay nên áp dụng mức giá nào để đạt lợi nhuận cao nhất (kết quả làm tròn đến hàng phần mười)?<br><br>Lời giải:<br>Gọi $x$ là số bước điều chỉnh giá (mỗi bước ${0,21}$ triệu đồng/người/ngày).<br><br>Khi đó:<br><br>Giá thuê:<br>$p(x)=1,5+0,21x$.<br><br>Số khách:<br>$k(x)=56-8x$.<br><br>Thời gian lưu trú:<br>$t(x)=3-1x$.<br><br>Điều kiện:<br>$p(x)\le 2,1,\ p(x)\ge 1,\ k(x)\ge 1,\ t(x)\ge 1$.<br><br>Lợi nhuận theo tháng:<br><br>$P(x)=(p(x)-1)k(x)t(x)$.<br><br>$P(x)=1,68x^3+-12,8x^2+-4,72x+84$.<br><br>Xét các giá trị nguyên của $x$ trong miền xác định, ta được lợi nhuận lớn nhất khi $x=0$.<br><br>Vậy mức giá tối ưu là:<br>$p=1,5+0,21\cdot(0)=1,5$ (triệu đồng/người/ngày).<br>Đáp án: 1,5 (triệu đồng/người/ngày)</div></div></div></div><div class="slide-container" id="slide-2"><div class="q-header"><div class="header-left"><div class="part-badge">PHẦN III (Trả lời ngắn)</div></div><div class="header-right"><button class="zoom-btn" onclick="changeFontSize(-2)" title="Giảm cỡ chữ">A-</button><button class="zoom-btn" onclick="changeFontSize(2)" title="Tăng cỡ chữ">A+</button><button class="timer-edit-btn" type="button" onclick="openTimerModal(this)" title="Thiết lập thời gian">🕘</button><div class="timer" onclick="startTimer(this)" ondblclick="editTimer(this)" data-time="60" title="Click: Chạy/Dừng. Click đúp: Thiết lập thời gian.">⏳ Bắt đầu (01:00)</div><button class="btn-exit-html" onclick="document.title='EXIT_FULL_SCREEN'; if(typeof exitPresentation==='function'){exitPresentation();}" title="Thoát chế độ trình chiếu (Phím Esc)">❌ Thoát</button></div></div><div class="content-wrapper"><div class="question-content"><span class="q-label">Câu 3:</span> Một nhà hàng có tổng cộng ${104}$ nhân viên và chi trả mức lương cố định cho mỗi nhân viên là ${312}$ USD/tháng. Vì nhà hàng liên tục đón những đoàn khách với số lượng lớn nhưng không thể thuê thêm nhân viên nên chủ nhà hàng muốn khuyến khích nhân viên của mình tăng ca. Ông chủ quyết định cứ một nhân viên quyết định tăng ca thì mức lương của tất cả nhân viên tăng ca trong nhà hàng đều được tăng thêm ${3}\%$. Tương tự nếu có ${x}$ nhân viên tăng ca thì lương cho mỗi người trong số đó sẽ tăng ${3x}\%$. Bên cạnh tiền lương cho nhân viên thì tiền điện nước và duy trì cơ sở vật chất là cố định ${8.000}$ USD/tháng. Doanh thu trung bình từ khách hàng là ${45.000}$ USD/tháng và mỗi nhân viên tăng ca trung bình sẽ được khách hàng tip ${800}$ USD/tháng (tiền tip phải nộp lại cho chủ cửa hàng và tính vào doanh thu).<br><br>Xác định số nhân viên còn lại không tăng ca cần có để lợi nhuận của nhà hàng đạt giá trị lớn nhất.</div><div class="short-answer-area"><div class="input-group"><input type="text" class="answer-input" id="input-2" placeholder="Nhập kết quả..." onkeyup="handleEnter(event, 2, 'NjE=')"></div></div><div class="actions-area"><button class="btn-action btn-check" id="btn-chk-2" onclick="checkShort(this, 'NjE=')">✓ KIỂM TRA</button><button class="btn-action btn-reveal" onclick="revealShort(this, 'NjE=')">👁 ĐÁP ÁN</button><div class="slide-counter" id="counter-2">Câu ? / ?</div><button class="btn-action btn-explain" onclick="toggleExpl(this)">💡 XEM LỜI GIẢI</button></div><div class="explanation-box"><div class="explanation-title">📝 LỜI GIẢI CHI TIẾT:</div><div class="explanation-content">Một nhà hàng có tổng cộng ${104}$ nhân viên và chi trả mức lương cố định cho mỗi nhân viên là ${312}$ USD/tháng. Vì nhà hàng liên tục đón những đoàn khách với số lượng lớn nhưng không thể thuê thêm nhân viên nên chủ nhà hàng muốn khuyến khích nhân viên của mình tăng ca. Ông chủ quyết định cứ một nhân viên quyết định tăng ca thì mức lương của tất cả nhân viên tăng ca trong nhà hàng đều được tăng thêm ${3}\%$. Tương tự nếu có ${x}$ nhân viên tăng ca thì lương cho mỗi người trong số đó sẽ tăng ${3x}\%$. Bên cạnh tiền lương cho nhân viên thì tiền điện nước và duy trì cơ sở vật chất là cố định ${8.000}$ USD/tháng. Doanh thu trung bình từ khách hàng là ${45.000}$ USD/tháng và mỗi nhân viên tăng ca trung bình sẽ được khách hàng tip ${800}$ USD/tháng (tiền tip phải nộp lại cho chủ cửa hàng và tính vào doanh thu).<br><br>Xác định số nhân viên còn lại không tăng ca cần có để lợi nhuận của nhà hàng đạt giá trị lớn nhất.<br><br>Lời giải:<br> Gọi ${x}$ là số nhân viên tăng ca, khi đó số nhân viên không tăng ca là ${104-x}$.<br><br>Doanh thu (gồm cả tip nộp lại):<br><br>$R(x)=45.000+800x$.<br><br>Chi phí lương:<br><br>- Nhóm không tăng ca: $(104-x)312$.<br><br>- Nhóm tăng ca: mỗi người nhận $\;312\left(1+\dfrac{3x}{100}\right)$ nên tổng là $x\cdot 312\left(1+\dfrac{3x}{100}\right)$.<br><br>Vậy tổng chi phí:<br><br>$C(x)=(104-x)312+x\cdot 312\left(1+\dfrac{3x}{100}\right)+8000$.<br><br>Lợi nhuận:<br><br>$P(x)=R(x)-C(x)$<br><br>$\Rightarrow P(x)=\left(45.000-312\cdot 104-8000\right)+800x-\dfrac{312\cdot 3}{100}x^2$.<br><br>Suy ra $P(x)=-9,36x^2+800,00x+4552,00$.<br><br>Lợi nhuận lớn nhất khi:<br><br>$x_0=\dfrac{-800,00}{-18,72}=42,7$.<br><br>Vì $x$ nguyên nên xét các giá trị lân cận $[x_0]-1,[x_0],[x_0]+1$, ta chọn được $x=43$ cho lợi nhuận lớn nhất.<br><br>Vậy số nhân viên không tăng ca cần có là: ${104-43}=61$. <br>Đáp án: 61</div></div></div></div><div class="slide-container" id="slide-3"><div class="q-header"><div class="header-left"><div class="part-badge">PHẦN III (Trả lời ngắn)</div></div><div class="header-right"><button class="zoom-btn" onclick="changeFontSize(-2)" title="Giảm cỡ chữ">A-</button><button class="zoom-btn" onclick="changeFontSize(2)" title="Tăng cỡ chữ">A+</button><button class="timer-edit-btn" type="button" onclick="openTimerModal(this)" title="Thiết lập thời gian">🕘</button><div class="timer" onclick="startTimer(this)" ondblclick="editTimer(this)" data-time="60" title="Click: Chạy/Dừng. Click đúp: Thiết lập thời gian.">⏳ Bắt đầu (01:00)</div><button class="btn-exit-html" onclick="document.title='EXIT_FULL_SCREEN'; if(typeof exitPresentation==='function'){exitPresentation();}" title="Thoát chế độ trình chiếu (Phím Esc)">❌ Thoát</button></div></div><div class="content-wrapper"><div class="question-content"><span class="q-label">Câu 4:</span> Một trung tâm dữ liệu có 15 máy chủ (server). Mỗi máy xử lý được 738 tác vụ trong 1 giờ. Chi phí điện năng cho mỗi máy trong một đợt chạy là 243000 đồng. Chi phí thuê kỹ sư giám sát hệ thống là 150000 đồng/giờ. Đợt này cần xử lý 206640 tác vụ. Trung tâm dữ liệu nên dùng bao nhiêu máy chủ để tổng chi phí thấp nhất?</div><div class="short-answer-area"><div class="input-group"><input type="text" class="answer-input" id="input-3" placeholder="Nhập kết quả..." onkeyup="handleEnter(event, 3, 'MTM=')"></div></div><div class="actions-area"><button class="btn-action btn-check" id="btn-chk-3" onclick="checkShort(this, 'MTM=')">✓ KIỂM TRA</button><button class="btn-action btn-reveal" onclick="revealShort(this, 'MTM=')">👁 ĐÁP ÁN</button><div class="slide-counter" id="counter-3">Câu ? / ?</div><button class="btn-action btn-explain" onclick="toggleExpl(this)">💡 XEM LỜI GIẢI</button></div><div class="explanation-box"><div class="explanation-title">📝 LỜI GIẢI CHI TIẾT:</div><div class="explanation-content">Một trung tâm dữ liệu có 15 máy chủ (server). Mỗi máy xử lý được 738 tác vụ trong 1 giờ. Chi phí điện năng cho mỗi máy trong một đợt chạy là 243000 đồng. Chi phí thuê kỹ sư giám sát hệ thống là 150000 đồng/giờ. Đợt này cần xử lý 206640 tác vụ. Trung tâm dữ liệu nên dùng bao nhiêu máy chủ để tổng chi phí thấp nhất?<br><br>Lời giải:<br> Gọi ${x}$ là số lượng máy chủ cần sử dụng.<br><br>Chi phí điện năng là ${243000}x$.<br><br>Trong một giờ, với  ${x}$ máy chủ thì xử lý được số tác vụ là ${738x}$.<br><br>Số giờ để xử lý hết 206640 tác vụ là: $\dfrac{206640}{738x}=\dfrac{280}{x}$.<br><br>Chi phí thuê kỹ sư giám sát hệ thống là: $\dfrac{280}{x}.150000=\dfrac{42000000}{x}$.<br><br>Xét hàm số: $f(x)=243000x+\dfrac{42000000}{x}$.<br><br>$f'(x)=243000-\dfrac{42000000}{x^2}=\dfrac{243000x^2-42000000}{x^2}$.<br><br>$f'(x)=0\Leftrightarrow x=\sqrt{\dfrac{42000000}{243000}}=\sqrt{\frac{14000}{81}}=13,1$.<br><br>Vì số máy chủ là số nguyên nên ta có:<br><br>$f(12)=6416000$.<br><br>$f(13)=6389769$.<br><br>$f(14)=6402000$.<br><br>Số máy chủ để tổng chi phí nhỏ nhất là ${13}$. <br>Đáp án: 13</div></div></div></div><div class="slide-container" id="slide-4"><div class="q-header"><div class="header-left"><div class="part-badge">PHẦN III (Trả lời ngắn)</div></div><div class="header-right"><button class="zoom-btn" onclick="changeFontSize(-2)" title="Giảm cỡ chữ">A-</button><button class="zoom-btn" onclick="changeFontSize(2)" title="Tăng cỡ chữ">A+</button><button class="timer-edit-btn" type="button" onclick="openTimerModal(this)" title="Thiết lập thời gian">🕘</button><div class="timer" onclick="startTimer(this)" ondblclick="editTimer(this)" data-time="60" title="Click: Chạy/Dừng. Click đúp: Thiết lập thời gian.">⏳ Bắt đầu (01:00)</div><button class="btn-exit-html" onclick="document.title='EXIT_FULL_SCREEN'; if(typeof exitPresentation==='function'){exitPresentation();}" title="Thoát chế độ trình chiếu (Phím Esc)">❌ Thoát</button></div></div><div class="content-wrapper"><div class="question-content"><span class="q-label">Câu 5:</span> Một bệnh viện có 15 máy xét nghiệm tự động. Mỗi máy xét nghiệm được 15 mẫu trong 1 giờ. Chi phí bảo dưỡng và khử khuẩn mỗi máy cho một ca trực là 81000 đồng. Chi phí thuê kỹ thuật viên giám sát là 49000 đồng/giờ. Trong ngày bệnh viện nhận 4500 mẫu xét nghiệm. Hỏi cần bao nhiêu máy để chi phí là ít nhất?</div><div class="short-answer-area"><div class="input-group"><input type="text" class="answer-input" id="input-4" placeholder="Nhập kết quả..." onkeyup="handleEnter(event, 4, 'MTM=')"></div></div><div class="actions-area"><button class="btn-action btn-check" id="btn-chk-4" onclick="checkShort(this, 'MTM=')">✓ KIỂM TRA</button><button class="btn-action btn-reveal" onclick="revealShort(this, 'MTM=')">👁 ĐÁP ÁN</button><div class="slide-counter" id="counter-4">Câu ? / ?</div><button class="btn-action btn-explain" onclick="toggleExpl(this)">💡 XEM LỜI GIẢI</button></div><div class="explanation-box"><div class="explanation-title">📝 LỜI GIẢI CHI TIẾT:</div><div class="explanation-content">Một bệnh viện có 15 máy xét nghiệm tự động. Mỗi máy xét nghiệm được 15 mẫu trong 1 giờ. Chi phí bảo dưỡng và khử khuẩn mỗi máy cho một ca trực là 81000 đồng. Chi phí thuê kỹ thuật viên giám sát là 49000 đồng/giờ. Trong ngày bệnh viện nhận 4500 mẫu xét nghiệm. Hỏi cần bao nhiêu máy để chi phí là ít nhất?<br><br>Lời giải:<br> Gọi ${x}$ là số lượng máy xét nghiệm cần sử dụng.<br><br>Chi phí bảo dưỡng và khử khuẩn là ${81000}x$.<br><br>Trong một giờ, với  ${x}$ máy thì xét nghiệm được số mẫu là ${15x}$.<br><br>Số giờ để xét nghiệm hết 4500 mẫu là: $\dfrac{4500}{15x}=\dfrac{300}{x}$.<br><br>Chi phí thuê kỹ thuật viên giám sát là: $\dfrac{300}{x}.49000=\dfrac{14700000}{x}$.<br><br>Xét hàm số: $f(x)=81000x+\dfrac{14700000}{x}$.<br><br>$f'(x)=81000-\dfrac{14700000}{x^2}=\dfrac{81000x^2-14700000}{x^2}$.<br><br>$f'(x)=0\Leftrightarrow x=\sqrt{\dfrac{14700000}{81000}}=\sqrt{\frac{4900}{27}}=13,5$.<br><br>Vì số máy là số nguyên nên ta có:<br><br>$f(12)=2197000$.<br><br>$f(13)=2183769$.<br><br>$f(14)=2184000$.<br><br>Số máy để tổng chi phí nhỏ nhất là ${13}$. <br>Đáp án: 13</div></div></div></div><div class="slide-container" id="slide-5"><div class="q-header"><div class="header-left"><div class="part-badge">PHẦN III (Trả lời ngắn)</div></div><div class="header-right"><button class="zoom-btn" onclick="changeFontSize(-2)" title="Giảm cỡ chữ">A-</button><button class="zoom-btn" onclick="changeFontSize(2)" title="Tăng cỡ chữ">A+</button><button class="timer-edit-btn" type="button" onclick="openTimerModal(this)" title="Thiết lập thời gian">🕘</button><div class="timer" onclick="startTimer(this)" ondblclick="editTimer(this)" data-time="60" title="Click: Chạy/Dừng. Click đúp: Thiết lập thời gian.">⏳ Bắt đầu (01:00)</div><button class="btn-exit-html" onclick="document.title='EXIT_FULL_SCREEN'; if(typeof exitPresentation==='function'){exitPresentation();}" title="Thoát chế độ trình chiếu (Phím Esc)">❌ Thoát</button></div></div><div class="content-wrapper"><div class="question-content"><span class="q-label">Câu 6:</span> Một khu du lịch bán vé vào cổng giá 96000 đồng một vé, trung bình có 1300 khách/ngày. Ban quản lý dự định tăng giá vé, khảo sát cho thấy nếu giá vé tăng thêm 3000 đồng thì số lượng khách giảm 75 người/ngày. Biết chi phí phục vụ cho mỗi khách là 54000 đồng. Hãy xác định số tiền cần tăng (đơn vị: ngàn đồng)để lợi nhuận trong ngày là cao nhất.</div><div class="short-answer-area"><div class="input-group"><input type="text" class="answer-input" id="input-5" placeholder="Nhập kết quả..." onkeyup="handleEnter(event, 5, 'NQ==')"></div></div><div class="actions-area"><button class="btn-action btn-check" id="btn-chk-5" onclick="checkShort(this, 'NQ==')">✓ KIỂM TRA</button><button class="btn-action btn-reveal" onclick="revealShort(this, 'NQ==')">👁 ĐÁP ÁN</button><div class="slide-counter" id="counter-5">Câu ? / ?</div><button class="btn-action btn-explain" onclick="toggleExpl(this)">💡 XEM LỜI GIẢI</button></div><div class="explanation-box"><div class="explanation-title">📝 LỜI GIẢI CHI TIẾT:</div><div class="explanation-content">Một khu du lịch bán vé vào cổng giá 96000 đồng một vé, trung bình có 1300 khách/ngày. Ban quản lý dự định tăng giá vé, khảo sát cho thấy nếu giá vé tăng thêm 3000 đồng thì số lượng khách giảm 75 người/ngày. Biết chi phí phục vụ cho mỗi khách là 54000 đồng. Hãy xác định số tiền cần tăng (đơn vị: ngàn đồng)để lợi nhuận trong ngày là cao nhất.<br><br>Lời giải:<br>  Gọi số tiền cần tăng giá mỗi vé là ${x}$ (nghìn đồng).<br><br> Vì cứ tăng giá thêm 3(nghìn đồng) thì số người giảm 75 nên tăng ${x}$ (nghìn đồng) thì số người bị giảm đi là ${25x}$.<br><br> Do đó tổng số vé bán ra mỗi suất là: $1300-25x$.<br><br> Lúc đầu bán với giá 96 (nghìn đồng), mỗi vé có lãi 42 (nghìn đồng).<br><br> Sau khi tăng giá, mỗi vé thu được số lãi là: $42+x$ (nghìn đồng).<br><br> Do đó tổng số lợi nhuận một suất chiếu thu được sau khi tăng giá là:<br><br>$f(x)=(1300-25x)(42+x)=- 25 x^{2} + 250 x + 54600$.<br><br>$f'(x)=250 - 50 x$.<br><br>$f'(x)=0\Leftrightarrow 250 - 50 x=0\Leftrightarrow x=5$.<br><br>Lập bảng biến thiên ta thấy $f(x)$ đạt giá trị lớn nhất khi $x=5$.<br><br> Vậy cần tăng thêm 5 đồng cho mỗi vé để được lợi nhuận cao nhất. <br>Đáp án: 5</div></div></div></div><div class="slide-container" id="slide-6"><div class="q-header"><div class="header-left"><div class="part-badge">PHẦN III (Trả lời ngắn)</div></div><div class="header-right"><button class="zoom-btn" onclick="changeFontSize(-2)" title="Giảm cỡ chữ">A-</button><button class="zoom-btn" onclick="changeFontSize(2)" title="Tăng cỡ chữ">A+</button><button class="timer-edit-btn" type="button" onclick="openTimerModal(this)" title="Thiết lập thời gian">🕘</button><div class="timer" onclick="startTimer(this)" ondblclick="editTimer(this)" data-time="60" title="Click: Chạy/Dừng. Click đúp: Thiết lập thời gian.">⏳ Bắt đầu (01:00)</div><button class="btn-exit-html" onclick="document.title='EXIT_FULL_SCREEN'; if(typeof exitPresentation==='function'){exitPresentation();}" title="Thoát chế độ trình chiếu (Phím Esc)">❌ Thoát</button></div></div><div class="content-wrapper"><div class="question-content"><span class="q-label">Câu 7:</span> Một rạp chiếu phim bán vé với giá 59000 đồng một vé, trung bình mỗi suất có 270 khán giả. Kết quả khảo sát thị trường cho thấy, nếu tăng giá vé thêm 2000 đồng thì số khán giả giảm 12 người. Biết chi phí phục vụ cho mỗi khán giả cố định là 36000 đồng. Hãy xác định số tiền cần tăng (đơn vị: ngàn đồng) để lợi nhuận từ một suất chiếu đạt mức cao nhất.</div><div class="short-answer-area"><div class="input-group"><input type="text" class="answer-input" id="input-6" placeholder="Nhập kết quả..." onkeyup="handleEnter(event, 6, 'MTE=')"></div></div><div class="actions-area"><button class="btn-action btn-check" id="btn-chk-6" onclick="checkShort(this, 'MTE=')">✓ KIỂM TRA</button><button class="btn-action btn-reveal" onclick="revealShort(this, 'MTE=')">👁 ĐÁP ÁN</button><div class="slide-counter" id="counter-6">Câu ? / ?</div><button class="btn-action btn-explain" onclick="toggleExpl(this)">💡 XEM LỜI GIẢI</button></div><div class="explanation-box"><div class="explanation-title">📝 LỜI GIẢI CHI TIẾT:</div><div class="explanation-content">Một rạp chiếu phim bán vé với giá 59000 đồng một vé, trung bình mỗi suất có 270 khán giả. Kết quả khảo sát thị trường cho thấy, nếu tăng giá vé thêm 2000 đồng thì số khán giả giảm 12 người. Biết chi phí phục vụ cho mỗi khán giả cố định là 36000 đồng. Hãy xác định số tiền cần tăng (đơn vị: ngàn đồng) để lợi nhuận từ một suất chiếu đạt mức cao nhất.<br><br>Lời giải:<br>  Gọi số tiền cần tăng giá mỗi vé là ${x}$ (nghìn đồng).<br><br> Vì cứ tăng giá thêm 2 (nghìn đồng) thì số người giảm 12 nên tăng ${x}$ (nghìn đồng) thì số người bị giảm đi là ${6x}$.<br><br> Do đó tổng số vé bán ra mỗi suất là: $270-6x$.<br><br> Lúc đầu bán với giá 59 (nghìn đồng), mỗi vé có lãi 23 (nghìn đồng).<br><br> Sau khi tăng giá, mỗi vé thu được số lãi là: $23+x$ (nghìn đồng).<br><br> Do đó tổng số lợi nhuận một suất chiếu thu được sau khi tăng giá là:<br><br>$f(x)=(270-6x)(23+x)=- 6 x^{2} + 132 x + 6210$.<br><br>$f'(x)=132 - 12 x$.<br><br>$f'(x)=0\Leftrightarrow 132 - 12 x=0\Leftrightarrow x=11$.<br><br>Lập bảng biến thiên ta thấy $f(x)$ đạt giá trị lớn nhất khi $x=11$.<br><br> Vậy cần tăng thêm 11 đồng cho mỗi vé để được lợi nhuận cao nhất. <br>Đáp án: 11</div></div></div></div><div class="slide-container" id="slide-7"><div class="q-header"><div class="header-left"><div class="part-badge">PHẦN III (Trả lời ngắn)</div></div><div class="header-right"><button class="zoom-btn" onclick="changeFontSize(-2)" title="Giảm cỡ chữ">A-</button><button class="zoom-btn" onclick="changeFontSize(2)" title="Tăng cỡ chữ">A+</button><button class="timer-edit-btn" type="button" onclick="openTimerModal(this)" title="Thiết lập thời gian">🕘</button><div class="timer" onclick="startTimer(this)" ondblclick="editTimer(this)" data-time="60" title="Click: Chạy/Dừng. Click đúp: Thiết lập thời gian.">⏳ Bắt đầu (01:00)</div><button class="btn-exit-html" onclick="document.title='EXIT_FULL_SCREEN'; if(typeof exitPresentation==='function'){exitPresentation();}" title="Thoát chế độ trình chiếu (Phím Esc)">❌ Thoát</button></div></div><div class="content-wrapper"><div class="question-content"><span class="q-label">Câu 8:</span> Một xưởng sản xuất bán một chiếc áo thun với giá 131000 đồng , mỗi tháng bán trung bình 880 chiếc. Khảo sát cho thấy nếu tăng thêm 5000 đồng thì số lượng tiêu thụ giảm 40 chiếc. Biết chi phí sản xuất một chiếc áo là 71000 đồng. Hãy tìm số tiền (ngàn đồng) cần tăng để lợi nhuận hàng tháng lớn nhất.</div><div class="short-answer-area"><div class="input-group"><input type="text" class="answer-input" id="input-7" placeholder="Nhập kết quả..." onkeyup="handleEnter(event, 7, 'MjU=')"></div></div><div class="actions-area"><button class="btn-action btn-check" id="btn-chk-7" onclick="checkShort(this, 'MjU=')">✓ KIỂM TRA</button><button class="btn-action btn-reveal" onclick="revealShort(this, 'MjU=')">👁 ĐÁP ÁN</button><div class="slide-counter" id="counter-7">Câu ? / ?</div><button class="btn-action btn-explain" onclick="toggleExpl(this)">💡 XEM LỜI GIẢI</button></div><div class="explanation-box"><div class="explanation-title">📝 LỜI GIẢI CHI TIẾT:</div><div class="explanation-content">Một xưởng sản xuất bán một chiếc áo thun với giá 131000 đồng , mỗi tháng bán trung bình 880 chiếc. Khảo sát cho thấy nếu tăng thêm 5000 đồng thì số lượng tiêu thụ giảm 40 chiếc. Biết chi phí sản xuất một chiếc áo là 71000 đồng. Hãy tìm số tiền (ngàn đồng) cần tăng để lợi nhuận hàng tháng lớn nhất.<br><br>Lời giải:<br>  Gọi số tiền cần tăng giá mỗi chiếc áo là ${x}$ (nghìn đồng).<br><br> Vì cứ tăng giá thêm 5(nghìn đồng) thì số lượng tiêu thụ 40 chiếc nên tăng ${x}$ (nghìn đồng) thì số số lượng tiêu thụ giảm đi là ${8x}$.<br><br> Do đó tổng số áo bán ra là: $880-8x$.<br><br> Lúc đầu bán với giá 131 (nghìn đồng), mỗi chiếc có lãi 60 (nghìn đồng).<br><br> Sau khi tăng giá, mỗi chiếc thu được số lãi là: $60+x$ (nghìn đồng).<br><br> Do đó tổng số lợi nhuận thu được sau khi tăng giá là:<br><br>$f(x)=(880-8x)(60+x)=- 8 x^{2} + 400 x + 52800$.<br><br>$f'(x)=400 - 16 x$.<br><br>$f'(x)=0\Leftrightarrow 400 - 16 x=0\Leftrightarrow x=25$.<br><br>Lập bảng biến thiên ta thấy $f(x)$ đạt giá trị lớn nhất khi $x=25$.<br><br> Vậy cần tăng thêm 25 ngàn đồng cho mỗi chiếc áo để được lợi nhuận cao nhất. <br>Đáp án: 25</div></div></div></div>
+        
+            <script>
+                let currentSlide = 0; let slides = []; let timerInterval;
+                
+                let audioCtx = null;
+                function getAudioCtx(){
+                    if(!audioCtx){
+                        const Ctx = window.AudioContext || window.webkitAudioContext;
+                        if(Ctx) audioCtx = new Ctx();
+                    }
+                    return audioCtx;
+                }
+
+                function playSound(type) {
+                    const ctx = getAudioCtx();
+                    if (!ctx) return;
+                    if (ctx.state === 'suspended') ctx.resume();
+                    const oscillator = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    const now = ctx.currentTime;
+                    
+                    if (type === 'correct') { 
+                        if(navigator.vibrate) navigator.vibrate([100, 50, 100]); // Rung 2 nhịp vui vẻ
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(800, now);
+                        oscillator.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                        gainNode.gain.setValueAtTime(1.5, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                        oscillator.start(now); oscillator.stop(now + 0.3);
+                    } else if (type === 'wrong') { 
+                        if(navigator.vibrate) navigator.vibrate(200); // Rung 1 nhịp dài cảnh báo
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.setValueAtTime(150, now);
+                        oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+                        gainNode.gain.setValueAtTime(1.2, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                        oscillator.start(now); oscillator.stop(now + 0.3);
+                    } else if (type === 'timeup') { 
+                        oscillator.type = 'square';
+                        oscillator.frequency.setValueAtTime(400, now);
+                        gainNode.gain.setValueAtTime(1.5, now);
+                        gainNode.gain.setValueAtTime(1.5, now + 0.1);
+                        gainNode.gain.setValueAtTime(0, now + 0.15);
+                        gainNode.gain.setValueAtTime(1.5, now + 0.2);
+                        gainNode.gain.setValueAtTime(1.5, now + 0.3);
+                        gainNode.gain.setValueAtTime(0, now + 0.35);
+                        gainNode.gain.setValueAtTime(1.5, now + 0.4);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+                        oscillator.start(now); oscillator.stop(now + 1.0);
+                    } else if (type === 'tick') { 
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(1000, now);
+                        gainNode.gain.setValueAtTime(0.8, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                        oscillator.start(now); oscillator.stop(now + 0.1);
+                    }
+                }
+                
+                const msgCorrect = ["Tuyệt vời!", "Chính xác!", "Quá đỉnh!", "Xuất sắc!", "Giỏi quá!", "10 Điểm!"];
+                const msgWrong = ["Cố lên nhé!", "Chưa chính xác!", "Hãy thử lại!", "Cẩn thận hơn!", "Đừng nản chí!", "Suýt nữa thì đúng!"];
+
+                function showFeedback(isCorrect, slideElement) {
+                    let popup = document.createElement('div');
+                    popup.className = 'feedback-popup ' + (isCorrect ? 'correct' : 'wrong');
+                    let emoji = isCorrect ? '😄' : '😢';
+                    let textArr = isCorrect ? msgCorrect : msgWrong;
+                    let randomText = textArr[Math.floor(Math.random() * textArr.length)];
+                    popup.innerHTML = '<div class="emoji">' + emoji + '</div><div class="message">' + randomText + '</div>';
+                    slideElement.appendChild(popup);
+                    setTimeout(() => popup.classList.add('pop'), 10);
+                    setTimeout(() => { popup.classList.remove('pop'); setTimeout(() => popup.remove(), 400); }, 1500);
+                }
+
+                function changeFontSize(delta) {
+                    const root = document.documentElement; const style = getComputedStyle(root);
+                    let baseSize = parseInt(style.getPropertyValue('--base-size'));
+                    let optSize = parseInt(style.getPropertyValue('--opt-size'));
+                    let badgeSize = parseInt(style.getPropertyValue('--badge-size'));
+                    if ((delta < 0 && baseSize <= 24) || (delta > 0 && baseSize >= 60)) return;
+                    root.style.setProperty('--base-size', (baseSize + delta) + 'px');
+                    root.style.setProperty('--opt-size', (optSize + delta) + 'px');
+                    root.style.setProperty('--badge-size', (badgeSize + (delta > 0 ? 2 : -2)) + 'px');
+                }
+                function formatTime(seconds) {
+                    let m = Math.floor(seconds / 60); let s = seconds % 60;
+                    return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+                }
+                function parseTime(input) {
+                    if (!input) return null;
+                    input = input.toString().trim();
+                    if (/^\d{1,3}:\d{1,2}$/.test(input)) {
+                        const parts = input.split(":");
+                        const minutes = parseInt(parts[0], 10);
+                        const seconds = parseInt(parts[1], 10);
+                        if (seconds >= 60) return null;
+                        return minutes * 60 + seconds;
+                    }
+                    if (/^\d+$/.test(input)) return parseInt(input, 10);
+                    return null;
+                }
+
+                let timerTargetEl = null;
+                function getTimerFromButton(btn) {
+                    const header = btn.closest('.header-right');
+                    return header ? header.querySelector('.timer') : null;
+                }
+                function openTimerModal(source) {
+                    let timer = source && source.classList && source.classList.contains('timer') ? source : getTimerFromButton(source);
+                    if (!timer) timer = document.querySelector('.slide-container.active .timer');
+                    if (!timer) return;
+                    if (timer.classList.contains('running')) {
+                        clearInterval(timerInterval);
+                        timer.classList.remove('running');
+                    }
+                    timerTargetEl = timer;
+                    const backdrop = document.getElementById('timerModalBackdrop');
+                    const input = document.getElementById('timerModalInput');
+                    const error = document.getElementById('timerModalError');
+                    input.value = formatTime(parseInt(timer.dataset.time || '60', 10));
+                    error.textContent = '';
+                    backdrop.classList.add('show');
+                    setTimeout(() => { input.focus(); input.select(); }, 60);
+                }
+                function closeTimerModal(evt) {
+                    if (evt && evt.target && evt.target.id !== 'timerModalBackdrop') return;
+                    const backdrop = document.getElementById('timerModalBackdrop');
+                    if (backdrop) backdrop.classList.remove('show');
+                }
+                function setTimerModalValue(value) {
+                    const input = document.getElementById('timerModalInput');
+                    input.value = value;
+                    input.focus();
+                    document.getElementById('timerModalError').textContent = '';
+                }
+                function updateTimerDisplay(timer, seconds) {
+                    if (!timer) return;
+                    timer.dataset.time = seconds;
+                    timer.dataset.remaining = seconds;
+                    timer.classList.remove('running');
+                    timer.innerText = '⏳ Bắt đầu (' + formatTime(seconds) + ')';
+                }
+                function applyTimerFromModal(applyAll) {
+                    const input = document.getElementById('timerModalInput');
+                    const error = document.getElementById('timerModalError');
+                    const seconds = parseTime(input.value);
+                    if (seconds == null || isNaN(seconds) || seconds <= 0) {
+                        error.textContent = 'Vui lòng nhập đúng dạng mm:ss, ví dụ 05:00 hoặc 01:30.';
+                        input.focus();
+                        input.select();
+                        return;
+                    }
+                    clearInterval(timerInterval);
+                    if (applyAll) {
+                        document.querySelectorAll('.timer').forEach(timer => updateTimerDisplay(timer, seconds));
+                    } else {
+                        updateTimerDisplay(timerTargetEl, seconds);
+                    }
+                    closeTimerModal();
+                }
+                document.addEventListener('keydown', function(e){
+                    const backdrop = document.getElementById('timerModalBackdrop');
+                    if (!backdrop || !backdrop.classList.contains('show')) return;
+                    if (e.key === 'Escape') closeTimerModal();
+                    if (e.key === 'Enter') applyTimerFromModal(false);
+                });
+                window.addEventListener("load", function(){ 
+                    document.addEventListener('keydown', function(e) {
+                        const tag = document.activeElement.tagName;
+                        if(tag === "INPUT" || tag === "TEXTAREA") return;
+                        if(e.key === "ArrowRight") nextSlide(); if(e.key === "ArrowLeft") prevSlide();
+                    });
+                });
+                function renderSlide(index) {
+                    document.querySelectorAll('.slide-container').forEach(el => el.classList.remove('active'));
+                    const activeSlide = document.getElementById('slide-' + index);
+                    if (activeSlide) {
+                        activeSlide.classList.add('active'); currentSlide = index;
+                        document.querySelectorAll('.slide-counter').forEach(el => el.innerText = `Câu ${index + 1} / ${slides.length}`);
+                        document.querySelectorAll('.quick-nav-item').forEach((el, i) => el.classList.toggle('active', i === index));
+                        
+                        if (window.MathJax && !activeSlide.dataset.typeset) {
+                            MathJax.typesetPromise([activeSlide]).then(() => { activeSlide.dataset.typeset = "true"; }).catch((err) => console.log('MJ Error:', err));
+                        }
+                        clearInterval(timerInterval); const timerEl = activeSlide.querySelector('.timer');
+                        if(timerEl) {
+                            const def = parseInt(timerEl.dataset.time || '60', 10);
+                            timerEl.dataset.remaining = def;
+                            timerEl.innerText = '⏳ Bắt đầu (' + formatTime(def) + ')';
+                            timerEl.classList.remove('running');
+                        }
+                        resizeSlideCanvas(activeSlide);
+                        redrawSlideDrawing(activeSlide);
+                    }
+                }
+                function startTimer(el) {
+                    if (el.classList.contains('running')) {
+                        clearInterval(timerInterval);
+                        el.classList.remove('running');
+                        const paused = parseInt(el.dataset.remaining || el.dataset.time || '60', 10);
+                        el.innerText = "⏳ Bắt đầu (" + formatTime(paused) + ")";
+                        return;
+                    }
+                    let timeLeft = parseInt(el.dataset.remaining || el.dataset.time || '60', 10);
+                    if (timeLeft <= 0 || isNaN(timeLeft)) timeLeft = parseInt(el.dataset.time || '60', 10);
+                    el.classList.add('running');
+                    el.innerText = formatTime(timeLeft);
+                    clearInterval(timerInterval);
+                    timerInterval = setInterval(() => {
+                        timeLeft--;
+                        el.dataset.remaining = timeLeft;
+                        el.innerText = formatTime(timeLeft);
+                        if (timeLeft <= 5 && timeLeft > 0) { playSound('tick'); }
+                        else if (timeLeft <= 0) {
+                            clearInterval(timerInterval);
+                            el.classList.remove('running');
+                            el.dataset.remaining = el.dataset.time || '60';
+                            el.innerText = "Hết giờ!";
+                            playSound('timeup');
+                        }
+                    }, 1000);
+                }
+                function editTimer(el) {
+                    openTimerModal(el);
+                }
+                
+function exitPresentation(){
+    try{
+        if(document.fullscreenElement){document.exitFullscreen();}
+    }catch(e){}
+    try{ window.open('','_self'); }catch(e){}
+    try{ window.close(); }catch(e){}
+    setTimeout(function(){
+        try{ location.replace('about:blank'); }catch(e){}
+    },100);
+}
+
+function buildQuickNav(){
+                    const grid = document.getElementById('quickNavGrid');
+                    if(!grid) return;
+                    grid.innerHTML = '';
+                    slides.forEach((q, i) => {
+                        const b = document.createElement('button');
+                        b.type = 'button';
+                        b.className = 'quick-nav-item' + (i === currentSlide ? ' active' : '');
+                        b.textContent = i + 1;
+                        b.title = q && q.title ? q.title : ('Câu ' + (i + 1));
+                        b.onclick = () => { renderSlide(i); closeQuickNav(); };
+                        grid.appendChild(b);
+                    });
+                }
+                function openQuickNav(){
+                    buildQuickNav();
+                    const box = document.getElementById('quickNavBackdrop');
+                    if(box) box.classList.add('show');
+                }
+                function closeQuickNav(e){
+                    if(e && e.target !== e.currentTarget) return;
+                    const box = document.getElementById('quickNavBackdrop');
+                    if(box) box.classList.remove('show');
+                }
+                document.addEventListener('keydown', function(e){
+                    if(e.key === 'Escape') closeQuickNav();
+                });
+
+                function nextSlide() { if (currentSlide < slides.length - 1) renderSlide(currentSlide + 1); }
+                function prevSlide() { if (currentSlide > 0) renderSlide(currentSlide - 1); }
+                function openImage(src) { const w = window.open(""); w.document.write('<img src="' + src + '" style="max-width:100%;">'); }
+                
+                function checkChoice(btn, isCorrect) {
+                    if (btn.classList.contains('checked')) return; const slide = btn.closest('.slide-container');
+                    if (isCorrect) { 
+                        playSound('correct'); showFeedback(true, slide);
+                        btn.classList.add('correct', 'checked'); slide.querySelectorAll('.btn-option').forEach(b => b.classList.add('disabled')); slide.querySelector('.btn-reveal').style.display='none'; 
+                    } else { 
+                        playSound('wrong'); showFeedback(false, slide); btn.classList.add('wrong', 'checked'); 
+                    }
+                }
+                function revealAnswerMC(btn) {
+                    const slide = btn.closest('.slide-container'); const corr = slide.querySelector('.btn-option[data-correct="true"]');
+                    if(corr) corr.classList.add('correct', 'checked'); slide.querySelectorAll('.btn-option').forEach(b => b.classList.add('disabled')); btn.style.display='none';
+                }
+                
+                function checkTF(btn, userChoice) {
+                    const row = btn.closest('.tf-row'); row.querySelectorAll('.btn-tf').forEach(b => b.classList.remove('user-correct', 'user-wrong'));
+                    const slideContainer = btn.closest('.slide-container');
+                    if (userChoice === (row.getAttribute('data-correct') === 'true')) { 
+                        playSound('correct'); showFeedback(true, slideContainer); btn.classList.add('user-correct'); 
+                    } else { 
+                        playSound('wrong'); showFeedback(false, slideContainer); btn.classList.add('user-wrong'); 
+                    }
+                }
+                function revealAnswerTF(btn) {
+                    const slide = btn.closest('.slide-container');
+                    slide.querySelectorAll('.tf-row').forEach(row => {
+                        const isTrue = row.getAttribute('data-correct') === 'true';
+                        row.querySelectorAll('.btn-tf').forEach(b => {
+                            if(b.innerText==='Đ' && isTrue) b.classList.add('reveal-true');
+                            if(b.innerText==='S' && !isTrue) b.classList.add('reveal-false');
+                        });
+                    }); btn.style.display='none';
+                }
+                
+                function checkShort(btn, b64) {
+                    const slide = btn.closest('.slide-container'); const inp = slide.querySelector('input');
+                    let val = inp.value.trim().toLowerCase().replace(',', '.').replace(/\s+/g, '');
+                    let ans = decodeURIComponent(escape(atob(b64))).trim().toLowerCase().replace(',', '.');
+                    if (ans === "") { inp.style.borderColor='#f59e0b'; alert('Câu này không tìm thấy đáp án chuẩn.'); return; }
+                    if(val === ans) { 
+                        playSound('correct'); showFeedback(true, slide); inp.style.borderColor='#22c55e'; inp.style.color='#15803d'; 
+                    } else { 
+                        playSound('wrong'); showFeedback(false, slide); inp.style.borderColor='#ef4444'; 
+                    }
+                }
+                function revealShort(btn, b64) {
+                    const slide = btn.closest('.slide-container'); const input = slide.querySelector('input');
+                    let decoded = decodeURIComponent(escape(atob(b64)));
+                    input.value = decoded; btn.style.display='none';
+                }
+                function toggleExpl(btn) { const box = btn.closest('.slide-container').querySelector('.explanation-box'); box.style.display = box.style.display==='block' ? 'none' : 'block'; }
+                function handleEnter(e, id, b64) { if (e.key === "Enter") checkShort(document.getElementById('btn-chk-'+id), b64); }
+                function initSlides(data) { slides = data; initPresentationDrawTools(); renderSlide(0); buildQuickNav(); }
+                function initImageZoom() {
+                    const images = document.querySelectorAll('.real-image');
+                    images.forEach(img => {
+                        img.addEventListener('wheel', function(e) {
+                            e.preventDefault(); let currentHeight = img.clientHeight; let delta = e.deltaY < 0 ? 40 : -40; let newHeight = currentHeight + delta;
+                            if (newHeight >= 150 && newHeight <= 1200) { img.style.maxHeight = 'none'; img.style.height = newHeight + 'px'; img.style.width = 'auto'; }
+                        });
+                    });
+                }
+
+
+                // --- CÔNG CỤ VẼ / CỤC TẨY CHO TRÌNH CHIẾU ---
+                const DRAW_COLORS = { red: '#ff5a47', blue: '#3b82f6', green: '#16a34a' };
+                function ensureDrawLayer(slide) {
+                    if (!slide || slide.__drawReady) return;
+                    slide.__drawReady = true;
+                    slide.__drawState = { paths: [], currentTool: 'pen', currentColor: 'red', drawing: false, currentPath: null, isDrawingMode: false };
+
+                    const headerRight = slide.querySelector('.header-right');
+                    if (headerRight) {
+                        const zoomPlus = headerRight.querySelector('.zoom-btn:last-of-type');
+                        const toolbar = document.createElement('div');
+                        toolbar.className = 'draw-toolbar';
+                        toolbar.innerHTML = `
+                            <div class="draw-sep"></div>
+                            <button class="draw-btn pen-btn active" type="button" title="Bút vẽ">✏️</button>
+                            <button class="draw-btn eraser-btn" type="button" title="Cục tẩy">🧽</button>
+                            <button class="color-btn active" type="button" data-color="red" title="Màu đỏ"></button>
+                            <button class="color-btn" type="button" data-color="blue" title="Màu xanh dương"></button>
+                            <button class="color-btn" type="button" data-color="green" title="Màu xanh lá"></button>
+                            <button class="draw-btn clear-btn" type="button" title="Xóa toàn bộ nét vẽ">🗑️</button>
+                        `;
+                        const timer = headerRight.querySelector('.timer');
+                        const timerEditBtn = headerRight.querySelector('.timer-edit-btn');
+                        headerRight.insertBefore(toolbar, timerEditBtn || timer || null);
+
+                        toolbar.querySelector('.pen-btn').addEventListener('click', () => toggleSlidePen(slide));
+                        toolbar.querySelector('.eraser-btn').addEventListener('click', () => setSlideTool(slide, 'eraser'));
+                        toolbar.querySelector('.clear-btn').addEventListener('click', () => clearSlideDrawing(slide));
+                        toolbar.querySelectorAll('.color-btn').forEach(btn => {
+                            btn.addEventListener('click', () => setSlideColor(slide, btn.dataset.color));
+                        });
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'slide-draw-canvas';
+                    slide.appendChild(canvas);
+                    slide.__drawCanvas = canvas;
+                    slide.__drawCtx = canvas.getContext('2d');
+
+                    const getPos = (evt) => {
+                        const rect = canvas.getBoundingClientRect();
+                        return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+                    };
+
+                    canvas.addEventListener('pointerdown', (evt) => {
+                        const state = slide.__drawState;
+                        if (!state.isDrawingMode || (!slide.classList.contains('draw-mode-pen') && !slide.classList.contains('draw-mode-eraser'))) return;
+                        evt.preventDefault();
+                        const pos = getPos(evt);
+                        state.drawing = true;
+                        try { canvas.setPointerCapture(evt.pointerId); } catch (e) {}
+                        if (state.currentTool === 'pen') {
+                            state.currentPath = { color: state.currentColor, points: [pos] };
+                            state.paths.push(state.currentPath);
+                            redrawSlideDrawing(slide);
+                        } else {
+                            eraseAtPoint(slide, pos.x, pos.y);
+                        }
+                    });
+
+                    canvas.addEventListener('pointermove', (evt) => {
+                        const state = slide.__drawState;
+                        if (!state.drawing || !state.isDrawingMode) return;
+                        evt.preventDefault();
+                        const pos = getPos(evt);
+                        if (state.currentTool === 'pen') {
+                            if (state.currentPath) state.currentPath.points.push(pos);
+                            redrawSlideDrawing(slide);
+                        } else {
+                            eraseAtPoint(slide, pos.x, pos.y);
+                        }
+                    });
+
+                    const stopDraw = (evt) => {
+                        const state = slide.__drawState;
+                        state.drawing = false;
+                        state.currentPath = null;
+                        if (evt) {
+                            try { canvas.releasePointerCapture(evt.pointerId); } catch (e) {}
+                        }
+                    };
+                    canvas.addEventListener('pointerup', stopDraw);
+                    canvas.addEventListener('pointercancel', stopDraw);
+                    canvas.addEventListener('pointerleave', stopDraw);
+
+                    resizeSlideCanvas(slide);
+                    setSlideColor(slide, 'red');
+                    disableSlideDrawing(slide);
+                }
+
+                function updateSlideToolUI(slide) {
+                    const state = slide.__drawState;
+                    const toolbar = slide.querySelector('.draw-toolbar');
+                    if (!toolbar) return;
+                    const penBtn = toolbar.querySelector('.pen-btn');
+                    const eraserBtn = toolbar.querySelector('.eraser-btn');
+                    if (penBtn) penBtn.classList.toggle('active', !!state.isDrawingMode && state.currentTool === 'pen');
+                    if (eraserBtn) eraserBtn.classList.toggle('active', !!state.isDrawingMode && state.currentTool === 'eraser');
+                }
+
+                function disableSlideDrawing(slide) {
+                    ensureDrawLayer(slide);
+                    const state = slide.__drawState;
+                    state.isDrawingMode = false;
+                    state.drawing = false;
+                    state.currentPath = null;
+                    slide.classList.remove('draw-mode-pen', 'draw-mode-eraser');
+                    updateSlideToolUI(slide);
+                }
+
+                function enableSlideDrawing(slide, tool = 'pen') {
+                    ensureDrawLayer(slide);
+                    const state = slide.__drawState;
+                    state.isDrawingMode = true;
+                    state.currentTool = tool;
+                    slide.classList.remove('draw-mode-pen', 'draw-mode-eraser');
+                    slide.classList.add(tool === 'eraser' ? 'draw-mode-eraser' : 'draw-mode-pen');
+                    updateSlideToolUI(slide);
+                }
+
+                function toggleSlidePen(slide) {
+                    ensureDrawLayer(slide);
+                    const state = slide.__drawState;
+                    if (state.isDrawingMode && state.currentTool === 'pen') {
+                        disableSlideDrawing(slide);
+                    } else {
+                        enableSlideDrawing(slide, 'pen');
+                    }
+                }
+
+                function setSlideTool(slide, tool) {
+                    ensureDrawLayer(slide);
+                    const state = slide.__drawState;
+                    if (tool === 'eraser') {
+                        if (!state.isDrawingMode) return;
+                        enableSlideDrawing(slide, 'eraser');
+                    } else {
+                        enableSlideDrawing(slide, 'pen');
+                    }
+                }
+
+                function setSlideColor(slide, colorName) {
+                    ensureDrawLayer(slide);
+                    const state = slide.__drawState;
+                    if (!DRAW_COLORS[colorName]) return;
+                    state.currentColor = colorName;
+                    const toolbar = slide.querySelector('.draw-toolbar');
+                    if (toolbar) {
+                        toolbar.querySelectorAll('.color-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.color === colorName));
+                    }
+                    if (state.isDrawingMode) {
+                        enableSlideDrawing(slide, 'pen');
+                    } else {
+                        updateSlideToolUI(slide);
+                    }
+                }
+
+                function clearSlideDrawing(slide) {
+                    ensureDrawLayer(slide);
+                    slide.__drawState.paths = [];
+                    slide.__drawState.currentPath = null;
+                    redrawSlideDrawing(slide);
+                }
+
+                function eraseAtPoint(slide, x, y) {
+                    const state = slide.__drawState;
+                    const radius = 22;
+                    const radius2 = radius * radius;
+                    state.paths = state.paths.filter(path => {
+                        return !path.points.some(p => {
+                            const dx = p.x - x;
+                            const dy = p.y - y;
+                            return dx * dx + dy * dy <= radius2;
+                        });
+                    });
+                    redrawSlideDrawing(slide);
+                }
+
+                function resizeSlideCanvas(slide) {
+                    if (!slide || !slide.__drawCanvas) return;
+                    const canvas = slide.__drawCanvas;
+                    const rect = canvas.getBoundingClientRect();
+                    const dpr = window.devicePixelRatio || 1;
+                    const width = Math.max(1, Math.round(rect.width));
+                    const height = Math.max(1, Math.round(rect.height));
+                    canvas.width = Math.round(width * dpr);
+                    canvas.height = Math.round(height * dpr);
+                    const ctx = slide.__drawCtx;
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    redrawSlideDrawing(slide);
+                }
+
+                function redrawSlideDrawing(slide) {
+                    if (!slide || !slide.__drawCanvas) return;
+                    const canvas = slide.__drawCanvas;
+                    const ctx = slide.__drawCtx;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    slide.__drawState.paths.forEach(path => {
+                        if (!path.points || !path.points.length) return;
+                        ctx.beginPath();
+                        ctx.strokeStyle = DRAW_COLORS[path.color] || DRAW_COLORS.red;
+                        ctx.lineWidth = 3;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.moveTo(path.points[0].x, path.points[0].y);
+                        for (let i = 1; i < path.points.length; i++) {
+                            ctx.lineTo(path.points[i].x, path.points[i].y);
+                        }
+                        if (path.points.length === 1) {
+                            ctx.lineTo(path.points[0].x + 0.01, path.points[0].y + 0.01);
+                        }
+                        ctx.stroke();
+                    });
+                }
+
+                function initPresentationDrawTools() {
+                    document.querySelectorAll('.slide-container').forEach(slide => ensureDrawLayer(slide));
+                }
+
+                window.addEventListener('resize', () => {
+                    document.querySelectorAll('.slide-container').forEach(slide => resizeSlideCanvas(slide));
+                });
+
+                // --- NÂNG CẤP VUỐT TRÊN MOBILE (SWIPE) ---
+                let touchStartX = 0; let touchEndX = 0;
+                document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+                document.addEventListener('touchend', e => {
+                    if(document.activeElement.tagName === "INPUT") return; // Chặn vuốt khi đang chạm vào ô nhập đáp án
+                    touchEndX = e.changedTouches[0].screenX;
+                    let diff = touchStartX - touchEndX;
+                    if (Math.abs(diff) > 60) { if (diff > 0) nextSlide(); else prevSlide(); }
+                }, {passive: true});
+            </script>
+        
+        <script>
+            window.addEventListener("DOMContentLoaded", function(){
+                // 🟢 HỆ THỐNG TỰ BÁO LỖI VÀ CHUYỂN HƯỚNG UX
+                try {
+                    const data = [{"title": "Phần III - Câu 1", "part": 3, "type": "short", "content": "Một công ty vận tải có 16 xe tải, mỗi xe có thể chở được 10 tấn hàng trong 1 giờ. Chi phí chuẩn bị và khấu hao mỗi xe cho một chuyến là 148000 đồng. Chi phí thuê nhân viên điều phối là 82000 đồng/giờ. Công ty cần vận chuyển 3500 tấn hàng. Hãy tìm số xe tải cần sử dụng để chi phí nhỏ nhất.", "images": [], "explanation": "Một công ty vận tải có 16 xe tải, mỗi xe có thể chở được 10 tấn hàng trong 1 giờ. Chi phí chuẩn bị và khấu hao mỗi xe cho một chuyến là 148000 đồng. Chi phí thuê nhân viên điều phối là 82000 đồng/giờ. Công ty cần vận chuyển 3500 tấn hàng. Hãy tìm số xe tải cần sử dụng để chi phí nhỏ nhất.\n\nLời giải:\n Gọi ${x}$ là số lượng xe tải cần sử dụng.\n\nChi phí chuẩn bị và khấu hao là ${148000}x$.\n\nTrong một giờ, với ${x}$ xe tải thì chở được số tấn hàng là ${10x}$.\n\nSố giờ để chở hết 3500 tấn hàng là: $\\dfrac{3500}{10x}=\\dfrac{350}{x}$.\n\nChi phí thuê nhân viên điều phối là: $\\dfrac{350}{x}.82000=\\dfrac{28700000}{x}$.\n\nXét hàm số: $f(x)=148000x+\\dfrac{28700000}{x}$.\n\n$f'(x)=148000-\\dfrac{28700000}{x^2}=\\dfrac{148000x^2-28700000}{x^2}$.\n\n$f'(x)=0\\Leftrightarrow x=\\sqrt{\\dfrac{28700000}{148000}}=\\sqrt{\\frac{7175}{37}}=13,9$.\n\nVì số xe tải là số nguyên nên ta có:\n\n$f(12)=4167667$.\n\n$f(13)=4131692$.\n\n$f(14)=4122000$.\n\nSố xe tải để tổng chi phí nhỏ nhất là ${14}$. \nĐáp án: 14\n\n", "options": [], "correct_answer": "14", "image_paths": [], "image_lookup": {}}, {"title": "Phần III - Câu 2", "part": 3, "type": "short", "content": "Một Homestay đang áp dụng mức giá cho thuê là ${1,5}$ triệu đồng/người/ngày. Tại mức giá này, trung bình mỗi tháng Homestay đón ${56}$ lượt khách và mỗi khách lưu trú ${3}$ ngày. Chủ Homestay dự tính điều chỉnh giá và thấy rằng cứ tăng giá thêm ${0,21}$ triệu đồng/người/ngày thì số khách sẽ giảm ${8}$ người và thời gian lưu trú trung bình giảm ${1}$ ngày. Ngược lại, nếu giảm giá thì các chỉ số sẽ tăng tương ứng. Biết chi phí vận hành cho mỗi khách một ngày là ${1}$ triệu đồng và mức giá trần không được vượt quá ${2,1}$ triệu đồng/người/ngày.\n\nHỏi Homestay nên áp dụng mức giá nào để đạt lợi nhuận cao nhất (kết quả làm tròn đến hàng phần mười)?", "images": [], "explanation": "Một Homestay đang áp dụng mức giá cho thuê là ${1,5}$ triệu đồng/người/ngày. Tại mức giá này, trung bình mỗi tháng Homestay đón ${56}$ lượt khách và mỗi khách lưu trú ${3}$ ngày. Chủ Homestay dự tính điều chỉnh giá và thấy rằng cứ tăng giá thêm ${0,21}$ triệu đồng/người/ngày thì số khách sẽ giảm ${8}$ người và thời gian lưu trú trung bình giảm ${1}$ ngày. Ngược lại, nếu giảm giá thì các chỉ số sẽ tăng tương ứng. Biết chi phí vận hành cho mỗi khách một ngày là ${1}$ triệu đồng và mức giá trần không được vượt quá ${2,1}$ triệu đồng/người/ngày.\n\nHỏi Homestay nên áp dụng mức giá nào để đạt lợi nhuận cao nhất (kết quả làm tròn đến hàng phần mười)?\n\nLời giải:\nGọi $x$ là số bước điều chỉnh giá (mỗi bước ${0,21}$ triệu đồng/người/ngày).\n\nKhi đó:\n\nGiá thuê:\n$p(x)=1,5+0,21x$.\n\nSố khách:\n$k(x)=56-8x$.\n\nThời gian lưu trú:\n$t(x)=3-1x$.\n\nĐiều kiện:\n$p(x)\\le 2,1,\\ p(x)\\ge 1,\\ k(x)\\ge 1,\\ t(x)\\ge 1$.\n\nLợi nhuận theo tháng:\n\n$P(x)=(p(x)-1)k(x)t(x)$.\n\n$P(x)=1,68x^3+-12,8x^2+-4,72x+84$.\n\nXét các giá trị nguyên của $x$ trong miền xác định, ta được lợi nhuận lớn nhất khi $x=0$.\n\nVậy mức giá tối ưu là:\n$p=1,5+0,21\\cdot(0)=1,5$ (triệu đồng/người/ngày).\nĐáp án: 1,5 (triệu đồng/người/ngày)\n\n", "options": [], "correct_answer": "1,5", "image_paths": [], "image_lookup": {}}, {"title": "Phần III - Câu 3", "part": 3, "type": "short", "content": "Một nhà hàng có tổng cộng ${104}$ nhân viên và chi trả mức lương cố định cho mỗi nhân viên là ${312}$ USD/tháng. Vì nhà hàng liên tục đón những đoàn khách với số lượng lớn nhưng không thể thuê thêm nhân viên nên chủ nhà hàng muốn khuyến khích nhân viên của mình tăng ca. Ông chủ quyết định cứ một nhân viên quyết định tăng ca thì mức lương của tất cả nhân viên tăng ca trong nhà hàng đều được tăng thêm ${3}\\%$. Tương tự nếu có ${x}$ nhân viên tăng ca thì lương cho mỗi người trong số đó sẽ tăng ${3x}\\%$. Bên cạnh tiền lương cho nhân viên thì tiền điện nước và duy trì cơ sở vật chất là cố định ${8.000}$ USD/tháng. Doanh thu trung bình từ khách hàng là ${45.000}$ USD/tháng và mỗi nhân viên tăng ca trung bình sẽ được khách hàng tip ${800}$ USD/tháng (tiền tip phải nộp lại cho chủ cửa hàng và tính vào doanh thu).\n\nXác định số nhân viên còn lại không tăng ca cần có để lợi nhuận của nhà hàng đạt giá trị lớn nhất.", "images": [], "explanation": "Một nhà hàng có tổng cộng ${104}$ nhân viên và chi trả mức lương cố định cho mỗi nhân viên là ${312}$ USD/tháng. Vì nhà hàng liên tục đón những đoàn khách với số lượng lớn nhưng không thể thuê thêm nhân viên nên chủ nhà hàng muốn khuyến khích nhân viên của mình tăng ca. Ông chủ quyết định cứ một nhân viên quyết định tăng ca thì mức lương của tất cả nhân viên tăng ca trong nhà hàng đều được tăng thêm ${3}\\%$. Tương tự nếu có ${x}$ nhân viên tăng ca thì lương cho mỗi người trong số đó sẽ tăng ${3x}\\%$. Bên cạnh tiền lương cho nhân viên thì tiền điện nước và duy trì cơ sở vật chất là cố định ${8.000}$ USD/tháng. Doanh thu trung bình từ khách hàng là ${45.000}$ USD/tháng và mỗi nhân viên tăng ca trung bình sẽ được khách hàng tip ${800}$ USD/tháng (tiền tip phải nộp lại cho chủ cửa hàng và tính vào doanh thu).\n\nXác định số nhân viên còn lại không tăng ca cần có để lợi nhuận của nhà hàng đạt giá trị lớn nhất.\n\nLời giải:\n Gọi ${x}$ là số nhân viên tăng ca, khi đó số nhân viên không tăng ca là ${104-x}$.\n\nDoanh thu (gồm cả tip nộp lại):\n\n$R(x)=45.000+800x$.\n\nChi phí lương:\n\n- Nhóm không tăng ca: $(104-x)312$.\n\n- Nhóm tăng ca: mỗi người nhận $\\;312\\left(1+\\dfrac{3x}{100}\\right)$ nên tổng là $x\\cdot 312\\left(1+\\dfrac{3x}{100}\\right)$.\n\nVậy tổng chi phí:\n\n$C(x)=(104-x)312+x\\cdot 312\\left(1+\\dfrac{3x}{100}\\right)+8000$.\n\nLợi nhuận:\n\n$P(x)=R(x)-C(x)$\n\n$\\Rightarrow P(x)=\\left(45.000-312\\cdot 104-8000\\right)+800x-\\dfrac{312\\cdot 3}{100}x^2$.\n\nSuy ra $P(x)=-9,36x^2+800,00x+4552,00$.\n\nLợi nhuận lớn nhất khi:\n\n$x_0=\\dfrac{-800,00}{-18,72}=42,7$.\n\nVì $x$ nguyên nên xét các giá trị lân cận $[x_0]-1,[x_0],[x_0]+1$, ta chọn được $x=43$ cho lợi nhuận lớn nhất.\n\nVậy số nhân viên không tăng ca cần có là: ${104-43}=61$. \nĐáp án: 61\n\n", "options": [], "correct_answer": "61", "image_paths": [], "image_lookup": {}}, {"title": "Phần III - Câu 4", "part": 3, "type": "short", "content": "Một trung tâm dữ liệu có 15 máy chủ (server). Mỗi máy xử lý được 738 tác vụ trong 1 giờ. Chi phí điện năng cho mỗi máy trong một đợt chạy là 243000 đồng. Chi phí thuê kỹ sư giám sát hệ thống là 150000 đồng/giờ. Đợt này cần xử lý 206640 tác vụ. Trung tâm dữ liệu nên dùng bao nhiêu máy chủ để tổng chi phí thấp nhất?", "images": [], "explanation": "Một trung tâm dữ liệu có 15 máy chủ (server). Mỗi máy xử lý được 738 tác vụ trong 1 giờ. Chi phí điện năng cho mỗi máy trong một đợt chạy là 243000 đồng. Chi phí thuê kỹ sư giám sát hệ thống là 150000 đồng/giờ. Đợt này cần xử lý 206640 tác vụ. Trung tâm dữ liệu nên dùng bao nhiêu máy chủ để tổng chi phí thấp nhất?\n\nLời giải:\n Gọi ${x}$ là số lượng máy chủ cần sử dụng.\n\nChi phí điện năng là ${243000}x$.\n\nTrong một giờ, với  ${x}$ máy chủ thì xử lý được số tác vụ là ${738x}$.\n\nSố giờ để xử lý hết 206640 tác vụ là: $\\dfrac{206640}{738x}=\\dfrac{280}{x}$.\n\nChi phí thuê kỹ sư giám sát hệ thống là: $\\dfrac{280}{x}.150000=\\dfrac{42000000}{x}$.\n\nXét hàm số: $f(x)=243000x+\\dfrac{42000000}{x}$.\n\n$f'(x)=243000-\\dfrac{42000000}{x^2}=\\dfrac{243000x^2-42000000}{x^2}$.\n\n$f'(x)=0\\Leftrightarrow x=\\sqrt{\\dfrac{42000000}{243000}}=\\sqrt{\\frac{14000}{81}}=13,1$.\n\nVì số máy chủ là số nguyên nên ta có:\n\n$f(12)=6416000$.\n\n$f(13)=6389769$.\n\n$f(14)=6402000$.\n\nSố máy chủ để tổng chi phí nhỏ nhất là ${13}$. \nĐáp án: 13\n\n", "options": [], "correct_answer": "13", "image_paths": [], "image_lookup": {}}, {"title": "Phần III - Câu 5", "part": 3, "type": "short", "content": "Một bệnh viện có 15 máy xét nghiệm tự động. Mỗi máy xét nghiệm được 15 mẫu trong 1 giờ. Chi phí bảo dưỡng và khử khuẩn mỗi máy cho một ca trực là 81000 đồng. Chi phí thuê kỹ thuật viên giám sát là 49000 đồng/giờ. Trong ngày bệnh viện nhận 4500 mẫu xét nghiệm. Hỏi cần bao nhiêu máy để chi phí là ít nhất?", "images": [], "explanation": "Một bệnh viện có 15 máy xét nghiệm tự động. Mỗi máy xét nghiệm được 15 mẫu trong 1 giờ. Chi phí bảo dưỡng và khử khuẩn mỗi máy cho một ca trực là 81000 đồng. Chi phí thuê kỹ thuật viên giám sát là 49000 đồng/giờ. Trong ngày bệnh viện nhận 4500 mẫu xét nghiệm. Hỏi cần bao nhiêu máy để chi phí là ít nhất?\n\nLời giải:\n Gọi ${x}$ là số lượng máy xét nghiệm cần sử dụng.\n\nChi phí bảo dưỡng và khử khuẩn là ${81000}x$.\n\nTrong một giờ, với  ${x}$ máy thì xét nghiệm được số mẫu là ${15x}$.\n\nSố giờ để xét nghiệm hết 4500 mẫu là: $\\dfrac{4500}{15x}=\\dfrac{300}{x}$.\n\nChi phí thuê kỹ thuật viên giám sát là: $\\dfrac{300}{x}.49000=\\dfrac{14700000}{x}$.\n\nXét hàm số: $f(x)=81000x+\\dfrac{14700000}{x}$.\n\n$f'(x)=81000-\\dfrac{14700000}{x^2}=\\dfrac{81000x^2-14700000}{x^2}$.\n\n$f'(x)=0\\Leftrightarrow x=\\sqrt{\\dfrac{14700000}{81000}}=\\sqrt{\\frac{4900}{27}}=13,5$.\n\nVì số máy là số nguyên nên ta có:\n\n$f(12)=2197000$.\n\n$f(13)=2183769$.\n\n$f(14)=2184000$.\n\nSố máy để tổng chi phí nhỏ nhất là ${13}$. \nĐáp án: 13\n\n", "options": [], "correct_answer": "13", "image_paths": [], "image_lookup": {}}, {"title": "Phần III - Câu 6", "part": 3, "type": "short", "content": "Một khu du lịch bán vé vào cổng giá 96000 đồng một vé, trung bình có 1300 khách/ngày. Ban quản lý dự định tăng giá vé, khảo sát cho thấy nếu giá vé tăng thêm 3000 đồng thì số lượng khách giảm 75 người/ngày. Biết chi phí phục vụ cho mỗi khách là 54000 đồng. Hãy xác định số tiền cần tăng (đơn vị: ngàn đồng)để lợi nhuận trong ngày là cao nhất.", "images": [], "explanation": "Một khu du lịch bán vé vào cổng giá 96000 đồng một vé, trung bình có 1300 khách/ngày. Ban quản lý dự định tăng giá vé, khảo sát cho thấy nếu giá vé tăng thêm 3000 đồng thì số lượng khách giảm 75 người/ngày. Biết chi phí phục vụ cho mỗi khách là 54000 đồng. Hãy xác định số tiền cần tăng (đơn vị: ngàn đồng)để lợi nhuận trong ngày là cao nhất.\n\nLời giải:\n  Gọi số tiền cần tăng giá mỗi vé là ${x}$ (nghìn đồng).\n\n Vì cứ tăng giá thêm 3(nghìn đồng) thì số người giảm 75 nên tăng ${x}$ (nghìn đồng) thì số người bị giảm đi là ${25x}$.\n\n Do đó tổng số vé bán ra mỗi suất là: $1300-25x$.\n\n Lúc đầu bán với giá 96 (nghìn đồng), mỗi vé có lãi 42 (nghìn đồng).\n\n Sau khi tăng giá, mỗi vé thu được số lãi là: $42+x$ (nghìn đồng).\n\n Do đó tổng số lợi nhuận một suất chiếu thu được sau khi tăng giá là:\n\n$f(x)=(1300-25x)(42+x)=- 25 x^{2} + 250 x + 54600$.\n\n$f'(x)=250 - 50 x$.\n\n$f'(x)=0\\Leftrightarrow 250 - 50 x=0\\Leftrightarrow x=5$.\n\nLập bảng biến thiên ta thấy $f(x)$ đạt giá trị lớn nhất khi $x=5$.\n\n Vậy cần tăng thêm 5 đồng cho mỗi vé để được lợi nhuận cao nhất. \nĐáp án: 5\n\n", "options": [], "correct_answer": "5", "image_paths": [], "image_lookup": {}}, {"title": "Phần III - Câu 7", "part": 3, "type": "short", "content": "Một rạp chiếu phim bán vé với giá 59000 đồng một vé, trung bình mỗi suất có 270 khán giả. Kết quả khảo sát thị trường cho thấy, nếu tăng giá vé thêm 2000 đồng thì số khán giả giảm 12 người. Biết chi phí phục vụ cho mỗi khán giả cố định là 36000 đồng. Hãy xác định số tiền cần tăng (đơn vị: ngàn đồng) để lợi nhuận từ một suất chiếu đạt mức cao nhất.", "images": [], "explanation": "Một rạp chiếu phim bán vé với giá 59000 đồng một vé, trung bình mỗi suất có 270 khán giả. Kết quả khảo sát thị trường cho thấy, nếu tăng giá vé thêm 2000 đồng thì số khán giả giảm 12 người. Biết chi phí phục vụ cho mỗi khán giả cố định là 36000 đồng. Hãy xác định số tiền cần tăng (đơn vị: ngàn đồng) để lợi nhuận từ một suất chiếu đạt mức cao nhất.\n\nLời giải:\n  Gọi số tiền cần tăng giá mỗi vé là ${x}$ (nghìn đồng).\n\n Vì cứ tăng giá thêm 2 (nghìn đồng) thì số người giảm 12 nên tăng ${x}$ (nghìn đồng) thì số người bị giảm đi là ${6x}$.\n\n Do đó tổng số vé bán ra mỗi suất là: $270-6x$.\n\n Lúc đầu bán với giá 59 (nghìn đồng), mỗi vé có lãi 23 (nghìn đồng).\n\n Sau khi tăng giá, mỗi vé thu được số lãi là: $23+x$ (nghìn đồng).\n\n Do đó tổng số lợi nhuận một suất chiếu thu được sau khi tăng giá là:\n\n$f(x)=(270-6x)(23+x)=- 6 x^{2} + 132 x + 6210$.\n\n$f'(x)=132 - 12 x$.\n\n$f'(x)=0\\Leftrightarrow 132 - 12 x=0\\Leftrightarrow x=11$.\n\nLập bảng biến thiên ta thấy $f(x)$ đạt giá trị lớn nhất khi $x=11$.\n\n Vậy cần tăng thêm 11 đồng cho mỗi vé để được lợi nhuận cao nhất. \nĐáp án: 11\n\n", "options": [], "correct_answer": "11", "image_paths": [], "image_lookup": {}}, {"title": "Phần III - Câu 8", "part": 3, "type": "short", "content": "Một xưởng sản xuất bán một chiếc áo thun với giá 131000 đồng , mỗi tháng bán trung bình 880 chiếc. Khảo sát cho thấy nếu tăng thêm 5000 đồng thì số lượng tiêu thụ giảm 40 chiếc. Biết chi phí sản xuất một chiếc áo là 71000 đồng. Hãy tìm số tiền (ngàn đồng) cần tăng để lợi nhuận hàng tháng lớn nhất.", "images": [], "explanation": "Một xưởng sản xuất bán một chiếc áo thun với giá 131000 đồng , mỗi tháng bán trung bình 880 chiếc. Khảo sát cho thấy nếu tăng thêm 5000 đồng thì số lượng tiêu thụ giảm 40 chiếc. Biết chi phí sản xuất một chiếc áo là 71000 đồng. Hãy tìm số tiền (ngàn đồng) cần tăng để lợi nhuận hàng tháng lớn nhất.\n\nLời giải:\n  Gọi số tiền cần tăng giá mỗi chiếc áo là ${x}$ (nghìn đồng).\n\n Vì cứ tăng giá thêm 5(nghìn đồng) thì số lượng tiêu thụ 40 chiếc nên tăng ${x}$ (nghìn đồng) thì số số lượng tiêu thụ giảm đi là ${8x}$.\n\n Do đó tổng số áo bán ra là: $880-8x$.\n\n Lúc đầu bán với giá 131 (nghìn đồng), mỗi chiếc có lãi 60 (nghìn đồng).\n\n Sau khi tăng giá, mỗi chiếc thu được số lãi là: $60+x$ (nghìn đồng).\n\n Do đó tổng số lợi nhuận thu được sau khi tăng giá là:\n\n$f(x)=(880-8x)(60+x)=- 8 x^{2} + 400 x + 52800$.\n\n$f'(x)=400 - 16 x$.\n\n$f'(x)=0\\Leftrightarrow 400 - 16 x=0\\Leftrightarrow x=25$.\n\nLập bảng biến thiên ta thấy $f(x)$ đạt giá trị lớn nhất khi $x=25$.\n\n Vậy cần tăng thêm 25 ngàn đồng cho mỗi chiếc áo để được lợi nhuận cao nhất. \nĐáp án: 25\n\n", "options": [], "correct_answer": "25", "image_paths": [], "image_lookup": {}}];
+                    initSlides(data);
+                    initImageZoom(); 
+                } catch(err) {
+                    document.body.innerHTML = "<div style='padding:30px; text-align:center; font-family: sans-serif;'><h2 style='color:#dc2626; font-size:24px;'>⚠️ LỖI HIỂN THỊ TRÊN ZALO/MESSENGER</h2><p style='font-size:18px; color:#334155;'>Trình duyệt nội bộ đang chặn hệ thống Toán học.</p><p style='font-size:16px; color:#004b87; font-weight:bold; background:#e0f2fe; padding:15px; border-radius:10px;'>👉 Vui lòng bấm nút [Chia sẻ] (Góc trên bên phải) ➔ Chọn [Mở bằng Safari] (hoặc Chrome) để làm bài bình thường nhé!</p></div>";
+                }
+            });
+        </script>
+        </body></html>

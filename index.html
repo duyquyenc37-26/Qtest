@@ -2743,6 +2743,18 @@ def parse_docx_math_text_py(raw_text):
               if (!Array.isArray(l.assignedClasses)) {
                 l.assignedClasses = ['ALL'];
               }
+              if (l.htmlContent) {
+                if (window.savePresentationHTML && l.id) {
+                  window.savePresentationHTML(l.id, l.htmlContent, l.title);
+                }
+                if (!l.url && l.id) {
+                  l.url = '/api/presentations/' + l.id + '.html';
+                }
+                delete l.htmlContent;
+              }
+              if ((l.isHtmlPresentation || l.type === 'presentation') && !l.url && l.id) {
+                l.url = '/api/presentations/' + l.id + '.html';
+              }
             });
             if (!data.lectures.some(l => l.id === 'lec_presentation_1' || l.url?.includes('Trinh_chieu_001'))) {
               data.lectures.unshift({
@@ -7556,11 +7568,98 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
     };
 
     // =========================================================================
-    // TRÌNH PHÁT BÀI GIẢNG TRÌNH CHIẾU HTML TƯƠNG TÁC (PLAYER & UPLOAD)
+    // TRÌNH PHÁT BÀI GIẢNG TRÌNH CHIẾU HTML TƯƠNG TÁC (PLAYER & DUAL STORAGE)
+    // Hỗ trợ lưu trữ bền vững qua IndexedDB và Server API, bảo vệ localStorage
     // =========================================================================
+    window._presentationCache = window._presentationCache || {};
     window.currentPresentationBlobUrl = null;
 
-    window.openPresentationPlayer = (lectureId) => {
+    // 1. IndexedDB Helper cho các tệp trình chiếu HTML lớn (không giới hạn 5MB của localStorage)
+    window.initPresentationDB = function() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) return resolve(null);
+        try {
+          const req = window.indexedDB.open('mathexam_presentations_db', 1);
+          req.onupgradeneeded = (e) => {
+            const idb = e.target.result;
+            if (!idb.objectStoreNames.contains('presentations')) {
+              idb.createObjectStore('presentations', { keyPath: 'id' });
+            }
+          };
+          req.onsuccess = (e) => resolve(e.target.result);
+          req.onerror = () => resolve(null);
+        } catch (_) {
+          resolve(null);
+        }
+      });
+    };
+
+    window.savePresentationHTML = async function(id, content, filename) {
+      if (!id || !content) return false;
+      window._presentationCache[id] = content;
+      try {
+        const idb = await window.initPresentationDB();
+        if (idb) {
+          await new Promise((resolve, reject) => {
+            const tx = idb.transaction('presentations', 'readwrite');
+            const store = tx.objectStore('presentations');
+            store.put({ id: id, content: content, filename: filename || `${id}.html`, updatedAt: Date.now() });
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+          });
+          return true;
+        }
+      } catch (e) {
+        console.warn('IDB save presentation notice:', e);
+      }
+      return false;
+    };
+
+    window.getPresentationHTML = async function(id) {
+      if (!id) return null;
+      if (window._presentationCache && window._presentationCache[id]) {
+        return window._presentationCache[id];
+      }
+      try {
+        const idb = await window.initPresentationDB();
+        if (idb) {
+          const res = await new Promise((resolve) => {
+            const tx = idb.transaction('presentations', 'readonly');
+            const store = tx.objectStore('presentations');
+            const getReq = store.get(id);
+            getReq.onsuccess = () => resolve(getReq.result ? getReq.result.content : null);
+            getReq.onerror = () => resolve(null);
+          });
+          if (res) {
+            window._presentationCache[id] = res;
+            return res;
+          }
+        }
+      } catch (e) {
+        console.warn('IDB get presentation notice:', e);
+      }
+      return null;
+    };
+
+    window.deletePresentationHTML = async function(id) {
+      if (!id) return;
+      delete window._presentationCache[id];
+      try {
+        const idb = await window.initPresentationDB();
+        if (idb) {
+          await new Promise((resolve) => {
+            const tx = idb.transaction('presentations', 'readwrite');
+            const store = tx.objectStore('presentations');
+            store.delete(id);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          });
+        }
+      } catch (_) {}
+    };
+
+    // 2. Mở Trình Phát Bài Giảng Trình Chiếu
+    window.openPresentationPlayer = async (lectureId) => {
       const db = window.dbManager.db;
       let lec = (db.lectures || []).find(l => l.id === lectureId);
       if (!lec && typeof lectureId === 'number') lec = db.lectures[lectureId];
@@ -7578,24 +7677,85 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
 
       if (titleEl) titleEl.innerText = lec.title || 'Trình Chiếu Bài Giảng';
 
-      // Clean up previous blob
+      // Clean up previous blob URL
       if (window.currentPresentationBlobUrl && window.currentPresentationBlobUrl.startsWith('blob:')) {
         try { URL.revokeObjectURL(window.currentPresentationBlobUrl); } catch (e) {}
       }
 
-      let targetUrl = '';
-      if (lec.htmlContent) {
-        const blob = new Blob([lec.htmlContent], { type: 'text/html;charset=utf-8' });
-        targetUrl = URL.createObjectURL(blob);
-      } else if (lec.url) {
-        targetUrl = lec.url;
-      }
-
-      window.currentPresentationBlobUrl = targetUrl;
-      if (iframe) iframe.src = targetUrl;
+      // Show modal with placeholder or loading
+      if (iframe) iframe.src = 'about:blank';
       if (modal) modal.classList.remove('hidden');
 
-      // Listen for exit from within the presentation (e.g. title changes to EXIT_FULL_SCREEN)
+      let htmlContent = null;
+
+      // Bước 1: Kiểm tra cache bộ nhớ
+      if (window._presentationCache && window._presentationCache[lec.id]) {
+        htmlContent = window._presentationCache[lec.id];
+      }
+
+      // Bước 2: Kiểm tra dữ liệu legacy nếu có
+      if (!htmlContent && lec.htmlContent) {
+        htmlContent = lec.htmlContent;
+        window.savePresentationHTML(lec.id, htmlContent, lec.title);
+      }
+
+      // Bước 3: Tìm trong IndexedDB
+      if (!htmlContent) {
+        htmlContent = await window.getPresentationHTML(lec.id);
+      }
+
+      // Bước 4: Tải từ Server URL hoặc Asset URL nếu chưa có trong IndexedDB
+      if (!htmlContent && (lec.url || lec.id)) {
+        const fetchUrls = [];
+        if (lec.url) fetchUrls.push(lec.url);
+        if (lec.id && !fetchUrls.includes(`/api/presentations/${lec.id}.html`)) {
+          fetchUrls.push(`/api/presentations/${lec.id}.html`);
+        }
+        if (lec.id === 'lec_presentation_1' || (lec.url && lec.url.includes('Trinh_chieu_001'))) {
+          fetchUrls.push('/assets/aistudio/Trinh_chieu_001_f1f3b979.html');
+        }
+
+        for (const u of fetchUrls) {
+          try {
+            const resp = await fetch(u);
+            if (resp.ok) {
+              htmlContent = await resp.text();
+              if (htmlContent && htmlContent.includes('<html') || htmlContent.includes('slide-container') || htmlContent.includes('<!DOCTYPE')) {
+                // Lưu lại vào IndexedDB để lần sau tải tức thì ngay cả khi offline
+                await window.savePresentationHTML(lec.id, htmlContent, lec.title);
+                break;
+              }
+            }
+          } catch (_) {}
+        }
+      }
+
+      // Khởi tạo Blob URL hoặc tải thẳng qua iframe
+      let finalTargetUrl = '';
+      if (htmlContent) {
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        finalTargetUrl = URL.createObjectURL(blob);
+      } else if (lec.url) {
+        finalTargetUrl = lec.url;
+      }
+
+      if (finalTargetUrl) {
+        window.currentPresentationBlobUrl = finalTargetUrl;
+        if (iframe) iframe.src = finalTargetUrl;
+      } else {
+        if (iframe) {
+          iframe.srcdoc = `
+            <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#0f172a;color:#fff;text-align:center;padding:20px;">
+              <div>
+                <h3 style="font-size:18px;margin-bottom:8px;color:#f87171;">Không thể tải nội dung trình chiếu</h3>
+                <p style="font-size:13px;color:#94a3b8;">Vui lòng tải lại tệp trình chiếu HTML hoặc kiểm tra kết nối máy chủ.</p>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // Listen for exit from within the presentation
       clearInterval(window._presentationExitCheckInterval);
       window._presentationExitCheckInterval = setInterval(() => {
         try {
@@ -7632,6 +7792,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       }
     };
 
+    // 3. Xử lý tải lên tệp trình chiếu HTML tương tác
     window.handlePresentationFileUpload = (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -7640,13 +7801,13 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
       const reader = new FileReader();
 
       Swal.fire({
-        title: 'Đang tải tệp trình chiếu HTML...',
-        text: `Tập tin: ${fileName}`,
+        title: 'Đang đọc tệp trình chiếu HTML...',
+        text: `Tập tin: ${fileName} (${(file.size / 1024).toFixed(1)} KB)`,
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
       });
 
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         try {
           const htmlContent = event.target.result;
           const slideMatches = htmlContent.match(/class=["'][^"']*slide-container[^"']*["']/g) || [];
@@ -7690,19 +7851,53 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
             confirmButtonText: '<i class="fa-solid fa-cloud-arrow-up mr-1"></i> Lưu & Đưa Vào Kho Bài Giảng',
             cancelButtonText: 'Hủy',
             confirmButtonColor: '#0d9488'
-          }).then(res => {
+          }).then(async (res) => {
             if (res.isConfirmed) {
               const customTitle = document.getElementById('swal-upload-lec-title')?.value.trim() || defaultTitle;
               const targetClass = document.getElementById('swal-upload-lec-class')?.value || 'ALL';
 
-              const newLecId = 'lec_' + window.uid();
+              Swal.fire({
+                title: 'Đang lưu trữ bài giảng trình chiếu...',
+                text: 'Hệ thống đang đồng bộ dữ liệu vào kho lưu trữ an toàn...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+              });
+
+              const newLecId = 'lec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+
+              // 1. Lưu vào bộ nhớ tạm & IndexedDB (chứa toàn bộ nội dung HTML an toàn tuyệt đối)
+              await window.savePresentationHTML(newLecId, htmlContent, fileName);
+
+              // 2. Tải lên Server backend để có URL cố định cho tất cả các thiết bị và học sinh
+              let serverUrl = `/api/presentations/${newLecId}.html`;
+              try {
+                const uploadRes = await fetch('/api/upload-presentation', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    id: newLecId,
+                    filename: fileName,
+                    content: htmlContent
+                  })
+                });
+                if (uploadRes.ok) {
+                  const uploadData = await uploadRes.json();
+                  if (uploadData.url) {
+                    serverUrl = uploadData.url;
+                  }
+                }
+              } catch (netErr) {
+                console.warn('Backend presentation upload notice (working offline with IndexedDB):', netErr);
+              }
+
+              // 3. Đưa metadata nhẹ vào db.lectures (KHÔNG chứa chuỗi htmlContent khổng lồ để tránh quá tải localStorage)
               if (!db.lectures) db.lectures = [];
               const newLecture = {
                 id: newLecId,
                 title: customTitle,
                 type: 'presentation',
                 isHtmlPresentation: true,
-                htmlContent: htmlContent,
+                url: serverUrl,
                 questionsCount: count,
                 assignedClasses: targetClass === 'ALL' ? ['ALL'] : [targetClass],
                 description: `Tệp trình chiếu HTML tương tác (${count} slide/câu hỏi)`,
@@ -7715,8 +7910,8 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
 
               Swal.fire({
                 icon: 'success',
-                title: 'Tải Lên Thành Công!',
-                html: `Đã lưu <b>${window.escapeHtml(customTitle)}</b> vào Kho Bài Giảng. Bạn có muốn mở trình chiếu thử ngay bây giờ không?`,
+                title: 'Đã Lưu Trình Chiếu Thành Công!',
+                html: `Đã lưu <b>${window.escapeHtml(customTitle)}</b> vào Kho Bài Giảng và sẵn sàng trình chiếu. Bạn có muốn mở xem ngay bây giờ không?`,
                 showCancelButton: true,
                 confirmButtonText: '<i class="fa-solid fa-play mr-1"></i> Mở Trình Chiếu Ngay',
                 cancelButtonText: 'Để sau',
@@ -7729,12 +7924,47 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
             }
           });
         } catch (err) {
-          Swal.fire('Lỗi tệp', 'Không thể đọc tệp HTML: ' + err.message, 'error');
+          Swal.fire('Lỗi tệp', 'Không thể xử lý tệp HTML: ' + err.message, 'error');
         }
       };
 
       reader.readAsText(file);
       e.target.value = '';
+    };
+
+    // 4. Xóa bài giảng / tệp trình chiếu
+    window.deleteLecture = (idx) => {
+      const db = window.dbManager.db;
+      const lecs = db.lectures || [];
+      const l = lecs[idx];
+      if (!l) return;
+
+      Swal.fire({
+        title: 'Xác Nhận Xóa Bài Giảng?',
+        text: `Bạn có chắc muốn xóa "${l.title}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Xác Nhận Xóa',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#e11d48'
+      }).then(async (res) => {
+        if (res.isConfirmed) {
+          if (l.id) {
+            await window.deletePresentationHTML(l.id);
+            fetch(`/api/presentations/${l.id}.html`, { method: 'DELETE' }).catch(() => {});
+          }
+          lecs.splice(idx, 1);
+          window.dbManager.saveLocal();
+          window.renderLecturesTab();
+          Swal.fire({
+            icon: 'success',
+            title: 'Đã Xóa',
+            text: 'Đã xóa bài giảng khỏi hệ thống.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        }
+      });
     };
 
     // =========================================================================
