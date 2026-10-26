@@ -1139,6 +1139,10 @@
             <p class="text-xs text-slate-500">Hỗ trợ Video YouTube, Slide PowerPoint, Trình chiếu Web & Bộ đề tự luyện xem trước, chỉnh sửa, tải lên đa định dạng</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
+            <label class="cursor-pointer px-3.5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 shadow-teal-600/20">
+              <i class="fa-solid fa-chalkboard-user"></i> Tải Lên Trình Chiếu (.html)
+              <input type="file" accept=".html,.htm" class="hidden" onchange="window.handlePresentationFileUpload(event)" />
+            </label>
             <button onclick="window.showAddLectureModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition shadow-sm flex items-center gap-1.5">
               <i class="fa-solid fa-plus"></i> Thêm Bài Giảng
             </button>
@@ -1151,9 +1155,18 @@
         <div class="grid md:grid-cols-2 gap-6">
           <!-- Lectures List -->
           <div class="glass-card p-5 rounded-2xl border border-slate-200 space-y-4">
-            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-              <i class="fa-solid fa-video text-emerald-600"></i> Bài Giảng Trực Tuyến & Học Liệu
-            </h4>
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                  <i class="fa-solid fa-video text-emerald-600"></i> Bài Giảng Trực Tuyến & Học Liệu
+                </h4>
+                <p class="text-[11px] text-slate-500">Hỗ trợ file trình chiếu HTML tương tác (bút vẽ, tẩy, đồng hồ, lời giải chi tiết) & video/link</p>
+              </div>
+              <label class="cursor-pointer px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-xl text-xs font-bold transition shadow-2xs flex items-center gap-1.5">
+                <i class="fa-solid fa-upload text-teal-600"></i> Tải HTML Trình Chiếu
+                <input type="file" accept=".html,.htm" class="hidden" onchange="window.handlePresentationFileUpload(event)" />
+              </label>
+            </div>
             <div id="lectures-container-list" class="space-y-3">
               <!-- Dynamically populated -->
             </div>
@@ -2030,6 +2043,32 @@
     </div>
   </div>
 
+  <!-- Modal: Interactive Presentation Player (Trình Chiếu Bài Giảng Chuẩn Trinh_chieu_001) -->
+  <div id="modal-presentation-player" class="fixed inset-0 z-50 bg-slate-900/95 hidden flex flex-col">
+    <div class="bg-slate-900 text-white px-3 sm:px-6 py-2.5 flex items-center justify-between z-20 border-b border-slate-800 shadow-md">
+      <div class="flex items-center gap-2.5 text-xs sm:text-sm font-bold min-w-0">
+        <span class="w-7 h-7 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs shadow-sm shrink-0">
+          <i class="fa-solid fa-chalkboard-user"></i>
+        </span>
+        <span id="player-presentation-title" class="truncate max-w-[200px] sm:max-w-md text-slate-100">Trình Chiếu Bài Giảng</span>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" onclick="window.togglePresentationPlayerFullscreen()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-expand"></i> <span class="hidden sm:inline">Toàn Màn Hình</span>
+        </button>
+        <button type="button" onclick="window.openCurrentPresentationNewTab()" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> <span class="hidden sm:inline">Tab Mới</span>
+        </button>
+        <button type="button" onclick="window.closePresentationPlayer()" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1 transition shadow-sm">
+          <i class="fa-solid fa-xmark"></i> <span>Đóng</span>
+        </button>
+      </div>
+    </div>
+    <div class="flex-1 w-full h-full relative bg-slate-100 overflow-hidden">
+      <iframe id="presentation-player-iframe" class="w-full h-full border-0" allow="fullscreen; clipboard-read; clipboard-write"></iframe>
+    </div>
+  </div>
+
   <!-- ========================================================================= -->
   <!-- JAVASCRIPT & EMBEDDED PYTHON MODULES                                      -->
   <!-- ========================================================================= -->
@@ -2301,6 +2340,7 @@ def parse_docx_math_text_py(raw_text):
           id: 'prac_1',
           title: 'Tự Luyện: Khảo Sát Sự Biến Thiên & Cực Trị',
           questionsCount: 4,
+          assignedClasses: ['ALL'],
           questions: [
             {
               id: 'pq1',
@@ -2344,18 +2384,29 @@ def parse_docx_math_text_py(raw_text):
       },
       lectures: [
         {
+          id: 'lec_presentation_1',
+          title: 'Trình Chiếu Bài Giảng: Ứng Dụng Đạo Hàm & Bài Toán Thực Tế (Phần III)',
+          type: 'presentation',
+          isHtmlPresentation: true,
+          url: '/assets/aistudio/Trinh_chieu_001_f1f3b979.html',
+          description: 'Trình chiếu tương tác 8 câu hỏi thực tế có bảng viết, tẩy, hẹn giờ & kiểm tra đáp án',
+          assignedClasses: ['ALL']
+        },
+        {
           id: 'lec_1',
           title: 'Phương Pháp Giải Nhanh Đồ Thị & Bảng Biến Thiên Hàm Số 12',
           type: 'video',
           url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-          description: 'Hệ thống hóa toàn bộ dạng bài nhận dạng đồ thị và tương giao'
+          description: 'Hệ thống hóa toàn bộ dạng bài nhận dạng đồ thị và tương giao',
+          assignedClasses: ['ALL']
         },
         {
           id: 'lec_2',
           title: 'Slide Tổng Ôn: Cực Trị & Giá Trị Lớn Nhất Nhỏ Nhất (PowerPoint)',
           type: 'slide',
           url: 'https://docs.google.com/presentation/d/1_sample/embed',
-          description: 'Slide trình chiếu tóm tắt lý thuyết trọng tâm và ví dụ mẫu'
+          description: 'Slide trình chiếu tóm tắt lý thuyết trọng tâm và ví dụ mẫu',
+          assignedClasses: ['ALL']
         }
       ],
       submissions: []
@@ -2667,16 +2718,41 @@ def parse_docx_math_text_py(raw_text):
             }
             if (data.practice && typeof data.practice === 'object') {
               Object.keys(data.practice).forEach(k => {
-                if (data.practice[k] && Array.isArray(data.practice[k].questions)) {
-                  data.practice[k].questions.forEach(q => {
-                    if (q && q.stem && (q.stem.includes('container text-center') || q.stem.includes('\\begin{center}') || q.stem.includes('\\resizebox') || q.stem.includes('\\immini') || q.stem.includes('\\begin{minipage}'))) {
-                      q.stem = window.cleanLatexWrappers(q.stem);
-                    }
-                    if (q && q.solution && (q.solution.includes('container text-center') || q.solution.includes('\\begin{center}') || q.solution.includes('\\resizebox') || q.solution.includes('\\immini') || q.solution.includes('\\begin{minipage}'))) {
-                      q.solution = window.cleanLatexWrappers(q.solution);
-                    }
-                  });
+                if (data.practice[k]) {
+                  if (!Array.isArray(data.practice[k].assignedClasses)) {
+                    data.practice[k].assignedClasses = ['ALL'];
+                  }
+                  if (Array.isArray(data.practice[k].questions)) {
+                    data.practice[k].questions.forEach(q => {
+                      if (q && q.stem && (q.stem.includes('container text-center') || q.stem.includes('\\begin{center}') || q.stem.includes('\\resizebox') || q.stem.includes('\\immini') || q.stem.includes('\\begin{minipage}'))) {
+                        q.stem = window.cleanLatexWrappers(q.stem);
+                      }
+                      if (q && q.solution && (q.solution.includes('container text-center') || q.solution.includes('\\begin{center}') || q.solution.includes('\\resizebox') || q.solution.includes('\\immini') || q.solution.includes('\\begin{minipage}'))) {
+                        q.solution = window.cleanLatexWrappers(q.solution);
+                      }
+                    });
+                  }
                 }
+              });
+            }
+
+            if (!Array.isArray(data.lectures)) {
+              data.lectures = [];
+            }
+            data.lectures.forEach(l => {
+              if (!Array.isArray(l.assignedClasses)) {
+                l.assignedClasses = ['ALL'];
+              }
+            });
+            if (!data.lectures.some(l => l.id === 'lec_presentation_1' || l.url?.includes('Trinh_chieu_001'))) {
+              data.lectures.unshift({
+                id: 'lec_presentation_1',
+                title: 'Trình Chiếu Bài Giảng: Ứng Dụng Đạo Hàm & Bài Toán Thực Tế (Phần III)',
+                type: 'presentation',
+                isHtmlPresentation: true,
+                url: '/assets/aistudio/Trinh_chieu_001_f1f3b979.html',
+                description: 'Trình chiếu tương tác 8 câu hỏi thực tế có bảng viết, tẩy, hẹn giờ & kiểm tra đáp án',
+                assignedClasses: ['ALL']
               });
             }
 
@@ -6390,6 +6466,12 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
           ex.classId === 'ALL' || 
           (Array.isArray(ex.assignedClasses) && ex.assignedClasses.includes(cid))
         ).length;
+        const assignedPracCount = Object.values(db.practice || {}).filter(p =>
+          !p.assignedClasses || p.assignedClasses.includes('ALL') || p.assignedClasses.includes(cid)
+        ).length;
+        const assignedLecCount = (db.lectures || []).filter(l =>
+          !l.assignedClasses || l.assignedClasses.includes('ALL') || l.assignedClasses.includes(cid)
+        ).length;
 
         const isGuest = cid === 'TD_NGOAILOP' || cls.isGuestRoom;
         return `
@@ -6404,6 +6486,9 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
                 </span>
                 <span class="text-[10px] px-1.5 py-0.2 rounded ${isActive ? 'bg-black/20 text-white' : 'bg-indigo-100 text-indigo-700 font-bold'}">
                   ${assignedCount} Đề
+                </span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded ${isActive ? 'bg-black/20 text-white' : 'bg-teal-100 text-teal-800 font-bold'}">
+                  ${assignedLecCount} Bài giảng
                 </span>
                 <span class="text-[10px] font-mono px-1.5 py-0.2 rounded ${isActive ? 'bg-black/30 text-amber-300' : 'bg-amber-50 text-amber-800 border border-amber-200'}" title="Mã PIN mặc định cả lớp">
                   PIN: ${cls.defaultPin || '123456'}
@@ -7070,98 +7155,387 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
     window.renderLecturesTab = () => {
       const db = window.dbManager.db;
       
-      // Lectures list
+      // 1. Lectures list
       const lecContainer = document.getElementById('lectures-container-list');
       const lecs = db.lectures || [];
       if (lecs.length === 0) {
-        lecContainer.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Chưa có bài giảng nào. Bấm "Thêm Bài Giảng" để tải lên link/video.</p>`;
+        lecContainer.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Chưa có bài giảng nào. Bấm "Tải Lên Trình Chiếu (.html)" hoặc "Thêm Bài Giảng" để bắt đầu.</p>`;
       } else {
-        lecContainer.innerHTML = lecs.map((l, idx) => `
-          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                <i class="fa-solid ${l.type === 'video' ? 'fa-video' : 'fa-presentation'}"></i>
+        lecContainer.innerHTML = lecs.map((l, idx) => {
+          const isHtml = l.isHtmlPresentation || l.type === 'presentation';
+          const assignedText = (!l.assignedClasses || l.assignedClasses.includes('ALL')) 
+            ? 'Tất cả các lớp' 
+            : l.assignedClasses.join(', ');
+
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 flex flex-wrap items-center justify-between gap-2.5 text-xs transition">
+              <div class="flex items-start gap-3 min-w-0 flex-1">
+                <div class="w-9 h-9 rounded-xl ${isHtml ? 'bg-teal-100 text-teal-700' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center font-bold text-base shrink-0 mt-0.5">
+                  <i class="fa-solid ${isHtml ? 'fa-chalkboard-user' : (l.type === 'video' ? 'fa-video' : 'fa-presentation')}"></i>
+                </div>
+                <div class="min-w-0 pr-2">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <h5 class="font-bold text-slate-800 truncate">${l.title}</h5>
+                    ${isHtml ? '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200">TRÌNH CHIẾU HTML</span>' : ''}
+                  </div>
+                  <p class="text-[11px] text-slate-500 mt-0.5 truncate">${l.description || l.url}</p>
+                  <div class="mt-1 flex items-center gap-1.5 text-[10px]">
+                    <span class="px-2 py-0.5 rounded font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      <i class="fa-solid fa-users mr-1"></i>Đã giao: <strong>${assignedText}</strong>
+                    </span>
+                    ${l.questionsCount ? `<span class="text-slate-400">• ${l.questionsCount} câu hỏi/slide</span>` : ''}
+                  </div>
+                </div>
               </div>
-              <div>
-                <h5 class="font-bold text-slate-800">${l.title}</h5>
-                <p class="text-[11px] text-slate-500">${l.description || l.url}</p>
+              <div class="flex items-center gap-1.5 shrink-0">
+                ${isHtml ? `
+                  <button type="button" onclick="window.openPresentationPlayer('${l.id || idx}')" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold flex items-center gap-1 transition shadow-2xs">
+                    <i class="fa-solid fa-play"></i> Trình Chiếu
+                  </button>
+                ` : `
+                  <a href="${l.url}" target="_blank" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100 flex items-center gap-1 transition shadow-2xs">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Mở
+                  </a>
+                `}
+                <button type="button" onclick="window.showAssignLectureToClassModal('${l.id || idx}')" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold flex items-center gap-1 transition border border-emerald-200 shadow-2xs" title="Giao bài giảng cho lớp học">
+                  <i class="fa-solid fa-share-nodes"></i> Giao Lớp
+                </button>
+                <button type="button" onclick="window.deleteLecture(${idx})" class="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition" title="Xóa bài giảng"><i class="fa-regular fa-trash-can"></i></button>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <a href="${l.url}" target="_blank" class="px-2.5 py-1 rounded bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100">
-                <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Mở
-              </a>
-              <button onclick="window.deleteLecture(${idx})" class="p-1 text-rose-500 hover:text-rose-700"><i class="fa-regular fa-trash-can"></i></button>
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
 
-      // Practice list
+      // 2. Practice list
       const pracContainer = document.getElementById('practice-container-list');
       const pracs = Object.values(db.practice || {});
       if (pracs.length === 0) {
         pracContainer.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Chưa có đề tự luyện nào. Hãy tải file Word, LaTeX hoặc bấm "Tạo Bộ Đề Riêng" để bắt đầu!</p>`;
       } else {
-        pracContainer.innerHTML = pracs.map((p) => `
-          <div class="p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs transition">
-            <div class="min-w-0 pr-2">
-              <h5 class="font-bold text-slate-800 text-sm truncate flex items-center gap-1.5">
-                <i class="fa-solid fa-book-open text-indigo-600"></i> ${p.title}
-              </h5>
-              <p class="text-[11px] text-slate-500 mt-0.5">
-                ${p.questions?.length || 0} câu tự luyện | Có đáp án & lời giải chi tiết từng bước
-              </p>
+        pracContainer.innerHTML = pracs.map((p) => {
+          const assignedText = (!p.assignedClasses || p.assignedClasses.includes('ALL')) 
+            ? 'Tất cả các lớp' 
+            : p.assignedClasses.join(', ');
+
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 flex flex-wrap items-center justify-between gap-2.5 text-xs transition">
+              <div class="min-w-0 pr-2 flex-1">
+                <h5 class="font-bold text-slate-800 text-sm truncate flex items-center gap-1.5">
+                  <i class="fa-solid fa-book-open text-indigo-600"></i> ${p.title}
+                </h5>
+                <p class="text-[11px] text-slate-500 mt-0.5">
+                  ${p.questions?.length || 0} câu tự luyện | Có đáp án & lời giải chi tiết từng bước
+                </p>
+                <div class="mt-1 flex items-center gap-1.5 text-[10px]">
+                  <span class="px-2 py-0.5 rounded font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <i class="fa-solid fa-users mr-1"></i>Đã giao: <strong>${assignedText}</strong>
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+                <button type="button" onclick="window.previewPractice('${p.id}')" class="px-2.5 py-1 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 font-semibold flex items-center gap-1 transition shadow-2xs" title="Xem trước câu hỏi & lời giải">
+                  <i class="fa-regular fa-eye"></i> Xem trước
+                </button>
+                <button type="button" onclick="window.showAssignPracticeToClassModal('${p.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold flex items-center gap-1 transition border border-emerald-200 shadow-2xs" title="Giao bộ đề tự luyện cho lớp học">
+                  <i class="fa-solid fa-share-nodes"></i> Giao Lớp
+                </button>
+                <button type="button" onclick="window.editPractice('${p.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold flex items-center gap-1 transition shadow-2xs" title="Chỉnh sửa nội dung câu hỏi">
+                  <i class="fa-regular fa-pen-to-square"></i> Sửa
+                </button>
+                <button type="button" onclick="window.deletePractice('${p.id}')" class="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition" title="Xóa bộ đề"><i class="fa-regular fa-trash-can"></i></button>
+              </div>
             </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button onclick="window.previewPractice('${p.id}')" class="px-2.5 py-1 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 font-semibold flex items-center gap-1 transition shadow-2xs" title="Xem trước câu hỏi & lời giải">
-                <i class="fa-regular fa-eye"></i> Xem trước
-              </button>
-              <button onclick="window.editPractice('${p.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold flex items-center gap-1 transition shadow-2xs" title="Chỉnh sửa nội dung câu hỏi">
-                <i class="fa-regular fa-pen-to-square"></i> Sửa
-              </button>
-              <button onclick="window.deletePractice('${p.id}')" class="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition" title="Xóa bộ đề"><i class="fa-regular fa-trash-can"></i></button>
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
     };
 
-    window.showAddLectureModal = () => {
+    // =========================================================================
+    // MODAL GIAO BỘ ĐỀ TỰ LUYỆN CHO LỚP
+    // =========================================================================
+    window.showAssignPracticeToClassModal = (practiceId) => {
+      const db = window.dbManager.db;
+      const p = db.practice[practiceId];
+      if (!p) return;
+
+      const classes = db.classes || {};
+      const classKeys = Object.keys(classes);
+      const assigned = Array.isArray(p.assignedClasses) ? p.assignedClasses : ['ALL'];
+      const isAll = assigned.includes('ALL');
+
+      const classCheckboxesHtml = classKeys.map(cid => {
+        const cls = classes[cid];
+        const checked = isAll || assigned.includes(cid);
+        return `
+          <label class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer text-xs">
+            <span class="flex items-center gap-2 font-semibold text-slate-700">
+              <i class="fa-solid ${cls.isGuestRoom ? 'fa-door-open text-violet-600' : 'fa-graduation-cap text-indigo-600'}"></i>
+              ${cls.name} (${cid})
+            </span>
+            <input type="checkbox" name="assign-practice-class" value="${cid}" ${checked ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 practice-class-checkbox" onchange="window.updatePracticeClassSelectState()">
+          </label>
+        `;
+      }).join('');
+
       Swal.fire({
-        title: 'Thêm Bài Giảng Trực Tuyến',
+        title: `<div class="flex items-center justify-center gap-2 text-emerald-700 text-base font-bold"><i class="fa-solid fa-share-nodes"></i> Giao Bộ Đề Tự Luyện Cho Lớp</div>`,
+        width: '560px',
         html: `
-          <div class="text-left space-y-3 text-xs">
-            <div>
-              <label class="font-bold text-slate-700 block mb-1">Tiêu Đề Bài Giảng:</label>
-              <input id="swal-lec-title" type="text" placeholder="Phương pháp giải nhanh Đồ thị hàm số" class="w-full p-2 border rounded-lg">
+          <div class="text-left space-y-3 text-xs pt-1">
+            <div class="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200">
+              <h5 class="font-bold text-emerald-950 text-xs truncate mb-1">
+                <i class="fa-solid fa-book-open text-emerald-600 mr-1"></i> ${p.title}
+              </h5>
+              <p class="text-[11px] text-emerald-800">Chọn các lớp học được phép truy cập và làm bộ đề tự luyện này trong Cổng Học Sinh.</p>
             </div>
-            <div>
-              <label class="font-bold text-slate-700 block mb-1">Loại Bài Giảng:</label>
-              <select id="swal-lec-type" class="w-full p-2 border rounded-lg">
-                <option value="video">Video YouTube / MP4</option>
-                <option value="slide">Trình chiếu Slide (PowerPoint / Google Slides)</option>
-                <option value="game">Trò chơi học tập / HTML Interactive</option>
-              </select>
-            </div>
-            <div>
-              <label class="font-bold text-slate-700 block mb-1">Link URL hoặc Nhúng (Embed):</label>
-              <input id="swal-lec-url" type="text" placeholder="https://www.youtube.com/embed/..." class="w-full p-2 border rounded-lg">
+
+            <div class="space-y-2">
+              <label class="flex items-center justify-between p-3 rounded-xl border-2 border-emerald-300 bg-emerald-50/50 cursor-pointer font-bold text-emerald-900">
+                <span class="flex items-center gap-2">
+                  <i class="fa-solid fa-earth-americas text-emerald-600 text-sm"></i>
+                  Tất Cả Các Lớp (Công khai cho toàn bộ học sinh)
+                </span>
+                <input type="checkbox" id="chk-assign-prac-all" ${isAll ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500" onchange="window.toggleAllPracticeClasses(this.checked)">
+              </label>
+
+              <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mt-2">Hoặc chọn từng lớp cụ thể:</div>
+              <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                ${classCheckboxesHtml}
+              </div>
             </div>
           </div>
         `,
         showCancelButton: true,
-        confirmButtonText: 'Lưu Bài Giảng',
+        confirmButtonText: '<i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Cấu Hình Giao Lớp',
         cancelButtonText: 'Hủy',
+        confirmButtonColor: '#059669',
+        preConfirm: () => {
+          const isAllChecked = document.getElementById('chk-assign-prac-all')?.checked;
+          if (isAllChecked) {
+            return ['ALL'];
+          }
+          const checked = Array.from(document.querySelectorAll('input[name="assign-practice-class"]:checked')).map(el => el.value);
+          if (checked.length === 0) {
+            Swal.showValidationMessage('Vui lòng chọn ít nhất một lớp học hoặc chọn Tất Cả Các Lớp!');
+            return false;
+          }
+          return checked;
+        }
+      }).then(res => {
+        if (res.isConfirmed) {
+          p.assignedClasses = res.value;
+          window.dbManager.saveLocal();
+          window.renderLecturesTab();
+          Swal.fire({
+            icon: 'success',
+            title: 'Đã Giao Bộ Đề Thành Công!',
+            text: `Bộ đề "${p.title}" đã được giao cho: ${res.value.includes('ALL') ? 'Tất cả các lớp' : res.value.join(', ')}.`,
+            timer: 2000,
+            showConfirmButton: false
+          });
+        }
+      });
+    };
+
+    window.toggleAllPracticeClasses = (checked) => {
+      document.querySelectorAll('.practice-class-checkbox').forEach(cb => {
+        cb.checked = checked;
+      });
+    };
+
+    window.updatePracticeClassSelectState = () => {
+      const allCbs = document.querySelectorAll('.practice-class-checkbox');
+      const allChecked = Array.from(allCbs).every(cb => cb.checked);
+      const allMaster = document.getElementById('chk-assign-prac-all');
+      if (allMaster) allMaster.checked = allChecked;
+    };
+
+    // =========================================================================
+    // MODAL GIAO BÀI GIẢNG / TRÌNH CHIẾU CHO LỚP
+    // =========================================================================
+    window.showAssignLectureToClassModal = (lectureId) => {
+      const db = window.dbManager.db;
+      let l = (db.lectures || []).find(x => x.id === lectureId);
+      if (!l && typeof lectureId === 'number') l = db.lectures[lectureId];
+      if (!l) {
+        l = (db.lectures || [])[parseInt(lectureId, 10)];
+      }
+      if (!l) return;
+
+      const classes = db.classes || {};
+      const classKeys = Object.keys(classes);
+      const assigned = Array.isArray(l.assignedClasses) ? l.assignedClasses : ['ALL'];
+      const isAll = assigned.includes('ALL');
+
+      const classCheckboxesHtml = classKeys.map(cid => {
+        const cls = classes[cid];
+        const checked = isAll || assigned.includes(cid);
+        return `
+          <label class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer text-xs">
+            <span class="flex items-center gap-2 font-semibold text-slate-700">
+              <i class="fa-solid ${cls.isGuestRoom ? 'fa-door-open text-violet-600' : 'fa-graduation-cap text-indigo-600'}"></i>
+              ${cls.name} (${cid})
+            </span>
+            <input type="checkbox" name="assign-lecture-class" value="${cid}" ${checked ? 'checked' : ''} class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 lecture-class-checkbox" onchange="window.updateLectureClassSelectState()">
+          </label>
+        `;
+      }).join('');
+
+      Swal.fire({
+        title: `<div class="flex items-center justify-center gap-2 text-indigo-700 text-base font-bold"><i class="fa-solid fa-share-nodes"></i> Giao Bài Giảng Cho Lớp Học</div>`,
+        width: '560px',
+        html: `
+          <div class="text-left space-y-3 text-xs pt-1">
+            <div class="p-3 bg-indigo-50/80 rounded-xl border border-indigo-200">
+              <h5 class="font-bold text-indigo-950 text-xs truncate mb-1">
+                <i class="fa-solid ${(l.isHtmlPresentation || l.type === 'presentation') ? 'fa-chalkboard-user' : (l.type === 'video' ? 'fa-video' : 'fa-presentation')} text-indigo-600 mr-1"></i> ${l.title}
+              </h5>
+              <p class="text-[11px] text-indigo-800">Chọn các lớp học được phép xem và học bài giảng/trình chiếu này trong Cổng Học Sinh.</p>
+            </div>
+
+            <div class="space-y-2">
+              <label class="flex items-center justify-between p-3 rounded-xl border-2 border-indigo-300 bg-indigo-50/50 cursor-pointer font-bold text-indigo-900">
+                <span class="flex items-center gap-2">
+                  <i class="fa-solid fa-earth-americas text-indigo-600 text-sm"></i>
+                  Tất Cả Các Lớp (Công khai cho toàn bộ học sinh)
+                </span>
+                <input type="checkbox" id="chk-assign-lec-all" ${isAll ? 'checked' : ''} class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" onchange="window.toggleAllLectureClasses(this.checked)">
+              </label>
+
+              <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mt-2">Hoặc chọn từng lớp cụ thể:</div>
+              <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                ${classCheckboxesHtml}
+              </div>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Cấu Hình Giao Lớp',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#4f46e5',
+        preConfirm: () => {
+          const isAllChecked = document.getElementById('chk-assign-lec-all')?.checked;
+          if (isAllChecked) {
+            return ['ALL'];
+          }
+          const checked = Array.from(document.querySelectorAll('input[name="assign-lecture-class"]:checked')).map(el => el.value);
+          if (checked.length === 0) {
+            Swal.showValidationMessage('Vui lòng chọn ít nhất một lớp học hoặc chọn Tất Cả Các Lớp!');
+            return false;
+          }
+          return checked;
+        }
+      }).then(res => {
+        if (res.isConfirmed) {
+          l.assignedClasses = res.value;
+          window.dbManager.saveLocal();
+          window.renderLecturesTab();
+          Swal.fire({
+            icon: 'success',
+            title: 'Đã Giao Bài Giảng Thành Công!',
+            text: `Bài giảng "${l.title}" đã được giao cho: ${res.value.includes('ALL') ? 'Tất cả các lớp' : res.value.join(', ')}.`,
+            timer: 2000,
+            showConfirmButton: false
+          });
+        }
+      });
+    };
+
+    window.toggleAllLectureClasses = (checked) => {
+      document.querySelectorAll('.lecture-class-checkbox').forEach(cb => {
+        cb.checked = checked;
+      });
+    };
+
+    window.updateLectureClassSelectState = () => {
+      const allCbs = document.querySelectorAll('.lecture-class-checkbox');
+      const allChecked = Array.from(allCbs).every(cb => cb.checked);
+      const allMaster = document.getElementById('chk-assign-lec-all');
+      if (allMaster) allMaster.checked = allChecked;
+    };
+
+    // =========================================================================
+    // MODAL THÊM BÀI GIẢNG TRỰC TUYẾN & TẢI TRÌNH CHIẾU
+    // =========================================================================
+    window.showAddLectureModal = () => {
+      const db = window.dbManager.db;
+      const classes = db.classes || {};
+      const classKeys = Object.keys(classes);
+
+      Swal.fire({
+        title: `<div class="flex items-center justify-center gap-2 text-emerald-700 text-base font-bold"><i class="fa-solid fa-plus-circle"></i> Thêm Bài Giảng & Trình Chiếu</div>`,
+        width: '560px',
+        html: `
+          <div class="text-left space-y-3.5 text-xs pt-1">
+            <!-- Option 1: Upload presentation HTML like Trinh_chieu_001.html -->
+            <div class="p-3.5 rounded-2xl bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-teal-950 flex items-center gap-1.5 text-xs">
+                  <i class="fa-solid fa-chalkboard-user text-teal-600 text-sm"></i> Cách 1: Tải lên định dạng trình chiếu HTML
+                </span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-200/80 text-teal-900">Khuyên dùng</span>
+              </div>
+              <p class="text-[11px] text-teal-800 leading-relaxed">
+                Tải lên tệp HTML trình chiếu chuẩn như <code>Trinh_chieu_001.html</code> có bảng viết bút vẽ, tẩy xóa, hẹn giờ đếm ngược, kiểm tra và giải chi tiết từng câu.
+              </p>
+              <label class="cursor-pointer w-full py-2.5 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Chọn tệp trình chiếu (.html)
+                <input type="file" accept=".html,.htm" class="hidden" onchange="Swal.close(); window.handlePresentationFileUpload(event)" />
+              </label>
+            </div>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-2 text-slate-400">
+              <div class="flex-1 h-px bg-slate-200"></div>
+              <span class="text-[11px] font-semibold text-slate-500 uppercase">Hoặc nhập link bài giảng trực tuyến</span>
+              <div class="flex-1 h-px bg-slate-200"></div>
+            </div>
+
+            <!-- Option 2: Enter URL -->
+            <div class="space-y-2.5">
+              <div>
+                <label class="font-bold text-slate-700 block mb-1">Tiêu Đề Bài Giảng:</label>
+                <input id="swal-lec-title" type="text" placeholder="Ví dụ: Phương pháp giải nhanh Đồ thị hàm số 12" class="w-full p-2.5 border rounded-xl font-medium">
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label class="font-bold text-slate-700 block mb-1">Loại Bài Giảng:</label>
+                  <select id="swal-lec-type" class="w-full p-2.5 border rounded-xl font-medium bg-slate-50">
+                    <option value="video">Video YouTube / MP4</option>
+                    <option value="slide">Trình chiếu Slide (PowerPoint / Google Slides)</option>
+                    <option value="game">Trò chơi học tập / HTML Interactive</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="font-bold text-slate-700 block mb-1">Giao Cho Lớp:</label>
+                  <select id="swal-lec-class" class="w-full p-2.5 border rounded-xl font-semibold bg-slate-50">
+                    <option value="ALL">-- Tất Cả Các Lớp --</option>
+                    ${classKeys.map(cid => `<option value="${cid}">${classes[cid].name} (${cid})</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="font-bold text-slate-700 block mb-1">Link URL hoặc Nhúng (Embed):</label>
+                <input id="swal-lec-url" type="text" placeholder="https://www.youtube.com/embed/..." class="w-full p-2.5 border rounded-xl font-medium">
+              </div>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Bài Giảng',
+        cancelButtonText: 'Đóng',
+        confirmButtonColor: '#059669',
         preConfirm: () => {
           const title = document.getElementById('swal-lec-title').value.trim();
           const type = document.getElementById('swal-lec-type').value;
           const url = document.getElementById('swal-lec-url').value.trim();
+          const assignedClass = document.getElementById('swal-lec-class').value;
           if (!title || !url) {
             Swal.showValidationMessage('Vui lòng nhập tiêu đề và link URL!');
             return false;
           }
-          return { title, type, url };
+          return { title, type, url, assignedClass };
         }
       }).then((res) => {
         if (res.isConfirmed) {
@@ -7171,13 +7545,196 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
             id: 'lec_' + window.uid(),
             title: res.value.title,
             type: res.value.type,
-            url: res.value.url
+            url: res.value.url,
+            assignedClasses: res.value.assignedClass === 'ALL' ? ['ALL'] : [res.value.assignedClass]
           });
           window.dbManager.saveLocal();
           window.renderLecturesTab();
           Swal.fire('Thành công', 'Đã thêm bài giảng mới!', 'success');
         }
       });
+    };
+
+    // =========================================================================
+    // TRÌNH PHÁT BÀI GIẢNG TRÌNH CHIẾU HTML TƯƠNG TÁC (PLAYER & UPLOAD)
+    // =========================================================================
+    window.currentPresentationBlobUrl = null;
+
+    window.openPresentationPlayer = (lectureId) => {
+      const db = window.dbManager.db;
+      let lec = (db.lectures || []).find(l => l.id === lectureId);
+      if (!lec && typeof lectureId === 'number') lec = db.lectures[lectureId];
+      if (!lec) {
+        lec = (db.lectures || [])[parseInt(lectureId, 10)];
+      }
+      if (!lec) {
+        Swal.fire('Lỗi', 'Không tìm thấy bài giảng trình chiếu này.', 'error');
+        return;
+      }
+
+      const modal = document.getElementById('modal-presentation-player');
+      const iframe = document.getElementById('presentation-player-iframe');
+      const titleEl = document.getElementById('player-presentation-title');
+
+      if (titleEl) titleEl.innerText = lec.title || 'Trình Chiếu Bài Giảng';
+
+      // Clean up previous blob
+      if (window.currentPresentationBlobUrl && window.currentPresentationBlobUrl.startsWith('blob:')) {
+        try { URL.revokeObjectURL(window.currentPresentationBlobUrl); } catch (e) {}
+      }
+
+      let targetUrl = '';
+      if (lec.htmlContent) {
+        const blob = new Blob([lec.htmlContent], { type: 'text/html;charset=utf-8' });
+        targetUrl = URL.createObjectURL(blob);
+      } else if (lec.url) {
+        targetUrl = lec.url;
+      }
+
+      window.currentPresentationBlobUrl = targetUrl;
+      if (iframe) iframe.src = targetUrl;
+      if (modal) modal.classList.remove('hidden');
+
+      // Listen for exit from within the presentation (e.g. title changes to EXIT_FULL_SCREEN)
+      clearInterval(window._presentationExitCheckInterval);
+      window._presentationExitCheckInterval = setInterval(() => {
+        try {
+          if (iframe && iframe.contentDocument && iframe.contentDocument.title === 'EXIT_FULL_SCREEN') {
+            window.closePresentationPlayer();
+          }
+        } catch (e) {}
+      }, 500);
+    };
+
+    window.closePresentationPlayer = () => {
+      clearInterval(window._presentationExitCheckInterval);
+      const modal = document.getElementById('modal-presentation-player');
+      const iframe = document.getElementById('presentation-player-iframe');
+      if (iframe) iframe.src = 'about:blank';
+      if (modal) modal.classList.add('hidden');
+      if (document.fullscreenElement) {
+        try { document.exitFullscreen(); } catch (e) {}
+      }
+    };
+
+    window.openCurrentPresentationNewTab = () => {
+      if (window.currentPresentationBlobUrl) {
+        window.open(window.currentPresentationBlobUrl, '_blank');
+      }
+    };
+
+    window.togglePresentationPlayerFullscreen = () => {
+      const modal = document.getElementById('modal-presentation-player');
+      if (!document.fullscreenElement) {
+        if (modal.requestFullscreen) modal.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    };
+
+    window.handlePresentationFileUpload = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const fileName = file.name;
+      const reader = new FileReader();
+
+      Swal.fire({
+        title: 'Đang tải tệp trình chiếu HTML...',
+        text: `Tập tin: ${fileName}`,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      reader.onload = (event) => {
+        try {
+          const htmlContent = event.target.result;
+          const slideMatches = htmlContent.match(/class=["'][^"']*slide-container[^"']*["']/g) || [];
+          const count = slideMatches.length || 1;
+
+          const titleMatch = htmlContent.match(/<title>([^<]+)<\/title>/i);
+          let defaultTitle = titleMatch ? titleMatch[1].trim() : ('Trình Chiếu: ' + fileName.replace(/\.[^/.]+$/, ''));
+          if (defaultTitle === 'EXIT_FULL_SCREEN' || !defaultTitle) {
+            defaultTitle = 'Trình Chiếu: ' + fileName.replace(/\.[^/.]+$/, '');
+          }
+
+          const db = window.dbManager.db;
+          const classes = db.classes || {};
+          const classKeys = Object.keys(classes);
+
+          Swal.fire({
+            title: `<div class="flex items-center justify-center gap-2 text-teal-700 text-base font-bold"><i class="fa-solid fa-chalkboard-user"></i> Xác Nhận Tải Lên Trình Chiếu</div>`,
+            width: '560px',
+            html: `
+              <div class="text-left space-y-3 text-xs pt-1">
+                <div class="p-3 bg-teal-50 rounded-xl border border-teal-200">
+                  <p class="font-bold text-teal-900 mb-0.5"><i class="fa-solid fa-circle-check text-teal-600 mr-1"></i> Tệp trình chiếu hợp lệ!</p>
+                  <p class="text-slate-600 text-[11px]">Đã nhận diện: <strong>${count} câu hỏi/slide trình chiếu</strong> với đầy đủ thanh công cụ vẽ, tẩy, màu sắc, hẹn giờ và kiểm tra đáp án tương tác.</p>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Tiêu Đề Bài Giảng Trình Chiếu:</label>
+                  <input id="swal-upload-lec-title" type="text" value="${window.escapeHtml(defaultTitle)}" class="w-full p-2.5 border rounded-xl font-medium text-xs">
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Giao Cho Lớp Học:</label>
+                  <select id="swal-upload-lec-class" class="w-full p-2.5 border rounded-xl font-semibold text-xs bg-slate-50">
+                    <option value="ALL">-- Tất Cả Các Lớp (Toàn bộ học sinh) --</option>
+                    ${classKeys.map(cid => `<option value="${cid}">${classes[cid].name} (${cid})</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-cloud-arrow-up mr-1"></i> Lưu & Đưa Vào Kho Bài Giảng',
+            cancelButtonText: 'Hủy',
+            confirmButtonColor: '#0d9488'
+          }).then(res => {
+            if (res.isConfirmed) {
+              const customTitle = document.getElementById('swal-upload-lec-title')?.value.trim() || defaultTitle;
+              const targetClass = document.getElementById('swal-upload-lec-class')?.value || 'ALL';
+
+              const newLecId = 'lec_' + window.uid();
+              if (!db.lectures) db.lectures = [];
+              const newLecture = {
+                id: newLecId,
+                title: customTitle,
+                type: 'presentation',
+                isHtmlPresentation: true,
+                htmlContent: htmlContent,
+                questionsCount: count,
+                assignedClasses: targetClass === 'ALL' ? ['ALL'] : [targetClass],
+                description: `Tệp trình chiếu HTML tương tác (${count} slide/câu hỏi)`,
+                uploadedAt: new Date().toISOString()
+              };
+
+              db.lectures.unshift(newLecture);
+              window.dbManager.saveLocal();
+              window.renderLecturesTab();
+
+              Swal.fire({
+                icon: 'success',
+                title: 'Tải Lên Thành Công!',
+                html: `Đã lưu <b>${window.escapeHtml(customTitle)}</b> vào Kho Bài Giảng. Bạn có muốn mở trình chiếu thử ngay bây giờ không?`,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa-solid fa-play mr-1"></i> Mở Trình Chiếu Ngay',
+                cancelButtonText: 'Để sau',
+                confirmButtonColor: '#0d9488'
+              }).then(playRes => {
+                if (playRes.isConfirmed) {
+                  window.openPresentationPlayer(newLecId);
+                }
+              });
+            }
+          });
+        } catch (err) {
+          Swal.fire('Lỗi tệp', 'Không thể đọc tệp HTML: ' + err.message, 'error');
+        }
+      };
+
+      reader.readAsText(file);
+      e.target.value = '';
     };
 
     // =========================================================================
@@ -8566,44 +9123,78 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         }
       }
 
-      // 2. Practice exams list
+      // 2. Practice exams list (filtered by student class)
       const pracContainer = document.getElementById('student-practice-list');
-      const pracs = Object.values(db.practice || {});
+      const allPracs = Object.values(db.practice || {});
+      const pracs = allPracs.filter(p => {
+        if (!p.assignedClasses || p.assignedClasses.length === 0 || p.assignedClasses.includes('ALL')) return true;
+        return p.assignedClasses.includes(stu.classId);
+      });
+
       if (pracs.length === 0) {
-        pracContainer.innerHTML = `<div class="col-span-3 text-center py-6 text-slate-400 glass-card rounded-2xl">Chưa có bài tự luyện.</div>`;
+        pracContainer.innerHTML = `<div class="col-span-3 text-center py-6 text-slate-400 glass-card rounded-2xl">Chưa có bài tự luyện nào được giao cho lớp ${stu.classId || ''}.</div>`;
       } else {
-        pracContainer.innerHTML = pracs.map(p => `
-          <div class="glass-card p-5 rounded-2xl border border-white/80 shadow-sm flex flex-col justify-between space-y-3">
-            <div>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700">TỰ LUYỆN</span>
-              <h4 class="font-bold text-slate-800 text-sm mt-2">${p.title}</h4>
-              <p class="text-xs text-slate-500 mt-0.5">${p.questions?.length || 0} câu (Có lời giải ngay)</p>
+        pracContainer.innerHTML = pracs.map(p => {
+          const isAll = !p.assignedClasses || p.assignedClasses.includes('ALL');
+          return `
+            <div class="glass-card p-5 rounded-2xl border border-white/80 shadow-sm flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex items-center justify-between gap-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700">TỰ LUYỆN</span>
+                  <span class="text-[10px] font-semibold text-slate-400">Lớp: ${isAll ? 'Chung' : p.assignedClasses.join(', ')}</span>
+                </div>
+                <h4 class="font-bold text-slate-800 text-sm mt-2">${p.title}</h4>
+                <p class="text-xs text-slate-500 mt-0.5">${p.questions?.length || 0} câu (Có lời giải ngay)</p>
+              </div>
+              <button type="button" onclick="window.showExamRulesModal('${p.id}', true)" class="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition shadow-md shadow-violet-600/30 flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-play mr-1"></i> Luyện Tập Ngay
+              </button>
             </div>
-            <button onclick="window.showExamRulesModal('${p.id}', true)" class="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition shadow-md shadow-violet-600/30 flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-play mr-1"></i> Luyện Tập Ngay
-            </button>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
 
-      // 3. Lectures list
+      // 3. Lectures list (filtered by student class)
       const lecContainer = document.getElementById('student-lectures-list');
-      const lecs = db.lectures || [];
+      const allLecs = db.lectures || [];
+      const lecs = allLecs.filter(l => {
+        if (!l.assignedClasses || l.assignedClasses.length === 0 || l.assignedClasses.includes('ALL')) return true;
+        return l.assignedClasses.includes(stu.classId);
+      });
+
       if (lecs.length === 0) {
-        lecContainer.innerHTML = `<div class="col-span-3 text-center py-6 text-slate-400 glass-card rounded-2xl">Chưa có bài giảng trực tuyến.</div>`;
+        lecContainer.innerHTML = `<div class="col-span-3 text-center py-6 text-slate-400 glass-card rounded-2xl">Chưa có bài giảng trực tuyến nào được giao cho lớp ${stu.classId || ''}.</div>`;
       } else {
-        lecContainer.innerHTML = lecs.map(l => `
-          <div class="glass-card p-4 rounded-2xl border border-white/80 shadow-sm space-y-2">
-            <div class="flex items-center gap-2 text-emerald-600 font-bold text-xs">
-              <i class="fa-solid ${l.type === 'video' ? 'fa-video' : 'fa-chalkboard'}"></i>
-              <span>${l.type === 'video' ? 'Video Bài Giảng' : 'Tài Liệu Trình Chiếu'}</span>
+        lecContainer.innerHTML = lecs.map(l => {
+          const isHtml = l.isHtmlPresentation || l.type === 'presentation';
+          const isAll = !l.assignedClasses || l.assignedClasses.includes('ALL');
+          return `
+            <div class="glass-card p-4 rounded-2xl border border-white/80 shadow-sm flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1.5">
+                  <div class="flex items-center gap-1.5 text-xs font-bold ${isHtml ? 'text-teal-700' : 'text-emerald-600'}">
+                    <i class="fa-solid ${isHtml ? 'fa-chalkboard-user' : (l.type === 'video' ? 'fa-video' : 'fa-chalkboard')}"></i>
+                    <span>${isHtml ? 'Trình Chiếu HTML' : (l.type === 'video' ? 'Video Bài Giảng' : 'Tài Liệu Slide')}</span>
+                  </div>
+                  <span class="text-[10px] font-semibold text-slate-400">Lớp: ${isAll ? 'Chung' : l.assignedClasses.join(', ')}</span>
+                </div>
+                <h4 class="font-bold text-slate-800 text-xs">${l.title}</h4>
+                ${l.description ? `<p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">${l.description}</p>` : ''}
+              </div>
+              <div class="pt-1">
+                ${isHtml ? `
+                  <button type="button" onclick="window.openPresentationPlayer('${l.id}')" class="w-full py-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-chalkboard-user"></i> Mở Trình Chiếu
+                  </button>
+                ` : `
+                  <a href="${l.url}" target="_blank" class="w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs hover:bg-emerald-100 transition">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Xem Bài Giảng
+                  </a>
+                `}
+              </div>
             </div>
-            <h4 class="font-bold text-slate-800 text-xs">${l.title}</h4>
-            <a href="${l.url}" target="_blank" class="inline-block mt-2 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-semibold text-xs hover:bg-emerald-100">
-              <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Xem Bài Giảng
-            </a>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
 
       // 4. Submission History list
