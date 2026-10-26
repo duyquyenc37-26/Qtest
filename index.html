@@ -45,6 +45,24 @@
       window._allowNativePrint = false;
       window.isDevToolsDetected = false;
 
+      // Helper function to detect Mobile and Tablet devices (iOS Safari, Android, WebViews, etc.)
+      window.isMobileOrTablet = function() {
+        try {
+          const ua = (navigator.userAgent || navigator.vendor || (window as any).opera || '').toLowerCase();
+          if (/android|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|crios|fxios/i.test(ua)) {
+            return true;
+          }
+          // iPadOS Safari reports as MacIntel but has touch points
+          if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) {
+            return true;
+          }
+          if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches && (window.innerWidth <= 1024 || window.innerHeight <= 1024)) {
+            return true;
+          }
+        } catch (_) {}
+        return false;
+      };
+
       // 1. Toast Notification for Protection Feedback
       window.showSecurityShieldToast = function(message) {
         try {
@@ -156,39 +174,55 @@
         console.trace = function() {};
       } catch (_) {}
 
-      // 5. Active DevTools Detection Logic
+      // 5. Active DevTools Detection Logic (Desktop Only)
       window.checkDevToolsActive = function() {
+        // Mobile browsers (iOS Safari, Android Chrome, in-app browsers like Zalo/FB) do not have docked DevTools
+        // and have inherent large differences between outerHeight and innerHeight due to URL bar, notch, and keyboard.
+        if (window.isMobileOrTablet()) {
+          return false;
+        }
+
         const widthDiff = window.outerWidth - window.innerWidth;
         const heightDiff = window.outerHeight - window.innerHeight;
-        // Detect docked DevTools
-        if (widthDiff > 160 || heightDiff > 160) {
+        // Detect docked DevTools on Desktop (typically takes >= 200px)
+        if (widthDiff > 200 || heightDiff > 200) {
           return true;
         }
         return false;
       };
 
       window.checkAndDismissDevToolsOverlay = function() {
-        if (window.checkDevToolsActive()) {
-          if (typeof Swal !== 'undefined') {
-            Swal.fire({
-              icon: 'warning',
-              title: 'DevTools Vẫn Đang Mở',
-              text: 'Cửa sổ kiểm tra mã nguồn (DevTools / Inspect) vẫn chưa đóng. Vui lòng đóng DevTools rồi nhấn lại nút này.',
-              confirmButtonText: 'Đã hiểu'
-            });
-          } else {
-            alert('Cửa sổ kiểm tra mã nguồn (DevTools) vẫn chưa đóng. Vui lòng đóng DevTools trên trình duyệt!');
+        if (window.isMobileOrTablet() || !window.checkDevToolsActive()) {
+          const overlay = document.getElementById('devtools-shield-overlay');
+          if (overlay) overlay.style.display = 'none';
+          window.isDevToolsDetected = false;
+          window.showSecurityShieldToast('Tiếp tục sử dụng hệ thống bình thường');
+          return;
+        }
+
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'DevTools Vẫn Đang Mở',
+            text: 'Cửa sổ kiểm tra mã nguồn (DevTools / Inspect) vẫn chưa đóng. Vui lòng đóng DevTools rồi nhấn lại nút này.',
+            confirmButtonText: 'Đã hiểu'
+          });
+        } else {
+          alert('Cửa sổ kiểm tra mã nguồn (DevTools) vẫn chưa đóng. Vui lòng đóng DevTools trên trình duyệt!');
+        }
+      };
+
+      // Periodic check for DevTools (Desktop only)
+      setInterval(function() {
+        if (window.isMobileOrTablet()) {
+          if (window.isDevToolsDetected) {
+            window.isDevToolsDetected = false;
+            const overlay = document.getElementById('devtools-shield-overlay');
+            if (overlay) overlay.style.display = 'none';
           }
           return;
         }
-        const overlay = document.getElementById('devtools-shield-overlay');
-        if (overlay) overlay.style.display = 'none';
-        window.isDevToolsDetected = false;
-        window.showSecurityShieldToast('Đã đóng DevTools - Tiếp tục sử dụng hệ thống');
-      };
 
-      // Periodic check for DevTools
-      setInterval(function() {
         const isDevTools = window.checkDevToolsActive();
         const overlay = document.getElementById('devtools-shield-overlay');
 
@@ -210,10 +244,11 @@
             if (overlay) overlay.style.display = 'none';
           }
         }
-      }, 1200);
+      }, 1500);
 
-      // Anti-Debugger protection against script inspection in Sources
+      // Anti-Debugger protection against script inspection in Sources (Desktop only)
       setTimeout(function runAntiDebuggerLoop() {
+        if (window.isMobileOrTablet()) return; // Skip completely on mobile devices to prevent false alarms and lag
         try {
           const t0 = performance.now();
           (function() {
@@ -228,8 +263,8 @@
             try { console.clear(); } catch (_) {}
           }
         } catch (_) {}
-        setTimeout(runAntiDebuggerLoop, 2500);
-      }, 3000);
+        setTimeout(runAntiDebuggerLoop, 3500);
+      }, 3500);
     })();
   </script>
   <title>MathExam Pro - Hệ thống thi trắc nghiệm Toán học trực tuyến</title>
@@ -9513,6 +9548,9 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
     };
 
     window.isFullscreenMode = () => {
+      if (window.isMobileOrTablet && window.isMobileOrTablet()) {
+        return true;
+      }
       return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
     };
 
@@ -9819,6 +9857,7 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
     // Anti-Cheat Engine: Visibility Change, Fullscreen Exit, Key Blocking, DevTools Inspection & Copy Protection
     window.onFullscreenChangeHandler = () => {
       if (window.currentView !== 'view-exam-room') return;
+      if (window.isMobileOrTablet && window.isMobileOrTablet()) return;
       const state = window.activeExamState;
       if (!state || state.isPracticeMode || window.isExamSubmitting) return;
 
@@ -9921,13 +9960,14 @@ Hãy đọc nội dung sau và bóc tách thành một danh sách JSON thuần (
         document.addEventListener(evt, window.onFullscreenChangeHandler);
       });
 
-      // 6. DevTools Dimension Monitor & Console Blanking
+      // 6. DevTools Dimension Monitor & Console Blanking (Desktop only)
       clearInterval(window.examDevToolsMonitorInterval);
       window.examDevToolsMonitorInterval = setInterval(() => {
         if (window.currentView !== 'view-exam-room' || window.activeExamState?.isPracticeMode || window.isExamSubmitting) return;
+        if (window.isMobileOrTablet && window.isMobileOrTablet()) return;
         const widthDiff = window.outerWidth - window.innerWidth;
         const heightDiff = window.outerHeight - window.innerHeight;
-        if (widthDiff > 160 || heightDiff > 160) {
+        if (widthDiff > 200 || heightDiff > 200) {
           window.handleCheatViolation('Phát hiện mở cửa sổ DevTools / Kiểm tra mã nguồn');
           try { console.clear(); } catch(e) {}
         }
